@@ -47,7 +47,6 @@ const TRANSLATIONS = {
     posterFeature1: "Stamp per Coffee",
     posterFeature2: "Double Dose = 2 Stamps",
     posterFeature3: "Stamps = Free Coffee",
-    posterCta: "Create My Card / Log In",
     signupTitle: "Welcome",
     signupSubtitle: "Get your virtual card or find an existing one.",
     signupSubtitleNew: "Get your virtual card in seconds.",
@@ -56,13 +55,18 @@ const TRANSLATIONS = {
     tabFindCard: "Find My Card",
     phDisplayName: "Display Name (e.g. Alex)",
     phUsername: "Username (Used to log in)",
-    phPassword: "Password (6+ chars)",
+    phPassword: "Password (8+ chars)",
     phPasswordConfirm: "Confirm Password",
+    pwReqLength: "8+ characters",
+    pwReqUpper: "Uppercase letter",
+    pwReqLower: "Lowercase letter",
+    pwReqNumber: "Number",
     errPasswordMismatch: "Passwords don't match",
     errChooseUsername: "Please choose a username",
     errPasswordMinLength: "Password must be at least 6 characters",
+    errPasswordWeak: "Password must be 8+ characters with an uppercase letter, a lowercase letter, and a number",
     errUsernameTaken: "That username is taken. Wrong password? Use \"Find My Card\" to log in.",
-    errInvalidSignupInput: "Please enter a username and a password of 6+ characters",
+    errInvalidSignupInput: "Please enter a username and a stronger password",
     errServerConnection: "Could not reach the server. Check your connection and try again.",
     errAcceptTos: "Please accept the Terms of Service & Privacy Policy",
     errSignupGeneric: "Something went wrong. Please try again.",
@@ -125,11 +129,13 @@ const TRANSLATIONS = {
     tosSubtitle: "Eightysix° Loyalty Program Terms",
     tosPara1: "<strong>1. Program Overview:</strong> The Eightysix° Loyalty Program allows customers to earn 1 stamp per standard beverage purchase (or 2 stamps for double-dose items like Freddo Espresso).",
     tosPara2: "<strong>2. Reward Redemption:</strong> Collecting 10 stamps unlocks 1 Free Coffee Reward. Rewards can be redeemed at participating Eightysix° locations or saved to your digital Rewards Wallet.",
-    tosPara3: "<strong>3. Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials.",
+    tosPara3: "<strong>3. Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials. Passwords must meet our minimum strength requirements (8+ characters, including an uppercase letter, a lowercase letter, and a number).",
+    tosPara4: "<strong>4. Google Sign-In:</strong> If you choose to continue with Google, your account is created and matched using your Google name and email address. Your use of Google Sign-In is also subject to Google's own Terms of Service.",
     privacySubtitle: "How Eightysix° protects your data",
-    privacyPara1: "<strong>1. Data Collection:</strong> We collect only essential information (username/display name and optional phone number) required to sync your loyalty stamps across your devices.",
-    privacyPara2: "<strong>2. Storage & Security:</strong> Data is encrypted locally and synced securely to Supabase Cloud infrastructure with anti-tampering checksums.",
+    privacyPara1: "<strong>1. Data Collection:</strong> We collect only essential information (username/display name and, depending on how you sign up, an optional phone number, password, or Google account name and email) required to identify your account and sync your loyalty stamps across your devices.",
+    privacyPara2: "<strong>2. Storage & Security:</strong> Data is encrypted locally and synced securely to Supabase Cloud infrastructure with anti-tampering checksums. Passwords are never stored in plain text — only a one-way cryptographic hash is kept, and it can't be reversed back into your password.",
     privacyPara3: "<strong>3. No Third-Party Sharing:</strong> Your personal information is strictly used for Eightysix° loyalty services and will never be sold or shared.",
+    privacyPara4: "<strong>4. Signing In With Google:</strong> If you use \"Continue with Google\", we receive only your name and email address from Google to create and identify your card — never your Google password, and we never access any other part of your Google account.",
     btnPrivacyAgree: "I Understand",
     settingsStaff: "Staff",
     settingsLockApp: "Lock App (Exit Staff Mode)",
@@ -162,6 +168,7 @@ const TRANSLATIONS = {
     editCustomerTitle: "Edit Customer",
     labelDisplayName: "Display Name",
     labelPhoneUsername: "Phone / Username",
+    labelResetPassword: "Reset Password (leave blank to skip)",
     btnDeleteCard: "Delete Card",
     btnSaveChanges: "Save Changes",
     btnIAgree: "I Agree",
@@ -192,6 +199,10 @@ const TRANSLATIONS = {
     labelBonusStamps: "Bonus Stamps",
     btnDelete: "Delete",
     btnSave: "Save",
+    settingsChangeUsername: "Username",
+    setUsernameTitle: "Username",
+    setUsernameSubtitle: "Lets you log in without Google, too.",
+    toastUsernameSaved: "Username saved!",
     homeGreetingGuest: "Hi, Guest",
     hiName: "Hi, {name}",
     homeSubtitleGuest: "Please sign in or ask staff to create a card.",
@@ -204,6 +215,8 @@ const TRANSLATIONS = {
     loggedInAs: "Logged in as {name}",
     phStaffEmail: "Staff Email",
     btnStaffLogin: "Log In",
+    authDividerOr: "or",
+    btnCustomerGoogleLogin: "Continue with Google",
     btnVoidRedemption: "Void Last Redemption",
     sortRecent: "Recent",
     sortRegulars: "Regulars",
@@ -243,7 +256,6 @@ const TRANSLATIONS = {
     posterFeature1: "печат по кафе",
     posterFeature2: "Двојна доза = 2 печати",
     posterFeature3: "печати = бесплатно кафе",
-    posterCta: "Направи картичка / Најави се",
     signupTitle: "Добредојде",
     signupSubtitle: "Направете виртуелна картичка или пронајдете постоечка.",
     signupSubtitleNew: "Направете ја вашата виртуелна картичка за неколку секунди.",
@@ -252,13 +264,18 @@ const TRANSLATIONS = {
     tabFindCard: "Пронајди картичка",
     phDisplayName: "Име за прикажување (пр. Алекс)",
     phUsername: "Корисничко име (за најава)",
-    phPassword: "Лозинка (6+ карактери)",
+    phPassword: "Лозинка (8+ карактери)",
     phPasswordConfirm: "Потврди лозинка",
+    pwReqLength: "8+ карактери",
+    pwReqUpper: "Голема буква",
+    pwReqLower: "Мала буква",
+    pwReqNumber: "Број",
     errPasswordMismatch: "Лозинките не се совпаѓаат",
     errChooseUsername: "Ве молиме изберете корисничко име",
     errPasswordMinLength: "Лозинката мора да има најмалку 6 карактери",
+    errPasswordWeak: "Лозинката мора да има 8+ карактери, голема буква, мала буква и број",
     errUsernameTaken: "Тоа корисничко име е зафатено. Погрешна лозинка? Користете „Најди ја мојата картичка“ за да се најавите.",
-    errInvalidSignupInput: "Внесете корисничко име и лозинка со 6+ карактери",
+    errInvalidSignupInput: "Внесете корисничко име и посилна лозинка",
     errServerConnection: "Не може да се поврземе со серверот. Проверете ја вашата врска и обидете се повторно.",
     errAcceptTos: "Ве молиме прифатете ги Условите за користење и Политиката за приватност",
     errSignupGeneric: "Нешто тргна наопаку. Обидете се повторно.",
@@ -321,11 +338,13 @@ const TRANSLATIONS = {
     tosSubtitle: "Услови на програмата за лојалност на Eightysix°",
     tosPara1: "<strong>1. Преглед на програмата:</strong> Програмата за лојалност Eightysix° им овозможува на клиентите да освојат 1 печат по стандардна нарачка на пијалак (или 2 печати за пијалаци со двојна доза, како Фредо еспресо).",
     tosPara2: "<strong>2. Искористување награда:</strong> Со собирање 10 печати се отклучува 1 бесплатна награда за кафе. Наградите можат да се искористат во учесничките локации на Eightysix° или да се зачуваат во вашиот дигитален паричник за награди.",
-    tosPara3: "<strong>3. Безбедност на профилот:</strong> Одговорни сте за чувањето на доверливоста на вашите податоци за најавување.",
+    tosPara3: "<strong>3. Безбедност на профилот:</strong> Одговорни сте за чувањето на доверливоста на вашите податоци за најавување. Лозинките мора да ги исполнуваат нашите минимални барања (8+ карактери, вклучувајќи голема буква, мала буква и број).",
+    tosPara4: "<strong>4. Најава со Google:</strong> Ако изберете да продолжите со Google, вашиот профил се создава и препознава користејќи го вашето име и е-пошта од Google. Употребата на најавата со Google подлежи и на условите за користење на Google.",
     privacySubtitle: "Како Eightysix° ги штити вашите податоци",
-    privacyPara1: "<strong>1. Собирање податоци:</strong> Собираме само основни информации (корисничко име/име за прикажување и опционален телефонски број) потребни за синхронизирање на вашите печати на сите уреди.",
-    privacyPara2: "<strong>2. Складирање и безбедност:</strong> Податоците се шифрирани локално и безбедно се синхронизираат со Supabase Cloud инфраструктурата, со контроли за спречување манипулација.",
+    privacyPara1: "<strong>1. Собирање податоци:</strong> Собираме само основни информации (корисничко име/име за прикажување и, во зависност од начинот на најава, опционален телефонски број, лозинка или име и е-пошта од Google профилот) потребни за препознавање на вашиот профил и синхронизирање на вашите печати на сите уреди.",
+    privacyPara2: "<strong>2. Складирање и безбедност:</strong> Податоците се шифрирани локално и безбедно се синхронизираат со Supabase Cloud инфраструктурата, со контроли за спречување манипулација. Лозинките никогаш не се чуваат во обична текстуална форма — се чува само еднонасочен криптографски хеш, кој не може да се врати назад во вашата лозинка.",
     privacyPara3: "<strong>3. Без споделување со трети лица:</strong> Вашите лични податоци се користат исклучиво за услугите на лојалност на Eightysix° и никогаш нема да бидат продадени или споделени.",
+    privacyPara4: "<strong>4. Најава со Google:</strong> Ако користите „Продолжи со Google“, добиваме само вашето име и е-пошта од Google за да го создадеме и препознаеме вашиот профил — никогаш вашата Google лозинка, и никогаш не пристапуваме до кој било друг дел од вашиот Google профил.",
     btnPrivacyAgree: "Разбирам",
     settingsStaff: "Персонал",
     settingsLockApp: "Заклучи ја апликацијата (излези од режим за вработени)",
@@ -358,6 +377,7 @@ const TRANSLATIONS = {
     editCustomerTitle: "Уреди клиент",
     labelDisplayName: "Име за прикажување",
     labelPhoneUsername: "Телефон / Корисничко име",
+    labelResetPassword: "Ресетирај лозинка (оставете празно за прескокнување)",
     btnDeleteCard: "Избриши картичка",
     btnSaveChanges: "Зачувај промени",
     btnIAgree: "Се согласувам",
@@ -388,6 +408,10 @@ const TRANSLATIONS = {
     labelBonusStamps: "Бонус печати",
     btnDelete: "Избриши",
     btnSave: "Зачувај",
+    settingsChangeUsername: "Корисничко име",
+    setUsernameTitle: "Корисничко име",
+    setUsernameSubtitle: "Ви овозможува да се најавите и без Google.",
+    toastUsernameSaved: "Корисничкото име е зачувано!",
     homeGreetingGuest: "Здраво, Гостин",
     hiName: "Здраво, {name}",
     homeSubtitleGuest: "Најавете се или замолете вработен да направи картичка.",
@@ -400,6 +424,8 @@ const TRANSLATIONS = {
     loggedInAs: "Најавени сте како {name}",
     phStaffEmail: "Е-пошта на вработен",
     btnStaffLogin: "Најави се",
+    authDividerOr: "или",
+    btnCustomerGoogleLogin: "Продолжи со Google",
     btnVoidRedemption: "Поништи последно искористување",
     sortRecent: "Неодамнешни",
     sortRegulars: "Редовни",
@@ -439,7 +465,6 @@ const TRANSLATIONS = {
     posterFeature1: "vulë për kafe",
     posterFeature2: "Dozë e Dyfishtë = 2 vula",
     posterFeature3: "vula = kafe falas",
-    posterCta: "Krijo Kartën / Identifikohu",
     signupTitle: "Mirë se vini",
     signupSubtitle: "Merrni kartën tuaj virtuale ose gjeni një ekzistuese.",
     signupSubtitleNew: "Merrni kartën tuaj virtuale brenda pak sekondash.",
@@ -448,13 +473,18 @@ const TRANSLATIONS = {
     tabFindCard: "Gjej Kartën Time",
     phDisplayName: "Emri i shfaqur (p.sh. Alex)",
     phUsername: "Emri i përdoruesit (për identifikim)",
-    phPassword: "Fjalëkalimi (6+ shkronja)",
+    phPassword: "Fjalëkalimi (8+ shkronja)",
     phPasswordConfirm: "Konfirmo Fjalëkalimin",
+    pwReqLength: "8+ shkronja",
+    pwReqUpper: "Shkronjë e madhe",
+    pwReqLower: "Shkronjë e vogël",
+    pwReqNumber: "Numër",
     errPasswordMismatch: "Fjalëkalimet nuk përputhen",
     errChooseUsername: "Ju lutemi zgjidhni një emër përdoruesi",
     errPasswordMinLength: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
+    errPasswordWeak: "Fjalëkalimi duhet të ketë 8+ shkronja, një shkronjë të madhe, një të vogël dhe një numër",
     errUsernameTaken: "Ky emër përdoruesi është i zënë. Fjalëkalim i gabuar? Përdor \"Gjej Kartën Time\" për t'u identifikuar.",
-    errInvalidSignupInput: "Vendos një emër përdoruesi dhe fjalëkalim me 6+ karaktere",
+    errInvalidSignupInput: "Vendos një emër përdoruesi dhe një fjalëkalim më të fortë",
     errServerConnection: "Nuk mund të lidhemi me serverin. Kontrollo lidhjen dhe provo përsëri.",
     errAcceptTos: "Ju lutemi pranoni Kushtet e Shërbimit dhe Politikën e Privatësisë",
     errSignupGeneric: "Diçka shkoi keq. Provo përsëri.",
@@ -517,11 +547,13 @@ const TRANSLATIONS = {
     tosSubtitle: "Kushtet e Programit të Besnikërisë Eightysix°",
     tosPara1: "<strong>1. Përmbledhje e Programit:</strong> Programi i Besnikërisë Eightysix° u lejon klientëve të fitojnë 1 vulë për çdo pije standarde (ose 2 vula për pije me dozë të dyfishtë si Freddo Espresso).",
     tosPara2: "<strong>2. Shpërblimi:</strong> Mbledhja e 10 vulave zhbllokon 1 Kafe Falas. Shpërblimet mund të shfrytëzohen në lokalet pjesëmarrëse të Eightysix° ose të ruhen në Portofolin tënd Dixhital të Shpërblimeve.",
-    tosPara3: "<strong>3. Siguria e Llogarisë:</strong> Ju jeni përgjegjës për ruajtjen e konfidencialitetit të kredencialeve të llogarisë suaj.",
+    tosPara3: "<strong>3. Siguria e Llogarisë:</strong> Ju jeni përgjegjës për ruajtjen e konfidencialitetit të kredencialeve të llogarisë suaj. Fjalëkalimet duhet të plotësojnë kërkesat tona minimale të forcës (8+ shkronja, duke përfshirë një shkronjë të madhe, një të vogël dhe një numër).",
+    tosPara4: "<strong>4. Identifikimi me Google:</strong> Nëse zgjidhni të vazhdoni me Google, llogaria juaj krijohet dhe identifikohet duke përdorur emrin dhe email-in tuaj nga Google. Përdorimi i Identifikimit me Google i nënshtrohet edhe Kushteve të Shërbimit të vetë Google-it.",
     privacySubtitle: "Si Eightysix° i mbron të dhënat tuaja",
-    privacyPara1: "<strong>1. Mbledhja e të Dhënave:</strong> Mbledhim vetëm informacionin thelbësor (emrin e përdoruesit/emrin e shfaqjes dhe numrin opsional të telefonit) të nevojshëm për sinkronizimin e vulave tuaja në të gjitha pajisjet.",
-    privacyPara2: "<strong>2. Ruajtja dhe Siguria:</strong> Të dhënat enkriptohen lokalisht dhe sinkronizohen në mënyrë të sigurt me infrastrukturën Supabase Cloud, me kontrolle anti-manipulim.",
+    privacyPara1: "<strong>1. Mbledhja e të Dhënave:</strong> Mbledhim vetëm informacionin thelbësor (emrin e përdoruesit/emrin e shfaqjes dhe, në varësi të mënyrës së regjistrimit, numrin opsional të telefonit, fjalëkalimin, ose emrin dhe email-in nga llogaria Google) të nevojshëm për të identifikuar llogarinë tuaj dhe sinkronizuar vulat tuaja në të gjitha pajisjet.",
+    privacyPara2: "<strong>2. Ruajtja dhe Siguria:</strong> Të dhënat enkriptohen lokalisht dhe sinkronizohen në mënyrë të sigurt me infrastrukturën Supabase Cloud, me kontrolle anti-manipulim. Fjalëkalimet nuk ruhen kurrë si tekst i thjeshtë — ruhet vetëm një hash kriptografik njëkahësh, i cili nuk mund të kthehet përsëri në fjalëkalimin tuaj.",
     privacyPara3: "<strong>3. Pa Ndarje me Palë të Treta:</strong> Informacioni juaj personal përdoret rreptësisht për shërbimet e besnikërisë të Eightysix° dhe nuk do të shitet apo ndahet kurrë.",
+    privacyPara4: "<strong>4. Identifikimi me Google:</strong> Nëse përdorni \"Vazhdo me Google\", marrim vetëm emrin dhe email-in tuaj nga Google për të krijuar dhe identifikuar kartën tuaj — kurrë fjalëkalimin tuaj të Google-it, dhe nuk aksesojmë kurrë ndonjë pjesë tjetër të llogarisë suaj Google.",
     btnPrivacyAgree: "E Kuptoj",
     settingsStaff: "Stafi",
     settingsLockApp: "Kyç Aplikacionin (Dil nga Modaliteti i Stafit)",
@@ -554,6 +586,7 @@ const TRANSLATIONS = {
     editCustomerTitle: "Ndrysho Klientin",
     labelDisplayName: "Emri i Shfaqur",
     labelPhoneUsername: "Telefoni / Emri i Përdoruesit",
+    labelResetPassword: "Rivendos Fjalëkalimin (lëre bosh për ta anashkaluar)",
     btnDeleteCard: "Fshi Kartën",
     btnSaveChanges: "Ruaj Ndryshimet",
     btnIAgree: "Pajtohem",
@@ -584,6 +617,10 @@ const TRANSLATIONS = {
     labelBonusStamps: "Vula Bonus",
     btnDelete: "Fshi",
     btnSave: "Ruaj",
+    settingsChangeUsername: "Emri i Përdoruesit",
+    setUsernameTitle: "Emri i Përdoruesit",
+    setUsernameSubtitle: "Të lejon të identifikohesh edhe pa Google.",
+    toastUsernameSaved: "Emri i përdoruesit u ruajt!",
     homeGreetingGuest: "Përshëndetje, Mysafir",
     hiName: "Përshëndetje, {name}",
     homeSubtitleGuest: "Identifikohu ose kërko stafit të krijojë një kartë.",
@@ -596,6 +633,8 @@ const TRANSLATIONS = {
     loggedInAs: "I identifikuar si {name}",
     phStaffEmail: "Email i Stafit",
     btnStaffLogin: "Identifikohu",
+    authDividerOr: "ose",
+    btnCustomerGoogleLogin: "Vazhdo me Google",
     btnVoidRedemption: "Anulo Shfrytëzimin e Fundit",
     sortRecent: "Të Fundit",
     sortRegulars: "Klientë të Rregullt",
@@ -670,6 +709,23 @@ function applyLanguage(lang) {
   if (typeof renderLeaderboard === 'function' && state.currentView === 'view-leaderboard') renderLeaderboard();
 }
 
+// Password strength rules for new signups — matched server-side in
+// signup_customer() so the requirement can't be bypassed by calling the
+// RPC directly.
+function getPasswordChecks(pw) {
+  pw = pw || '';
+  return {
+    length: pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    number: /[0-9]/.test(pw)
+  };
+}
+function isPasswordStrong(pw) {
+  const c = getPasswordChecks(pw);
+  return c.length && c.upper && c.lower && c.number;
+}
+
 // Timeout helper to ensure network calls never freeze the UI
 function withTimeout(promise, ms = 1500) {
   return Promise.race([
@@ -710,6 +766,7 @@ const state = {
   customers: [],
   selectedCustomerId: null,
   myCustomerId: null,
+  myToken: null,
   staffToken: null,
   staffName: null,
   pinFailedAttempts: 0,
@@ -747,35 +804,36 @@ const defaultMenu = [
   { id: 'm18', name: 'Tea', sub: '', price: '80', category: 'Warm Comfort', stamps: 0 }
 ];
 
+// Instant-boot local cache — the menu now lives in Supabase (see
+// syncMenuFromCloud), but rendering from this cache first means the app
+// doesn't have to wait on a network round-trip just to show the menu,
+// and it still works offline. syncMenuFromCloud() overwrites this with
+// the real data moments later on every load, and realtime keeps it
+// current after that without needing a reload.
 function loadMenu() {
   const saved = localStorage.getItem('86_menu');
   if (saved) {
     try {
-      const parsed = JSON.parse(saved);
-      // Migrate old prices (e.g. "1.20" -> "120")
-      if (parsed.length > 0 && parsed[0].price.includes('.')) {
-        state.menuItems = defaultMenu;
-        saveMenu();
-      } else {
-        // Matcha used to auto-grant +2 stamps, which stacked oddly with
-        // the Double Stamps campaign (4x on one item). It's no longer a
-        // bonus item on its own — only double-dose drinks are — so
-        // clear out any stale +2 left over from that old default.
-        let migrated = false;
-        parsed.forEach(item => {
-          if ((item.name || '').trim().toLowerCase() === 'matcha' && item.stamps === 2) {
-            item.stamps = 0;
-            migrated = true;
-          }
-        });
-        state.menuItems = parsed;
-        if (migrated) saveMenu();
-      }
+      state.menuItems = JSON.parse(saved);
     } catch(e) { state.menuItems = defaultMenu; }
   } else {
     state.menuItems = defaultMenu;
   }
 }
+
+// Fetches the real menu from Supabase and replaces local state/cache/UI
+// with it. Called on boot and again whenever realtime signals a change,
+// so every device converges on the same menu within a moment of a staff
+// edit — no reload required.
+async function syncMenuFromCloud() {
+  const cloudMenu = await cloud.getMenu();
+  if (!cloudMenu) return;
+  state.menuItems = cloudMenu.length ? cloudMenu : defaultMenu;
+  saveMenu();
+  renderCustomerMenu();
+  renderAdminMenu();
+}
+
 function saveMenu() {
   localStorage.setItem('86_menu', JSON.stringify(state.menuItems));
 }
@@ -812,37 +870,128 @@ const cloud = {
     return false;
   },
 
-  // Goes through a SECURITY DEFINER RPC rather than a direct table
-  // write. A raw anon UPDATE was verified live to report success (204,
-  // no error) while silently not persisting the change — root cause
-  // unconfirmed, so this routes around it entirely using the same
-  // reliable pattern every other write in this app already uses
-  // (signup, login, staff_* actions all bypass RLS the same way).
-  async pushCustomer(customer) {
-    if (!supabaseClient || !customer) return;
+  // Self-service avatar change, verified server-side against the
+  // caller's own session token (password customers) or live Google
+  // session (auth.uid()) — the RPC resolves identity itself, it's never
+  // trusted from the client. Can only ever touch the caller's own row.
+  async setAvatar(token, avatar) {
+    if (!supabaseClient) return null;
     try {
-      const clean = verifyAndCleanCustomer(customer);
       const res = await withTimeout(
-        supabaseClient.rpc('customer_save_self', {
-          p_id: clean.id,
-          p_name: clean.name,
-          p_phone: clean.phone || '',
-          p_avatar: clean.avatar || 'person',
-          p_stamps: clean.stamps || 0,
-          p_rewards_earned: clean.rewardsEarned || 0,
-          p_history: clean.history || [],
-          p_total_stamps_earned: clean.totalStampsEarned || 0,
-          p_reward_banked_at: clean.rewardBankedAt || null
-        }),
+        supabaseClient.rpc('customer_save_self', { p_token: token || null, p_avatar: avatar }),
         2500
       );
-      if (res.error) {
-        console.warn('Cloud push error:', res.error);
-        return;
-      }
-      console.log('☁️ Saved to cloud:', clean.id, 'stamps:', clean.stamps);
+      if (res.error || !res.data || !res.data.length) return null;
+      return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
-      console.warn('Cloud push timeout/error:', e);
+      return null;
+    }
+  },
+
+  // Staff overriding a selected customer's avatar at the counter.
+  async staffSetAvatar(staffToken, customerId, avatar) {
+    if (!supabaseClient || !staffToken) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_set_avatar', { p_token: staffToken, p_customer_id: customerId, p_avatar: avatar }),
+        2500
+      );
+      if (res.error || !res.data || !res.data.length) return null;
+      return mapDbRowToCustomer(res.data[0]);
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // Self-service redeem — server checks the caller's own rewards_earned/
+  // stamps and expiry, then decrements atomically. There's no field the
+  // caller sets directly, so there's nothing to forge.
+  async redeemReward(token, method) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_redeem_reward', { p_token: token || null, p_method: method }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('reward_expired')) return { error: 'reward_expired' };
+        if (msg.includes('no_reward_available') || msg.includes('not_enough_stamps')) return { error: 'not_ready' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  async staffRedeemReward(staffToken, customerId, method) {
+    if (!supabaseClient || !staffToken) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_redeem_reward', { p_token: staffToken, p_customer_id: customerId, p_method: method }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('no_reward_available') || msg.includes('not_enough_stamps')) return { error: 'not_ready' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  // Self-service "Keep in Wallet & Reset Card" — server requires the
+  // caller's own row to actually have 10 stamps before banking a reward.
+  async bankReward(token) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_bank_reward', { p_token: token || null }),
+        4000
+      );
+      if (res.error) return { error: 'not_ready' };
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  async staffBankReward(staffToken, customerId) {
+    if (!supabaseClient || !staffToken) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_bank_reward', { p_token: staffToken, p_customer_id: customerId }),
+        4000
+      );
+      if (res.error) return { error: 'not_ready' };
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  // Staff onboarding a customer whose card was created locally on their
+  // own device and hasn't synced to the cloud yet (scanned at the
+  // counter for the first time). Only inserts if the id doesn't already
+  // exist — never overwrites an existing customer.
+  async staffCreateCustomer(staffToken, customerId, name, phone) {
+    if (!supabaseClient || !staffToken) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_create_customer', { p_token: staffToken, p_customer_id: customerId, p_name: name, p_phone: phone }),
+        4000
+      );
+      if (res.error || !res.data || !res.data.length) return null;
+      return mapDbRowToCustomer(res.data[0]);
+    } catch (e) {
+      return null;
     }
   },
 
@@ -859,12 +1008,13 @@ const cloud = {
       if (res.error) {
         const msg = res.error.message || '';
         if (msg.includes('username_taken')) return { error: 'username_taken' };
+        if (msg.includes('weak_password')) return { error: 'weak_password' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       const d = res.data[0];
-      return { customer: mapDbRowToCustomer(d), isNew: d.is_new };
+      return { customer: mapDbRowToCustomer(d), isNew: d.is_new, token: d.token };
     } catch (e) {
       return { error: 'offline' };
     }
@@ -878,7 +1028,8 @@ const cloud = {
         4000
       );
       if (res.error || !res.data || !res.data.length) return null;
-      return mapDbRowToCustomer(res.data[0]);
+      const d = res.data[0];
+      return { customer: mapDbRowToCustomer(d), token: d.token };
     } catch (e) {
       return null;
     }
@@ -889,12 +1040,37 @@ const cloud = {
     try {
       const res = await withTimeout(
         supabaseClient.rpc('get_customer_by_id', { p_id: id }),
-        1500
+        4000
       );
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
       return null;
+    }
+  },
+
+  // Narrow, single-purpose write — only ever touches phone/username, so
+  // it can't clobber stamps/history the way re-sending a full customer
+  // record could if the local copy is stale (see
+  // supabase-customer-set-username.sql for why this is separate from
+  // customer_save_self).
+  async setUsername(token, username) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_set_username', { p_token: token || null, p_username: username }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('username_taken')) return { error: 'username_taken' };
+        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
     }
   },
 
@@ -933,6 +1109,41 @@ const cloud = {
     try {
       await withTimeout(supabaseClient.rpc('staff_logout', { p_token: token }), 2000);
     } catch (e) {}
+  },
+
+  // Kicks off the Google OAuth redirect for a customer. Supabase-js sends
+  // the browser to Google and back; the actual customer find-or-create
+  // happens in completeGoogleLogin() once we're back with a Supabase
+  // Auth session.
+  async startGoogleLogin() {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) return { error: 'offline' };
+      return { ok: true };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  // Exchanges an already-established Google/Supabase Auth session for a
+  // customer record — creating one on first sign-in. The RPC derives the
+  // email/identity from the verified JWT server-side (see
+  // customer_login_google in supabase-customer-google-login.sql), so the
+  // client can't claim to be a different Google user.
+  async completeGoogleLogin() {
+    if (!supabaseClient) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_login_google'), 4000);
+      if (res.error || !res.data || !res.data.length) return null;
+      const d = res.data[0];
+      return { customer: mapDbRowToCustomer(d), isNew: d.is_new };
+    } catch (e) {
+      return null;
+    }
   },
 
   async staffChangePassword(token, currentPassword, newPassword) {
@@ -1021,6 +1232,28 @@ const cloud = {
     }
   },
 
+  // In-person reset, no email required: staff (already logged in) verify
+  // the customer at the counter and set a new password directly. Same
+  // strength rule as normal signup, enforced server-side too.
+  async staffResetCustomerPassword(token, customerId, newPassword) {
+    if (!supabaseClient || !token) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_reset_customer_password', { p_token: token, p_customer_id: customerId, p_new_password: newPassword }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('weak_password')) return { error: 'weak_password' };
+        if (msg.includes('customer_not_found')) return { error: 'not_found' };
+        return { error: 'unknown' };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
   async staffDeleteCustomer(token, customerId) {
     if (!supabaseClient || !token) return false;
     try {
@@ -1083,6 +1316,70 @@ const cloud = {
     } catch (e) {
       return null;
     }
+  },
+
+  // ---- Menu (public — no auth needed to read, staff token to write) ----
+  async getMenu() {
+    if (!supabaseClient) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.from('menu_items').select('*').order('created_at', { ascending: true }),
+        4000
+      );
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 }));
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async staffUpsertMenuItem(token, item) {
+    if (!supabaseClient || !token) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_upsert_menu_item', {
+          p_token: token,
+          p_id: item.id,
+          p_name: item.name,
+          p_sub: item.sub || '',
+          p_price: item.price,
+          p_category: item.category,
+          p_stamps: item.stamps || 0
+        }),
+        4000
+      );
+      if (res.error || !res.data || !res.data.length) return { error: 'unknown' };
+      const d = res.data[0];
+      return { item: { id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 } };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  async staffDeleteMenuItem(token, id) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_delete_menu_item', { p_token: token, p_id: id }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Realtime menu sync — any staff edit, on any device, pushes to every
+  // open app within moments. Global (not tied to a customer/staff id),
+  // so this subscribes once at startup rather than on login.
+  subscribeToMenu() {
+    if (!supabaseClient) return;
+    supabaseClient
+      .channel('menu-items-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => {
+        syncMenuFromCloud();
+      })
+      .subscribe();
   },
 
   subscribeToCustomer(customerId) {
@@ -1399,6 +1696,7 @@ const DOM = {
   loginUsername: document.getElementById('login-username'),
   loginPassword: document.getElementById('login-password'),
   btnLoginSubmit: document.getElementById('btn-login-submit'),
+  btnCustomerGoogleLogin: document.getElementById('btn-customer-google-login'),
 
   // Links for ToS & Privacy Policy
   linkTos: document.getElementById('link-tos'),
@@ -1438,6 +1736,7 @@ const DOM = {
 
   // Avatar Picker Elements
   btnChangeAvatar: document.getElementById('btn-change-avatar'),
+  btnChangeUsername: document.getElementById('btn-change-username'),
   userAvatarDisplay: document.getElementById('user-avatar-display'),
   modalAvatarPicker: document.getElementById('modal-avatar-picker'),
   overlayAvatarPicker: document.getElementById('overlay-avatar-picker'),
@@ -1466,6 +1765,8 @@ const DOM = {
   editCustomerIdText: document.getElementById('edit-customer-id-text'),
   editCustomerName: document.getElementById('edit-customer-name'),
   editCustomerPhone: document.getElementById('edit-customer-phone'),
+  editCustomerNewPassword: document.getElementById('edit-customer-new-password'),
+  editCustomerPasswordError: document.getElementById('edit-customer-password-error'),
   btnSaveEditCustomer: document.getElementById('btn-save-edit-customer'),
   btnDeleteCustomer: document.getElementById('btn-delete-customer'),
 
@@ -1491,6 +1792,12 @@ const DOM = {
   changePasswordError: document.getElementById('change-password-error'),
   btnCancelChangePassword: document.getElementById('btn-cancel-change-password'),
   btnSaveChangePassword: document.getElementById('btn-save-change-password'),
+  modalSetUsername: document.getElementById('modal-set-username'),
+  overlaySetUsername: document.getElementById('overlay-set-username'),
+  setUsernameInput: document.getElementById('set-username-input'),
+  setUsernameError: document.getElementById('set-username-error'),
+  btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
+  btnSetUsernameSave: document.getElementById('btn-set-username-save'),
   btnExportData: document.getElementById('btn-export-data'),
   btnClearData: document.getElementById('btn-clear-data'),
   statStampsToday: document.getElementById('stat-stamps-today'),
@@ -1539,7 +1846,6 @@ const DOM = {
 
   // Promotional Poster
   posterQrcodeDisplay: document.getElementById('poster-qrcode-display'),
-  btnPosterSignup: document.getElementById('btn-poster-signup'),
 
   // Toast
   toast: document.getElementById('toast'),
@@ -1617,7 +1923,10 @@ window.addEventListener('popstate', handleHashRoute);
 // ==========================================
 
 async function initApp() {
+  let splashDismissed = false;
   const dismissSplash = (targetView = 'view-signup') => {
+    if (splashDismissed) return;
+    splashDismissed = true;
     if (DOM.viewSplash) {
       DOM.viewSplash.classList.add('fade-out');
       setTimeout(() => {
@@ -1632,6 +1941,19 @@ async function initApp() {
       }
     }
   };
+
+  // Hard ceiling: no single await inside init should ever be able to trap
+  // a visitor on the splash screen forever. Everything network-bound
+  // below already has its own timeout, but this is a last-resort net —
+  // if something unexpected still hangs (e.g. indexedDB.open() never
+  // firing, which has no timeout of its own), this fires regardless and
+  // drops the visitor onto the sign-up screen instead of a dead splash.
+  setTimeout(() => {
+    if (!splashDismissed) {
+      console.warn('App init exceeded 8s — forcing splash dismiss');
+      dismissSplash('view-signup');
+    }
+  }, 8000);
 
   try {
     applyLanguage(localStorage.getItem('86_language') || 'en');
@@ -1653,7 +1975,14 @@ async function initApp() {
     loadMenu();
     renderCustomerMenu();
     renderAdminMenu();
-    
+    syncMenuFromCloud();
+    cloud.subscribeToMenu();
+    // Realtime should push edits instantly, but websockets can silently
+    // drop (backgrounded app, flaky connection) without an obvious
+    // reconnect — this bounds how stale a displayed price can ever get
+    // to well under a minute even if that happens.
+    setInterval(syncMenuFromCloud, 45000);
+
     // Load saved user session
     const savedUserJson = localStorage.getItem('86_user_session');
     if (savedUserJson) {
@@ -1662,6 +1991,31 @@ async function initApp() {
         if (session && session.id) {
           state.myCustomerId = session.id;
           state.selectedCustomerId = session.id;
+          state.myToken = session.token || null;
+        }
+      } catch (e) {}
+    }
+
+    // Returning from a Google OAuth redirect ("Continue with Google" on
+    // the customer Welcome screen) — supabase-js parses the tokens out of
+    // the URL as soon as the client is created, and getSession() waits
+    // for that to finish. A successful exchange finds-or-creates the
+    // matching customer row and restores it exactly like a normal saved
+    // session below. Gated on the URL actually carrying OAuth tokens so a
+    // completely ordinary guest visit (the overwhelming majority of page
+    // loads) never pays for this extra network round-trip at all.
+    const returningFromOAuth = /[#&](access_token|error)=/.test(window.location.hash);
+    if (!state.myCustomerId && supabaseClient && returningFromOAuth) {
+      try {
+        const { data } = await withTimeout(supabaseClient.auth.getSession(), 4000);
+        if (data && data.session) {
+          const googleResult = await cloud.completeGoogleLogin();
+          if (googleResult) {
+            await db.saveCustomer(googleResult.customer);
+            saveUserSession(googleResult.customer);
+          } else {
+            await supabaseClient.auth.signOut().catch(() => {});
+          }
         }
       } catch (e) {}
     }
@@ -1706,8 +2060,34 @@ async function initApp() {
       }
     } else if (state.myCustomerId) {
       let me = await db.getCustomer(state.myCustomerId).catch(() => null);
+      let needsCloudRefresh = false;
       if (!me) {
-        me = await cloud.pullCustomer(state.myCustomerId).catch(() => null);
+        // No local IndexedDB copy (new device, cleared storage, or the
+        // browser evicted it — common on iOS). Don't let a slow/cold
+        // Supabase round-trip decide whether this reload bounces a
+        // returning customer back to the signup screen: rebuild a minimal
+        // card from the saved session immediately so the reload can never
+        // "reset" a logged-in session, then reconcile with the cloud in
+        // the background once it's reachable.
+        try {
+          const session = JSON.parse(localStorage.getItem('86_user_session') || 'null');
+          if (session && session.id === state.myCustomerId) {
+            me = {
+              id: session.id,
+              name: session.name || 'Customer',
+              phone: session.phone || '',
+              avatar: session.avatar || 'person',
+              stamps: 0,
+              rewardsEarned: 0,
+              totalStampsEarned: 0,
+              history: [],
+              joinedAt: new Date().toISOString(),
+              rewardBankedAt: null
+            };
+            await db.saveCustomer(me);
+            needsCloudRefresh = true;
+          }
+        } catch (e) {}
       }
       if (me) {
         state.selectedCustomerId = me.id;
@@ -1719,6 +2099,18 @@ async function initApp() {
         DOM.nav.classList.remove('hidden');
         toggleAdminMode(false);
         cloud.subscribeToCustomer(me.id);
+
+        if (needsCloudRefresh) {
+          cloud.pullCustomer(me.id).then(async (fresh) => {
+            if (fresh && state.selectedCustomerId === fresh.id) {
+              const avatar = localStorage.getItem(`86_user_avatar_${fresh.id}`);
+              if (avatar) fresh.avatar = avatar;
+              await db.saveCustomer(fresh);
+              await updateCardUI();
+              renderActivityList();
+            }
+          }).catch(() => {});
+        }
       }
     }
 
@@ -1778,19 +2170,28 @@ function showUpdateBanner() {
   banner.addEventListener('click', () => window.location.reload(), { once: true });
 }
 
-function saveUserSession(customer) {
+// token is only passed on an actual login/signup — omit it (e.g. when
+// just refreshing the displayed name/avatar after a local edit) and the
+// previously-stored session token is kept as-is. Google-login customers
+// never get a token here; their identity comes from the live Supabase
+// Auth session instead (see cloud.setAvatar/redeemReward/etc, which
+// fall back to auth.uid() server-side when p_token is null).
+function saveUserSession(customer, token) {
   state.myCustomerId = customer.id;
   state.selectedCustomerId = customer.id;
+  if (token) state.myToken = token;
 
   const avatarKey = customer.avatar || localStorage.getItem(`86_user_avatar_${customer.id}`) || 'person';
   customer.avatar = avatarKey;
   localStorage.setItem(`86_user_avatar_${customer.id}`, avatarKey);
 
+  const existing = JSON.parse(localStorage.getItem('86_user_session') || 'null');
   localStorage.setItem('86_user_session', JSON.stringify({
     id: customer.id,
     name: customer.name,
     phone: customer.phone,
-    avatar: avatarKey
+    avatar: avatarKey,
+    token: token || (existing && existing.id === customer.id ? existing.token : null) || null
   }));
 
   if (DOM.userAccountLabel) {
@@ -1813,19 +2214,26 @@ function initAvatarPickerModal() {
     btn.addEventListener('click', async () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
+      const isSelf = !state.isAdmin && activeId === state.myCustomerId;
 
       let customer = await db.getCustomer(activeId);
       if (!customer) customer = await cloud.pullCustomer(activeId);
       if (!customer) return;
 
-      customer.avatar = key;
+      const saved = isSelf
+        ? await cloud.setAvatar(state.myToken, key)
+        : await cloud.staffSetAvatar(state.staffToken, activeId, key);
+      if (!saved) {
+        showToast(t('errServerConnection'), 'error');
+        return;
+      }
+      customer = saved;
       verifyAndCleanCustomer(customer);
 
       localStorage.setItem(`86_user_avatar_${customer.id}`, key);
-      saveUserSession(customer);
+      if (isSelf) saveUserSession(customer);
 
       await db.saveCustomer(customer);
-      await cloud.pushCustomer(customer);
       state.customers = await db.getAllCustomers();
 
       closeModal(DOM.modalAvatarPicker);
@@ -1844,6 +2252,27 @@ function setupEventListeners() {
     item.addEventListener('click', () => switchView(item.dataset.target));
   });
 
+  // Secret staff/admin entry point: tap the welcome-screen logo 5 times
+  // within 3 seconds. Needed because #admin URL routing only works from
+  // a browser address bar — once the app is installed to the home
+  // screen, it always launches at the plain start_url with no hash, so
+  // that route is unreachable from the installed icon with no other way
+  // in.
+  if (DOM.secretAdminLogo) {
+    let tapCount = 0;
+    let tapResetTimer = null;
+    DOM.secretAdminLogo.addEventListener('click', () => {
+      tapCount++;
+      clearTimeout(tapResetTimer);
+      tapResetTimer = setTimeout(() => { tapCount = 0; }, 3000);
+      if (tapCount >= 5) {
+        tapCount = 0;
+        clearTimeout(tapResetTimer);
+        switchView('view-admin-login');
+      }
+    });
+  }
+
   // Show/Hide Password Toggles
   document.querySelectorAll('.toggle-password-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1855,6 +2284,21 @@ function setupEventListeners() {
       btn.querySelector('.icon-eye-off').classList.toggle('hidden', showing);
     });
   });
+
+  // Live password strength checklist — shared by the signup form and the
+  // staff "Reset Password" field on the Edit Customer modal.
+  const wirePasswordChecklist = (inputEl, requirementsContainerId) => {
+    if (!inputEl) return;
+    inputEl.addEventListener('input', () => {
+      const checks = getPasswordChecks(inputEl.value);
+      Object.entries(checks).forEach(([rule, met]) => {
+        const el = document.querySelector(`#${requirementsContainerId} .pw-req[data-rule="${rule}"]`);
+        if (el) el.classList.toggle('met', met);
+      });
+    });
+  };
+  wirePasswordChecklist(DOM.signupPassword, 'signup-password-requirements');
+  wirePasswordChecklist(DOM.editCustomerNewPassword, 'edit-customer-password-requirements');
 
   // Avatar Picker Modal Trigger (from Settings)
   if (DOM.btnChangeAvatar) {
@@ -1877,6 +2321,20 @@ function setupEventListeners() {
 
   if (DOM.btnCloseAvatarPicker) DOM.btnCloseAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
   if (DOM.overlayAvatarPicker) DOM.overlayAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
+
+  // Change Username (Settings > Account) — pre-fills with whatever
+  // username the customer already has, blank for Google customers who
+  // never set one.
+  if (DOM.btnChangeUsername) {
+    DOM.btnChangeUsername.addEventListener('click', async () => {
+      const activeId = state.myCustomerId;
+      if (!activeId) return;
+      const customer = await db.getCustomer(activeId);
+      if (DOM.setUsernameInput) DOM.setUsernameInput.value = (customer && customer.phone) || '';
+      if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
+      openModal(DOM.modalSetUsername);
+    });
+  }
 
   // QR Code Button
   if (DOM.btnShowQr) {
@@ -1985,13 +2443,6 @@ function setupEventListeners() {
     });
   }
 
-  // Promotional Poster CTA Button
-  if (DOM.btnPosterSignup) {
-    DOM.btnPosterSignup.addEventListener('click', () => {
-      window.location.hash = '#signup';
-      switchView('view-signup');
-    });
-  }
 
   // Secret 5-tap gesture on Settings title
   let tapCount = 0;
@@ -2065,26 +2516,9 @@ function setupEventListeners() {
       }
 
       state.pinFailedAttempts = 0;
-      state.staffToken = result.token;
-      state.staffName = result.name;
-      localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, name: result.name, email: result.email }));
       DOM.staffLoginEmail.value = '';
       DOM.staffLoginPassword.value = '';
-      DOM.staffLoginError.textContent = '';
-      toggleAdminMode(true);
-
-      try {
-        const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
-        if (cloudCustomers.length > 0) {
-          for (const c of cloudCustomers) await db.saveCustomer(c);
-          state.customers = await db.getAllCustomers();
-          renderCustomersList();
-          renderActivityList();
-        }
-      } catch (e) {}
-
-      switchView('view-customers');
-      showToast(`Welcome, ${result.name}!`, 'success');
+      await finishStaffLogin(result);
     });
   }
 
@@ -2116,6 +2550,21 @@ function setupEventListeners() {
     });
   }
 
+  // Continue with Google — works for both new and returning customers;
+  // the server-side RPC finds-or-creates the matching card.
+  if (DOM.btnCustomerGoogleLogin) {
+    DOM.btnCustomerGoogleLogin.addEventListener('click', async () => {
+      DOM.btnCustomerGoogleLogin.disabled = true;
+      const result = await cloud.startGoogleLogin();
+      if (result.error) {
+        showToast(t('errServerConnection'), 'error');
+        DOM.btnCustomerGoogleLogin.disabled = false;
+      }
+      // On success the browser is navigating away to Google, so there's
+      // nothing left to do here — the redirect back is handled at init.
+    });
+  }
+
   // Sign Up: Create New Card with Username & Password.
   // If the username already exists and the password matches, this signs the
   // returning customer back into their existing card instead of failing.
@@ -2131,8 +2580,8 @@ function setupEventListeners() {
       showToast(t('errChooseUsername'), 'error');
       return;
     }
-    if (password.length < 6) {
-      showToast(t('errPasswordMinLength'), 'error');
+    if (!isPasswordStrong(password)) {
+      showToast(t('errPasswordWeak'), 'error');
       return;
     }
     if (password !== passwordConfirm) {
@@ -2152,6 +2601,10 @@ function setupEventListeners() {
         showToast(t('errUsernameTaken'), 'error');
         return;
       }
+      if (result.error === 'weak_password') {
+        showToast(t('errPasswordWeak'), 'error');
+        return;
+      }
       if (result.error === 'invalid_input') {
         showToast(t('errInvalidSignupInput'), 'error');
         return;
@@ -2162,7 +2615,7 @@ function setupEventListeners() {
       }
 
       await db.saveCustomer(result.customer);
-      saveUserSession(result.customer);
+      saveUserSession(result.customer, result.token);
       await updateCardUI();
       DOM.nav.classList.remove('hidden');
       toggleAdminMode(false);
@@ -2188,15 +2641,16 @@ function setupEventListeners() {
 
     DOM.btnLoginSubmit.disabled = true;
     try {
-      const customer = await cloud.loginCustomer(username, password);
-      if (!customer) {
+      const loginResult = await cloud.loginCustomer(username, password);
+      if (!loginResult) {
         showToast(t('errIncorrectLogin'), 'error');
         return;
       }
+      const { customer, token } = loginResult;
 
       await db.saveCustomer(customer);
       state.customers = await db.getAllCustomers();
-      saveUserSession(customer);
+      saveUserSession(customer, token);
       await updateCardUI();
       DOM.nav.classList.remove('hidden');
       toggleAdminMode(false);
@@ -2210,12 +2664,28 @@ function setupEventListeners() {
     }
   });
 
-  // Logout / Switch Account
+  // Logout / Switch Account — a full logout of this device, not just the
+  // customer identity. A leftover staff session sitting in localStorage
+  // would otherwise let the app boot straight back into admin mode with
+  // no auth on the next reload (the original bug: logging out of a
+  // customer account left a valid staff token behind).
   const handleUserLogout = () => {
     cloud.unsubscribe();
+    // Also end the Google session, if there was one — otherwise the next
+    // "Continue with Google" tap on this device (e.g. a shared phone)
+    // would silently sign back in as whoever just logged out.
+    if (supabaseClient) supabaseClient.auth.signOut().catch(() => {});
     localStorage.removeItem('86_user_session');
     state.myCustomerId = null;
+    state.myToken = null;
     state.selectedCustomerId = null;
+
+    if (state.staffToken) cloud.staffLogout(state.staffToken);
+    state.staffToken = null;
+    state.staffName = null;
+    localStorage.removeItem('86_staff_session');
+    toggleAdminMode(false);
+
     DOM.nav.classList.add('hidden');
     switchView('view-signup');
     showToast(t('toastLoggedOut'), 'success');
@@ -2230,12 +2700,31 @@ function setupEventListeners() {
       if (!state.editingCustomerId || !state.staffToken) return;
       const name = DOM.editCustomerName.value.trim();
       const phone = DOM.editCustomerPhone.value.trim();
+      const newPassword = DOM.editCustomerNewPassword ? DOM.editCustomerNewPassword.value : '';
+
+      if (DOM.editCustomerPasswordError) DOM.editCustomerPasswordError.textContent = '';
+      if (newPassword && !isPasswordStrong(newPassword)) {
+        if (DOM.editCustomerPasswordError) DOM.editCustomerPasswordError.textContent = t('errPasswordWeak');
+        return;
+      }
 
       const updated = await cloud.staffEditCustomer(state.staffToken, state.editingCustomerId, name, phone);
       if (!updated) {
         showToast('Could not save — that username may already be taken', 'error');
         return;
       }
+
+      if (newPassword) {
+        const resetResult = await cloud.staffResetCustomerPassword(state.staffToken, state.editingCustomerId, newPassword);
+        if (resetResult.error) {
+          await db.saveCustomer(updated);
+          state.customers = await db.getAllCustomers();
+          if (DOM.editCustomerPasswordError) DOM.editCustomerPasswordError.textContent = t('errServerConnection');
+          showToast('Name/username saved, but password reset failed — try again', 'error');
+          return;
+        }
+      }
+
       await db.saveCustomer(updated);
       state.customers = await db.getAllCustomers();
 
@@ -2243,7 +2732,7 @@ function setupEventListeners() {
       renderCustomersList(DOM.customerSearch.value);
       renderActivityList();
       if (state.selectedCustomerId === updated.id) await updateCardUI();
-      showToast('Customer updated', 'success');
+      showToast(newPassword ? 'Customer updated & password reset' : 'Customer updated', 'success');
     });
   }
 
@@ -2389,27 +2878,30 @@ function setupEventListeners() {
     });
   }
 
-  // Action: Keep in Wallet & Reset Card
+  // Action: Keep in Wallet & Reset Card — the server re-checks stamps
+  // itself, so this can no longer be forged by mutating a local object.
   DOM.btnCloseReward.addEventListener('click', async () => {
     if (state.selectedCustomerId) {
-      const customer = await db.getCustomer(state.selectedCustomerId);
-      if (customer) {
-        customer.stamps = 0;
-        if (!customer.rewardsEarned || customer.rewardsEarned < 1) {
-          if (!customer.rewardsEarned) customer.rewardBankedAt = new Date().toISOString();
-          customer.rewardsEarned = 1;
-        }
-        await db.saveCustomer(customer);
-        state.customers = await db.getAllCustomers();
-        cloud.pushCustomer(customer);
-        await updateCardUI();
-        showToast('Reward saved to Wallet! Stamp card reset.', 'success');
+      const isSelf = !state.isAdmin && state.selectedCustomerId === state.myCustomerId;
+      const result = isSelf
+        ? await cloud.bankReward(state.myToken)
+        : await cloud.staffBankReward(state.staffToken, state.selectedCustomerId);
+      if (result.error) {
+        showToast(t('errServerConnection'), 'error');
+        closeModal(DOM.rewardOverlay);
+        return;
       }
+      await db.saveCustomer(result.customer);
+      state.customers = await db.getAllCustomers();
+      await updateCardUI();
+      showToast('Reward saved to Wallet! Stamp card reset.', 'success');
     }
     closeModal(DOM.rewardOverlay);
   });
 
-  // Action: Redeem Reward (Counter / Wallet / Staff Mode)
+  // Action: Redeem Reward (Counter / Wallet / Staff Mode) — server
+  // verifies rewards_earned/stamps and expiry, decrements atomically,
+  // and attributes staff-performed redemptions in the history entry.
   const handleRedeem = async () => {
     if (!state.selectedCustomerId) return;
 
@@ -2422,32 +2914,22 @@ function setupEventListeners() {
       return;
     }
 
-    let method;
-    if (customer.rewardsEarned > 0) {
-      customer.rewardsEarned -= 1;
-      method = 'wallet';
-      if (customer.rewardsEarned === 0) customer.rewardBankedAt = null;
-    } else if (customer.stamps >= MAX_STAMPS) {
-      customer.stamps = 0;
-      method = 'direct';
-    } else {
+    const method = customer.rewardsEarned > 0 ? 'wallet' : (customer.stamps >= MAX_STAMPS ? 'direct' : null);
+    if (!method) return;
+
+    const isSelf = !state.isAdmin && state.selectedCustomerId === state.myCustomerId;
+    const result = isSelf
+      ? await cloud.redeemReward(state.myToken, method)
+      : await cloud.staffRedeemReward(state.staffToken, state.selectedCustomerId, method);
+
+    if (result.error) {
+      showToast(result.error === 'reward_expired' ? 'This reward expired 1 year after it was earned' : t('errServerConnection'), 'error');
+      closeModal(DOM.rewardOverlay);
       return;
     }
 
-    if (!customer.history) customer.history = [];
-    const entry = {
-      id: 'tx_' + Math.random().toString(36).substr(2, 7).toUpperCase(),
-      type: 'redemption',
-      drink: 'Free Coffee',
-      method,
-      timestamp: new Date().toISOString()
-    };
-    if (state.isAdmin && state.staffName) entry.staffName = state.staffName;
-    customer.history.unshift(entry);
-
-    await db.saveCustomer(customer);
+    await db.saveCustomer(result.customer);
     state.customers = await db.getAllCustomers();
-    cloud.pushCustomer(customer);
 
     closeModal(DOM.rewardOverlay);
     await updateCardUI();
@@ -2477,14 +2959,26 @@ function setupEventListeners() {
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', handleRedeem);
   }
 
-  // App Lock (Settings) — also logs the staff member out
+  // App Lock (Settings) — a full logout of this device, symmetric with
+  // the customer logout above: clears the staff session AND any
+  // lingering customer session, so this shared device has nothing
+  // left signed in either direction.
   DOM.btnLockApp.addEventListener('click', () => {
     if (state.staffToken) cloud.staffLogout(state.staffToken);
     state.staffToken = null;
     state.staffName = null;
     localStorage.removeItem('86_staff_session');
     toggleAdminMode(false);
-    switchView(state.myCustomerId ? 'view-home' : 'view-signup');
+
+    cloud.unsubscribe();
+    if (supabaseClient) supabaseClient.auth.signOut().catch(() => {});
+    localStorage.removeItem('86_user_session');
+    state.myCustomerId = null;
+    state.myToken = null;
+    state.selectedCustomerId = null;
+
+    DOM.nav.classList.add('hidden');
+    switchView('view-signup');
     showToast('App Locked', 'success');
   });
 
@@ -2534,6 +3028,45 @@ function setupEventListeners() {
       }
       closeModal(DOM.modalChangePassword);
       showToast('Password updated', 'success');
+    });
+  }
+
+  // Set/Change Username modal (opened from Settings > Account).
+  if (DOM.btnSetUsernameSkip) DOM.btnSetUsernameSkip.addEventListener('click', () => closeModal(DOM.modalSetUsername));
+  if (DOM.overlaySetUsername) DOM.overlaySetUsername.addEventListener('click', () => closeModal(DOM.modalSetUsername));
+  if (DOM.btnSetUsernameSave) {
+    DOM.btnSetUsernameSave.addEventListener('click', async () => {
+      const username = (DOM.setUsernameInput ? DOM.setUsernameInput.value : '').trim().toLowerCase();
+      if (!username) {
+        DOM.setUsernameError.textContent = t('errChooseUsername');
+        return;
+      }
+      if (!state.myCustomerId) {
+        closeModal(DOM.modalSetUsername);
+        return;
+      }
+
+      DOM.btnSetUsernameSave.disabled = true;
+      const result = await cloud.setUsername(state.myToken, username);
+      DOM.btnSetUsernameSave.disabled = false;
+
+      if (result.error === 'username_taken') {
+        DOM.setUsernameError.textContent = t('errUsernameTaken');
+        return;
+      }
+      if (result.error) {
+        DOM.setUsernameError.textContent = t('errServerConnection');
+        return;
+      }
+
+      await db.saveCustomer(result.customer);
+      const savedSession = JSON.parse(localStorage.getItem('86_user_session') || 'null');
+      if (savedSession && savedSession.id === result.customer.id) {
+        savedSession.phone = result.customer.phone;
+        localStorage.setItem('86_user_session', JSON.stringify(savedSession));
+      }
+      closeModal(DOM.modalSetUsername);
+      showToast(t('toastUsernameSaved'), 'success');
     });
   }
 
@@ -2695,8 +3228,9 @@ function setupEventListeners() {
           if (!customer) customer = await db.getCustomer(custId);
 
           if (!customer) {
-            customer = await db.addCustomer(custName || 'Customer', custPhone || '', custId);
-            cloud.pushCustomer(customer);
+            const created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
+            customer = created || await db.addCustomer(custName || 'Customer', custPhone || '', custId);
+            await db.saveCustomer(customer);
             state.customers = await db.getAllCustomers();
             showToast('New customer synced!', 'success');
           } else {
@@ -2783,6 +3317,11 @@ function switchView(viewId) {
   if (viewId === 'view-settings') updateSettingsStats();
   if (viewId === 'view-activity') renderActivityList();
   if (viewId === 'view-leaderboard') renderLeaderboard();
+  // Prices must be current the moment someone is actually looking at the
+  // menu — don't rely solely on realtime having stayed connected since
+  // boot (a backgrounded app, a dropped websocket, etc. shouldn't be able
+  // to leave a stale price on screen at the moment it matters most).
+  if (viewId === 'view-menu' || viewId === 'view-admin-menu') syncMenuFromCloud();
 
   const fabActions = document.getElementById('customers-fab-actions');
   if (fabActions) {
@@ -2803,6 +3342,31 @@ function renderPosterQr() {
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
+}
+
+// Shared tail end of every staff-login path (email/password or Google) —
+// stores the token exactly like the old shared-PIN flow used to, so
+// session restore on reload works identically no matter how the token
+// was obtained.
+async function finishStaffLogin(result) {
+  state.staffToken = result.token;
+  state.staffName = result.name;
+  localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, name: result.name, email: result.email }));
+  if (DOM.staffLoginError) DOM.staffLoginError.textContent = '';
+  toggleAdminMode(true);
+
+  try {
+    const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
+    if (cloudCustomers.length > 0) {
+      for (const c of cloudCustomers) await db.saveCustomer(c);
+      state.customers = await db.getAllCustomers();
+      renderCustomersList();
+      renderActivityList();
+    }
+  } catch (e) {}
+
+  switchView('view-customers');
+  showToast(`Welcome, ${result.name}!`, 'success');
 }
 
 function toggleAdminMode(isActive) {
@@ -3189,6 +3753,9 @@ function renderCustomersList(searchTerm = '') {
         if (DOM.editCustomerIdText) DOM.editCustomerIdText.textContent = `ID: ${customer.id}`;
         if (DOM.editCustomerName) DOM.editCustomerName.value = customer.name || '';
         if (DOM.editCustomerPhone) DOM.editCustomerPhone.value = customer.phone || '';
+        if (DOM.editCustomerNewPassword) DOM.editCustomerNewPassword.value = '';
+        if (DOM.editCustomerPasswordError) DOM.editCustomerPasswordError.textContent = '';
+        document.querySelectorAll('#edit-customer-password-requirements .pw-req').forEach(el => el.classList.remove('met'));
         openModal(DOM.modalEditCustomer);
       });
       el.appendChild(editBtn);
@@ -3680,17 +4247,17 @@ if (DOM.btnCancelMenuItem) DOM.btnCancelMenuItem.addEventListener('click', () =>
 if (DOM.overlayEditMenuItem) DOM.overlayEditMenuItem.addEventListener('click', () => closeModal(DOM.modalEditMenuItem));
 
 if (DOM.btnSaveMenuItem) {
-  DOM.btnSaveMenuItem.addEventListener('click', () => {
+  DOM.btnSaveMenuItem.addEventListener('click', async () => {
     const id = DOM.menuItemId.value || 'm' + Date.now();
     const name = DOM.menuItemName.value.trim();
     const category = DOM.menuItemCategory.value.trim();
     const price = DOM.menuItemPrice.value.trim();
-    
+
     if (!name || !category || !price) {
       showToast('Name, Category, and Price are required', 'error');
       return;
     }
-    
+
     const newItem = {
       id,
       name,
@@ -3699,33 +4266,41 @@ if (DOM.btnSaveMenuItem) {
       price: parseFloat(price).toFixed(2),
       stamps: parseInt(DOM.menuItemStamps.value) || 0
     };
-    
-    const existingIndex = state.menuItems.findIndex(i => i.id === id);
-    if (existingIndex >= 0) {
-      state.menuItems[existingIndex] = newItem;
-    } else {
-      state.menuItems.push(newItem);
+
+    DOM.btnSaveMenuItem.disabled = true;
+    const result = await cloud.staffUpsertMenuItem(state.staffToken, newItem);
+    DOM.btnSaveMenuItem.disabled = false;
+
+    if (result.error) {
+      showToast(t('errServerConnection'), 'error');
+      return;
     }
-    
-    saveMenu();
-    renderCustomerMenu();
-    renderAdminMenu();
+
+    // Server is authoritative — realtime will also push this to every
+    // other open device momentarily, this just avoids waiting on it here.
+    await syncMenuFromCloud();
     closeModal(DOM.modalEditMenuItem);
     showToast('Menu item saved', 'success');
   });
 }
 
 if (DOM.btnDeleteMenuItem) {
-  DOM.btnDeleteMenuItem.addEventListener('click', () => {
+  DOM.btnDeleteMenuItem.addEventListener('click', async () => {
     const id = DOM.menuItemId.value;
-    if (id) {
-      state.menuItems = state.menuItems.filter(i => i.id !== id);
-      saveMenu();
-      renderCustomerMenu();
-      renderAdminMenu();
-      closeModal(DOM.modalEditMenuItem);
-      showToast('Menu item deleted', 'success');
+    if (!id) return;
+
+    DOM.btnDeleteMenuItem.disabled = true;
+    const ok = await cloud.staffDeleteMenuItem(state.staffToken, id);
+    DOM.btnDeleteMenuItem.disabled = false;
+
+    if (!ok) {
+      showToast(t('errServerConnection'), 'error');
+      return;
     }
+
+    await syncMenuFromCloud();
+    closeModal(DOM.modalEditMenuItem);
+    showToast('Menu item deleted', 'success');
   });
 }
 

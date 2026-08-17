@@ -1,0 +1,25 @@
+-- ============================================================
+-- Eightysixdegrees Punchcard — reset all customer data
+-- ============================================================
+-- Run this in the Supabase SQL Editor for
+-- https://edunsrtcdhnpbsipalhc.supabase.co when you're ready to start
+-- fresh (e.g. clearing out test signups before a real launch).
+--
+-- THIS IS IRREVERSIBLE. Read before running.
+--
+-- WHAT THIS DELETES:
+--   - Every customer account: stamps, rewards, activity history,
+--     usernames/passwords, and any Google-linked accounts.
+--
+-- WHAT THIS DOES NOT TOUCH:
+--   - Staff accounts (Stacy/Kiko/Iva) and their sessions — you'll
+--     still be able to log into the Staff Portal afterward.
+--   - The stamp campaign setting (e.g. Double Stamps toggle/label).
+--   - The menu (that's stored per-device in the browser, not here).
+--
+-- After running this, every device that has the app open will still
+-- show its locally cached card until it next syncs or reloads — that's
+-- expected; the cloud copy is gone, so nothing will save back to it.
+-- ============================================================
+
+delete from public.customers;

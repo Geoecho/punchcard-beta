@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Eightysix°">
@@ -63,10 +64,6 @@
           <div class="poster-stat"><strong>10</strong><span data-i18n="posterFeature3">Stamps = Free Coffee</span></div>
         </div>
 
-        <button class="btn-secondary btn-block poster-action-btn" id="btn-poster-signup" data-i18n="posterCta">
-          Create My Card / Log In
-        </button>
-
         <a href="https://instagram.com/eightysixdeg" target="_blank" rel="noopener" class="poster-instagram" id="poster-instagram-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
           <span id="poster-instagram-handle">@eightysixdeg</span>
@@ -86,10 +83,18 @@
         </div>
 
         <div class="signup-header">
-          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo-large">
+          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo-large" id="secret-admin-logo">
           <h2 class="signup-title" id="signup-title-text" data-i18n="signupTitle">Welcome</h2>
           <p class="signup-subtitle" id="signup-subtitle-text" data-i18n="signupSubtitle">Get your virtual card or find an existing one.</p>
         </div>
+
+        <button class="btn-google btn-block" id="btn-customer-google-login" type="button" style="margin-bottom: 16px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+          </svg>
+          <span data-i18n="btnCustomerGoogleLogin">Continue with Google</span>
+        </button>
+        <div class="auth-divider"><span data-i18n="authDividerOr">or</span></div>
 
         <!-- Auth Tabs -->
         <div class="auth-tabs">
@@ -106,11 +111,17 @@
             <input type="text" id="signup-username" class="form-input" placeholder="Username (Used to log in)" autocomplete="username" data-i18n-placeholder="phUsername">
           </div>
           <div class="form-group form-group-password">
-            <input type="password" id="signup-password" class="form-input" placeholder="Password (6+ chars)" autocomplete="new-password" data-i18n-placeholder="phPassword">
+            <input type="password" id="signup-password" class="form-input" placeholder="Password (8+ chars)" autocomplete="new-password" data-i18n-placeholder="phPassword">
             <button type="button" class="toggle-password-btn" data-target="signup-password" aria-label="Toggle password visibility">
               <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
             </button>
+          </div>
+          <div class="password-requirements" id="signup-password-requirements">
+            <span class="pw-req" data-rule="length" data-i18n="pwReqLength">8+ characters</span>
+            <span class="pw-req" data-rule="upper" data-i18n="pwReqUpper">Uppercase letter</span>
+            <span class="pw-req" data-rule="lower" data-i18n="pwReqLower">Lowercase letter</span>
+            <span class="pw-req" data-rule="number" data-i18n="pwReqNumber">Number</span>
           </div>
           <div class="form-group form-group-password">
             <input type="password" id="signup-password-confirm" class="form-input" placeholder="Confirm Password" autocomplete="new-password" data-i18n-placeholder="phPasswordConfirm">
@@ -464,6 +475,15 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
+        <div class="settings-item" id="btn-change-username">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20a6 6 0 0 0-12 0"></path><circle cx="12" cy="10" r="4"></circle><circle cx="12" cy="12" r="10"></circle></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsChangeUsername">Username</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
         <div class="settings-item" id="btn-logout-user">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -748,6 +768,26 @@
       </div>
     </div>
 
+    <!-- Set/Change Username Modal (from Settings > Account) -->
+    <div class="modal" id="modal-set-username">
+      <div class="modal-overlay" id="overlay-set-username"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="setUsernameTitle">Username</h3>
+        <p class="modal-subtitle" data-i18n="setUsernameSubtitle">Lets you log in without Google, too.</p>
+
+        <div class="form-group">
+          <input type="text" id="set-username-input" class="form-input" placeholder="Username" autocomplete="username" data-i18n-placeholder="phUsername">
+        </div>
+        <p class="pin-error" id="set-username-error"></p>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-set-username-skip" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-set-username-save" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Confirm Reset Data Modal -->
     <div class="modal" id="modal-reset">
         <div class="modal-overlay" id="overlay-reset"></div>
@@ -882,6 +922,18 @@
           <input type="text" id="edit-customer-phone" class="form-input" placeholder="Phone or Username">
         </div>
 
+        <div class="form-group form-group-password">
+          <label class="form-label" for="edit-customer-new-password" data-i18n="labelResetPassword">Reset Password (leave blank to skip)</label>
+          <input type="password" id="edit-customer-new-password" class="form-input" placeholder="New Password (8+ chars)" autocomplete="new-password">
+        </div>
+        <div class="password-requirements" id="edit-customer-password-requirements">
+          <span class="pw-req" data-rule="length" data-i18n="pwReqLength">8+ characters</span>
+          <span class="pw-req" data-rule="upper" data-i18n="pwReqUpper">Uppercase letter</span>
+          <span class="pw-req" data-rule="lower" data-i18n="pwReqLower">Lowercase letter</span>
+          <span class="pw-req" data-rule="number" data-i18n="pwReqNumber">Number</span>
+        </div>
+        <p class="pin-error" id="edit-customer-password-error"></p>
+
         <div class="modal-actions" style="margin-top: 20px;">
           <button class="btn-danger" id="btn-delete-customer" data-i18n="btnDeleteCard">Delete Card</button>
           <button class="btn-primary" id="btn-save-edit-customer" data-i18n="btnSaveChanges">Save Changes</button>
@@ -899,7 +951,8 @@
         <div class="legal-text-content">
           <p data-i18n-html="tosPara1"><strong>1. Program Overview:</strong> The Eightysix° Loyalty Program allows customers to earn 1 stamp per standard beverage purchase (or 2 stamps for double-dose items like Freddo Espresso).</p>
           <p data-i18n-html="tosPara2"><strong>2. Reward Redemption:</strong> Collecting 10 stamps unlocks 1 Free Coffee Reward. Rewards can be redeemed at participating Eightysix° locations or saved to your digital Rewards Wallet.</p>
-          <p data-i18n-html="tosPara3"><strong>3. Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials.</p>
+          <p data-i18n-html="tosPara3"><strong>3. Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials. Passwords must meet our minimum strength requirements (8+ characters, including an uppercase letter, a lowercase letter, and a number).</p>
+          <p data-i18n-html="tosPara4"><strong>4. Google Sign-In:</strong> If you choose to continue with Google, your account is created and matched using your Google name and email address. Your use of Google Sign-In is also subject to Google's own Terms of Service.</p>
         </div>
         <div class="modal-actions">
           <button class="btn-primary btn-block" id="btn-close-tos" data-i18n="btnIAgree">I Agree</button>
@@ -915,9 +968,10 @@
         <h3 class="modal-title" data-i18n="settingsPrivacy">Privacy Policy</h3>
         <p class="modal-subtitle" data-i18n="privacySubtitle">How Eightysix° protects your data</p>
         <div class="legal-text-content">
-          <p data-i18n-html="privacyPara1"><strong>1. Data Collection:</strong> We collect only essential information (username/display name and optional phone number) required to sync your loyalty stamps across your devices.</p>
-          <p data-i18n-html="privacyPara2"><strong>2. Storage & Security:</strong> Data is encrypted locally and synced securely to Supabase Cloud infrastructure with anti-tampering checksums.</p>
+          <p data-i18n-html="privacyPara1"><strong>1. Data Collection:</strong> We collect only essential information (username/display name and, depending on how you sign up, an optional phone number, password, or Google account name and email) required to identify your account and sync your loyalty stamps across your devices.</p>
+          <p data-i18n-html="privacyPara2"><strong>2. Storage & Security:</strong> Data is encrypted locally and synced securely to Supabase Cloud infrastructure with anti-tampering checksums. Passwords are never stored in plain text — only a one-way cryptographic hash is kept, and it can't be reversed back into your password.</p>
           <p data-i18n-html="privacyPara3"><strong>3. No Third-Party Sharing:</strong> Your personal information is strictly used for Eightysix° loyalty services and will never be sold or shared.</p>
+          <p data-i18n-html="privacyPara4"><strong>4. Signing In With Google:</strong> If you use "Continue with Google", we receive only your name and email address from Google to create and identify your card — never your Google password, and we never access any other part of your Google account.</p>
         </div>
         <div class="modal-actions">
           <button class="btn-primary btn-block" id="btn-close-privacy" data-i18n="btnPrivacyAgree">I Understand</button>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Eightysix° Poster">
+
+  <title>Eightysix° — Join the Loyalty Program</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+  <!-- Its own manifest, separate from the main app's. This is the whole
+       fix: a home-screen icon always launches at the manifest's
+       start_url, ignoring whatever URL/hash was on screen at install
+       time. Pointing this file's own manifest at itself means there's
+       no hash to lose — the icon can only ever open the poster. -->
+  <link rel="manifest" href="./manifest-poster.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* Standalone page, not part of the SPA's view-switching — just
+       center everything in the viewport directly, works at any tablet
+       size or orientation. */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .poster-page {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+    }
+    /* .poster-glow normally anchors to the SPA's full-height #app
+       wrapper (top: 8% of that). There's no equivalent fixed-height
+       ancestor here, so anchor it to the real viewport instead — keeps
+       it centered behind the poster regardless of content height. */
+    .poster-glow {
+      position: fixed;
+      top: 8vh;
+    }
+  </style>
+</head>
+<body>
+  <div class="poster-page">
+    <div class="poster-glow" aria-hidden="true"></div>
+    <div class="poster-container">
+      <img src="Group 9.png" alt="Eightysix° Logo" class="poster-logo">
+      <div class="poster-badge">OFFICIAL LOYALTY CARD</div>
+
+      <h1 class="poster-headline">GET FREE<br>COFFEE ON US</h1>
+
+      <div class="poster-qr-wrapper">
+        <div id="poster-qrcode-display" class="poster-qr-box"></div>
+        <div class="poster-qr-caption">SCAN TO JOIN</div>
+      </div>
+
+      <div class="poster-stats-strip">
+        <div class="poster-stat"><strong>1</strong><span>Stamp per Coffee</span></div>
+        <div class="poster-stat-divider"></div>
+        <div class="poster-stat"><strong>10</strong><span>Stamps = Free Coffee</span></div>
+      </div>
+
+      <a href="https://instagram.com/eightysixdeg" target="_blank" rel="noopener" class="poster-instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        <span>@eightysixdeg</span>
+      </a>
+    </div>
+  </div>
+
+  <script src="./lib/qrcode.min.js"></script>
+  <script>
+    new QRCode(document.getElementById('poster-qrcode-display'), {
+      text: window.location.origin + '/index.html#signup',
+      width: 260,
+      height: 260,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  </script>
+</body>
+</html>

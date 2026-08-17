@@ -179,7 +179,16 @@ input { font: inherit; color: inherit; }
   align-items: center;
   justify-content: center;
   gap: 20px;
-  animation: splash-enter 0.8s var(--ease-out) forwards;
+}
+/* Only the logo animates in on the splash screen — the tagline and
+   loader dots appear immediately, unanimated. */
+#view-splash .brand-logo-large {
+  animation: logo-entrance 0.9s var(--ease-out) forwards;
+}
+@keyframes logo-entrance {
+  0% { opacity: 0; transform: scale(0.7) translateY(8px); }
+  60% { opacity: 1; transform: scale(1.06) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 .splash-tagline {
   font-family: var(--font-body);
@@ -355,6 +364,10 @@ input { font: inherit; color: inherit; }
   width: 100%;
   max-width: 360px;
 }
+/* .form-group's own margin-bottom would stack on top of the flex gap
+   above, doubling the spacing between inputs — the gap alone is enough
+   here. */
+.signup-form .form-group { margin-bottom: 0; }
 .btn-block { width: 100%; }
 
 /* ── Checkbox Styling ─────────────────────────────────────── */
@@ -949,6 +962,11 @@ input { font: inherit; color: inherit; }
   background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 60%);
   pointer-events: none;
   z-index: 0;
+  animation: posterGlowPulse 6s ease-in-out infinite;
+}
+@keyframes posterGlowPulse {
+  0%, 100% { opacity: 0.65; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
 }
 .poster-container {
   width: 100%;
@@ -961,10 +979,15 @@ input { font: inherit; color: inherit; }
   z-index: 1;
 }
 .poster-logo {
-  height: 34px;
+  height: 64px;
   width: auto;
   filter: brightness(0) invert(1);
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+  animation: posterLogoFloat 4s ease-in-out infinite;
+}
+@keyframes posterLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 .poster-badge {
   font-size: 11px;
@@ -984,6 +1007,7 @@ input { font: inherit; color: inherit; }
   margin-bottom: 32px;
 }
 .poster-qr-wrapper {
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border-glass-strong);
   border-radius: var(--radius-xl);
@@ -993,6 +1017,27 @@ input { font: inherit; color: inherit; }
   align-items: center;
   box-shadow: 0 0 60px rgba(255, 255, 255, 0.08), var(--shadow-lg);
   margin-bottom: 28px;
+  animation: posterQrPulse 2.6s ease-in-out infinite;
+}
+@keyframes posterQrPulse {
+  0%, 100% { box-shadow: 0 0 60px rgba(255, 255, 255, 0.08), var(--shadow-lg); }
+  50% { box-shadow: 0 0 90px rgba(255, 255, 255, 0.22), var(--shadow-lg); }
+}
+/* Ring pinging outward from the QR box — now the only call-to-action on
+   a kiosk display, so it needs to draw the eye on its own. */
+.poster-qr-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--accent-main);
+  opacity: 0;
+  pointer-events: none;
+  animation: posterQrRing 2.6s ease-out infinite;
+}
+@keyframes posterQrRing {
+  0% { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.14); opacity: 0; }
 }
 .poster-qr-box {
   background: #ffffff;
@@ -1041,11 +1086,6 @@ input { font: inherit; color: inherit; }
   height: 32px;
   background: var(--border-glass-strong);
 }
-.poster-action-btn {
-  font-size: 14px;
-  padding: 14px;
-  width: 100%;
-}
 .poster-instagram {
   display: inline-flex;
   align-items: center;
@@ -1089,6 +1129,19 @@ input { font: inherit; color: inherit; }
 .pin-dot.filled { background: var(--accent-main); border-color: var(--accent-main); box-shadow: 0 0 12px rgba(255, 255, 255, 0.4); }
 .pin-dot.error { border-color: var(--error); background: var(--error); animation: shake 0.4s var(--ease-in-out); }
 .pin-error { color: var(--error); font-size: 13px; min-height: 20px; text-align: center; }
+
+.password-requirements { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: -6px 0 14px; }
+.pw-req { position: relative; padding-left: 15px; font-size: 11px; color: var(--text-muted); transition: color 0.2s var(--ease-out); }
+.pw-req::before {
+  content: '';
+  position: absolute; left: 0; top: 50%;
+  width: 6px; height: 6px; border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--text-muted);
+  transition: background 0.2s var(--ease-out);
+}
+.pw-req.met { color: var(--text-secondary); }
+.pw-req.met::before { background: var(--success); }
 .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; margin: 0 auto; }
 .pin-key { height: 64px; border-radius: var(--radius-lg); background: var(--bg-glass); border: 1px solid var(--border-glass-strong); font-family: var(--font-heading); font-size: 24px; font-weight: 600; color: var(--text-primary); transition: all 0.15s var(--ease-out); display: flex; align-items: center; justify-content: center; }
 .pin-key:active { background: rgba(255, 255, 255, 0.15); transform: scale(0.94); }
@@ -1127,6 +1180,12 @@ input { font: inherit; color: inherit; }
 .btn-secondary:active { background: var(--bg-glass-hover); }
 .btn-danger { padding: 14px 20px; background: transparent; border: 1px solid var(--error); color: var(--error); font-weight: 500; font-size: 15px; border-radius: var(--radius-md); text-align: center; }
 .btn-small { padding: 8px 14px; font-size: 12px; }
+.btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: var(--bg-glass); border: 1px solid var(--border-glass-strong); color: var(--text-primary); font-weight: 500; font-size: 15px; border-radius: var(--radius-md); text-align: center; transition: all 0.2s var(--ease-out); }
+.btn-google:active { background: var(--bg-glass-hover); }
+.btn-google:disabled { opacity: 0.6; pointer-events: none; }
+
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-glass-strong); }
 
 /* ── Toast ─────────────────────────────────────────────────── */
 .toast {
