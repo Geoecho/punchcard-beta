@@ -1,0 +1,81 @@
+// 86° Punchcard — Service Worker
+// Network-first for API, Stale-While-Revalidate for app shell
+
+const CACHE_NAME = '86-punchcard-v21';
+const APP_SHELL = [
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './lib/qrcode.min.js',
+  './lib/html5-qrcode.min.js'
+];
+
+// Pre-cache app shell on install
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('[SW] Pre-caching app shell');
+        return cache.addAll(APP_SHELL);
+      })
+      .then(() => self.skipWaiting())
+  );
+});
+
+// Clean up old caches and take control immediately
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Removing old cache:', key);
+            return caches.delete(key);
+          }
+        })
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+// Fetch strategy: Network-first for API, Stale-While-Revalidate for app shell
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  const url = event.request.url;
+
+  // NEVER cache Supabase API or any external API calls — always go to network
+  if (url.includes('supabase.co') || url.includes('cdn.jsdelivr.net')) {
+    event.respondWith(
+      fetch(event.request).catch(() => null)
+    );
+    return;
+  }
+
+  // For app shell files: Stale-While-Revalidate
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      const fetchPromise = fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(event.request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+          return null;
+        });
+
+      return cachedResponse || fetchPromise;
+    })
+  );
+});

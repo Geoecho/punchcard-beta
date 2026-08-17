@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Eightysix°">
+  
+  <title>Eightysix° Punchcard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Confetti Canvas for Celebrations -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div id="app">
+    
+    <!-- ==========================================
+         SPLASH SCREEN
+         ========================================== -->
+    <div id="view-splash" class="view active">
+      <div class="splash-content">
+        <img src="Group 9.png" alt="Eightysix Degrees Logo" class="brand-logo-large">
+        <div class="splash-tagline" data-i18n="splashTagline">Loyalty</div>
+        <div class="splash-loader">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PROMOTIONAL POSTER VIEW (/#poster)
+         ========================================== -->
+    <div id="view-poster" class="view">
+      <div class="poster-glow" aria-hidden="true"></div>
+      <div class="poster-container">
+        <img src="Group 9.png" alt="Eightysix° Logo" class="poster-logo">
+        <div class="poster-badge" data-i18n="posterBadge">OFFICIAL LOYALTY CARD</div>
+
+        <h1 class="poster-headline" data-i18n="posterHeadline">GET FREE<br>COFFEE ON US</h1>
+
+        <div class="poster-qr-wrapper">
+          <div id="poster-qrcode-display" class="poster-qr-box"></div>
+          <div class="poster-qr-caption" data-i18n="posterQrCaption">SCAN TO JOIN</div>
+        </div>
+
+        <div class="poster-stats-strip">
+          <div class="poster-stat"><strong>1</strong><span data-i18n="posterFeature1">Stamp per Coffee</span></div>
+          <div class="poster-stat-divider"></div>
+          <div class="poster-stat"><strong>10</strong><span data-i18n="posterFeature3">Stamps = Free Coffee</span></div>
+        </div>
+
+        <button class="btn-secondary btn-block poster-action-btn" id="btn-poster-signup" data-i18n="posterCta">
+          Create My Card / Log In
+        </button>
+
+        <a href="https://instagram.com/eightysixdeg" target="_blank" rel="noopener" class="poster-instagram" id="poster-instagram-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          <span id="poster-instagram-handle">@eightysixdeg</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SIGN UP / LOGIN VIEW (Customers)
+         ========================================== -->
+    <div class="view" id="view-signup">
+      <div class="signup-container">
+        <div class="lang-switcher" id="lang-switcher-signup" style="align-self: flex-end; margin-bottom: 18px;">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="mk">МК</button>
+          <button class="lang-btn" data-lang="sq">SQ</button>
+        </div>
+
+        <div class="signup-header">
+          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo-large">
+          <h2 class="signup-title" id="signup-title-text" data-i18n="signupTitle">Welcome</h2>
+          <p class="signup-subtitle" id="signup-subtitle-text" data-i18n="signupSubtitle">Get your virtual card or find an existing one.</p>
+        </div>
+
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-new-card" data-i18n="tabNewCard">New Card</button>
+          <button class="auth-tab" id="tab-find-card" data-i18n="tabFindCard">Find My Card</button>
+        </div>
+
+        <!-- Form: New Card -->
+        <div class="signup-form" id="form-new-card">
+          <div class="form-group">
+            <input type="text" id="signup-name" class="form-input" placeholder="Display Name (e.g. Alex)" autocomplete="name" data-i18n-placeholder="phDisplayName">
+          </div>
+          <div class="form-group">
+            <input type="text" id="signup-username" class="form-input" placeholder="Username (Used to log in)" autocomplete="username" data-i18n-placeholder="phUsername">
+          </div>
+          <div class="form-group form-group-password">
+            <input type="password" id="signup-password" class="form-input" placeholder="Password (6+ chars)" autocomplete="new-password" data-i18n-placeholder="phPassword">
+            <button type="button" class="toggle-password-btn" data-target="signup-password" aria-label="Toggle password visibility">
+              <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
+          </div>
+          <div class="form-group form-group-password">
+            <input type="password" id="signup-password-confirm" class="form-input" placeholder="Confirm Password" autocomplete="new-password" data-i18n-placeholder="phPasswordConfirm">
+            <button type="button" class="toggle-password-btn" data-target="signup-password-confirm" aria-label="Toggle password visibility">
+              <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
+          </div>
+          <div class="form-group-checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" id="signup-tos-check" checked class="custom-checkbox">
+              <span class="checkbox-text">I agree to the <a href="#" id="link-tos">Terms of Service</a> & <a href="#" id="link-privacy">Privacy Policy</a></span>
+            </label>
+          </div>
+          <button class="btn-primary btn-block" id="btn-signup-submit" data-i18n="btnCreateCard">Create My Card</button>
+        </div>
+
+        <!-- Form: Find Card -->
+        <div class="signup-form hidden" id="form-find-card">
+          <div class="form-group">
+            <input type="text" id="login-username" class="form-input" placeholder="Enter your Username" autocomplete="username" data-i18n-placeholder="phEnterUsername">
+          </div>
+          <div class="form-group form-group-password">
+            <input type="password" id="login-password" class="form-input" placeholder="Password" autocomplete="current-password" data-i18n-placeholder="phPasswordPlain">
+            <button type="button" class="toggle-password-btn" data-target="login-password" aria-label="Toggle password visibility">
+              <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </button>
+          </div>
+          <button class="btn-primary btn-block" id="btn-login-submit" data-i18n="btnLogin">Log In to My Card</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         ADMIN / STAFF LOGIN VIEW
+         ========================================== -->
+    <div class="view" id="view-admin-login">
+      <div class="signup-container">
+        <div class="signup-header">
+          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo-large">
+          <h2 class="signup-title" data-i18n="staffPortalTitle">Staff Portal</h2>
+          <p class="signup-subtitle" data-i18n="staffPortalSubtitle">Authorized Eightysix° Staff Only</p>
+        </div>
+
+        <div class="signup-form">
+          <div class="form-group">
+            <input type="email" id="staff-login-email" class="form-input" placeholder="Staff Email" autocomplete="username" data-i18n-placeholder="phStaffEmail">
+          </div>
+          <div class="form-group">
+            <input type="password" id="staff-login-password" class="form-input" placeholder="Password" autocomplete="current-password" data-i18n-placeholder="phPasswordPlain">
+          </div>
+          <p class="pin-error" id="staff-login-error"></p>
+          <button class="btn-primary btn-block" id="btn-staff-login-submit" data-i18n="btnStaffLogin">Log In</button>
+          <button class="btn-secondary btn-block" id="btn-staff-login-cancel" style="margin-top: 10px;" data-i18n="btnCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         HOME VIEW (Customer Card)
+         ========================================== -->
+    <div id="view-home" class="view">
+      <header class="home-header">
+        <div class="header-left">
+          <div class="user-avatar-display" id="user-avatar-display" style="width: 34px; height: 34px; border-width: 1px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
+          </div>
+          <div class="header-text">
+            <h2 class="home-greeting" id="home-greeting">Hi, Guest</h2>
+            <p class="home-subtitle" id="home-subtitle">Here is your card</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="install-prompt-banner hidden" id="install-banner">
+        <div class="install-prompt-left">
+          <div class="install-prompt-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </div>
+          <div class="install-prompt-info">
+            <div class="install-prompt-title" data-i18n="installBannerTitle">Add to Home Screen</div>
+            <div class="install-prompt-subtitle" data-i18n="installBannerSubtitle">Instant access, works offline</div>
+          </div>
+        </div>
+        <div class="install-prompt-actions">
+          <button class="btn-primary btn-small" id="btn-install" data-i18n="installBannerBtn">Install</button>
+          <button class="install-prompt-close" id="btn-close-install" aria-label="Dismiss">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="campaign-banner hidden" id="campaign-banner">
+        <div class="campaign-banner-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </div>
+        <div class="campaign-banner-text">
+          <div class="campaign-banner-title" id="campaign-banner-title" data-i18n="campaignBannerTitle">Double Stamps Today!</div>
+          <div class="campaign-banner-subtitle" id="campaign-banner-subtitle" data-i18n="campaignBannerSubtitle">Every order earns 2x stamps right now</div>
+        </div>
+      </div>
+
+      <div class="card-container" id="punchcard">
+        <div class="card-header">
+          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo">
+          <div class="card-header-right">
+            <div class="card-number" id="card-number">CARD #---</div>
+            <div class="stamp-badge hidden" id="stamp-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <span id="stamp-badge-label">Bronze</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stamp-grid" id="stamp-grid">
+          <!-- Stamps will be injected here by JS -->
+        </div>
+
+        <div class="card-footer">
+          <div class="progress-section">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="stamp-count"><span id="stamp-count-text">0</span>/10</div>
+          </div>
+          <div class="progress-message" id="progress-msg">10 more to your free coffee!</div>
+        </div>
+      </div>
+
+      <!-- Rewards Wallet Card (Customer View) -->
+      <div class="rewards-wallet-card hidden" id="rewards-wallet-card">
+        <div class="wallet-left">
+          <div class="wallet-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12v10H4V12"></path>
+              <path d="M2 7h20v5H2z"></path>
+              <path d="M12 22V7"></path>
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+            </svg>
+          </div>
+          <div class="wallet-info">
+            <div class="wallet-title" data-i18n="walletTitle">Rewards Wallet</div>
+            <div class="wallet-subtitle" id="wallet-count-text">1 Free Coffee Available</div>
+            <div class="wallet-expiry" id="wallet-expiry-text"></div>
+          </div>
+        </div>
+        <button class="btn-secondary btn-small" id="btn-redeem-banked" data-i18n="btnRedeem">Redeem</button>
+      </div>
+
+      <!-- Customer actions (Hidden from admin) -->
+      <div class="home-actions" id="customer-actions">
+        <button class="btn-primary show-qr-btn" id="btn-show-qr">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <rect x="7" y="7" width="3" height="3"></rect>
+            <rect x="14" y="7" width="3" height="3"></rect>
+            <rect x="7" y="14" width="3" height="3"></rect>
+            <rect x="14" y="14" width="3" height="3"></rect>
+          </svg>
+          <span data-i18n="btnShowQr">Show My QR Code</span>
+        </button>
+      </div>
+      
+      <!-- Admin Add Stamp Action (Hidden by default) -->
+      <div class="home-actions hidden" id="admin-actions">
+        <div class="stamp-actions-row">
+          <button class="btn-add-stamp" id="btn-add-stamp">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <button class="btn-remove-stamp" id="btn-remove-stamp" aria-label="Remove Stamp">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="stamp-btn-label" data-i18n="addStampLabel">ADD STAMP</div>
+        <div class="admin-secondary-actions">
+          <button class="btn-admin-redeem-banked hidden" id="btn-admin-redeem">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+            <span id="btn-admin-redeem-label">Redeem 1 Banked Reward</span>
+          </button>
+          <button class="btn-void-link hidden" id="btn-void-redemption">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+            <span data-i18n="btnVoidRedemption">Void Last Redemption</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State for Admin before selecting customer -->
+      <div class="empty-state hidden" id="admin-empty-state">
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <h2 class="empty-title" data-i18n="staffModeTitle">Staff Mode Active</h2>
+        <p class="empty-text" data-i18n="staffModeText">Select a customer from the list to view and stamp their card.</p>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         MENU VIEW (Customer Only)
+         ========================================== -->
+    <div id="view-menu" class="view">
+      <header class="customers-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
+        <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
+        <h2 style="margin: 0;" data-i18n="navMenu">Menu</h2>
+      </header>
+
+      <div class="menu-scroll-area" id="customer-menu-container">
+        <!-- Dynamically rendered menu items go here -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         LEADERBOARD VIEW (Customer Only)
+         ========================================== -->
+    <div id="view-leaderboard" class="view">
+      <header class="customers-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
+        <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
+        <div>
+          <h2 style="margin: 0;" data-i18n="leaderboardTitle">Leaderboard</h2>
+          <p class="lb-header-subtitle" data-i18n="leaderboardSubtitle">Ranked by lifetime stamps earned</p>
+        </div>
+      </header>
+
+      <div class="lb-scroll-area" id="leaderboard-container">
+        <!-- Dynamically rendered leaderboard rows go here -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         ADMIN MENU EDITOR (Staff Only)
+         ========================================== -->
+    <div id="view-admin-menu" class="view">
+      <header class="customers-header" style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
+          <h2 style="margin: 0;" data-i18n="navEditMenu">Edit Menu</h2>
+        </div>
+        <button class="btn-primary btn-small" id="btn-add-menu-item" data-i18n="btnAddItem">+ Add Item</button>
+      </header>
+
+      <div class="menu-scroll-area" id="admin-menu-container">
+        <!-- Dynamically rendered admin menu items go here -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         CUSTOMERS VIEW (Admin Only)
+         ========================================== -->
+    <div id="view-customers" class="view">
+      <header class="customers-header">
+        <h2 data-i18n="navCustomers">Customers</h2>
+        <div class="customer-count-badge" id="total-customers-badge">0</div>
+      </header>
+
+      <div class="search-container">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" id="customer-search" placeholder="Search name or phone..." data-i18n-placeholder="phSearchCustomers">
+        </div>
+      </div>
+
+      <div class="filter-chips" id="customer-sort-chips">
+        <button class="chip active" data-sort="recent" data-i18n="sortRecent">Recent</button>
+        <button class="chip" data-sort="regulars" data-i18n="sortRegulars">Regulars</button>
+      </div>
+
+      <div class="customer-list" id="customer-list">
+        <!-- Customer items injected by JS -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         ACTIVITY & REDEMPTIONS LOG VIEW (Admin Only)
+         ========================================== -->
+    <div id="view-activity" class="view">
+      <header class="customers-header">
+        <h2 data-i18n="navActivity">Activity Log</h2>
+        <div class="customer-count-badge" id="total-activity-badge">0</div>
+      </header>
+
+      <div class="search-container">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" id="activity-search" placeholder="Search customer ID or action..." data-i18n-placeholder="phSearchActivity">
+        </div>
+      </div>
+
+      <div class="filter-chips" id="activity-filter-chips">
+        <button class="chip active" data-filter="all" data-i18n="filterAll">All</button>
+        <button class="chip" data-filter="redemption" data-i18n="filterRedemptions">Redemptions</button>
+        <button class="chip" data-filter="stamp" data-i18n="filterStamps">Stamps</button>
+      </div>
+
+      <div class="customer-list" id="activity-list">
+        <!-- Log entries injected by JS -->
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SETTINGS VIEW
+         ========================================== -->
+    <div id="view-settings" class="view">
+      <header class="settings-header">
+        <h2 id="settings-title" style="cursor: pointer;" data-i18n="dashboardTitle">Dashboard</h2>
+      </header>
+
+      <div class="quick-stats admin-only" style="margin-top: 16px;">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-stamps-today">0</div>
+          <div class="stat-label" data-i18n="statStampsToday">Stamps Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-rewards-given">0</div>
+          <div class="stat-label" data-i18n="statRewardsGiven">Rewards Given</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-active-cards">0</div>
+          <div class="stat-label" data-i18n="statActiveCards">Active Cards</div>
+        </div>
+      </div>
+
+      <div class="settings-section customer-only">
+        <div class="settings-section-title" data-i18n="settingsLanguage">Language</div>
+        <div class="lang-switcher" id="lang-switcher-settings">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="mk">МК</button>
+          <button class="lang-btn" data-lang="sq">SQ</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsAccount">Account</div>
+        <div class="settings-item" id="btn-change-avatar">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsChooseAvatar">Choose Avatar</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="btn-logout-user">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+            <div>
+              <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
+              <div class="settings-item-sublabel" id="user-account-label"></div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title" data-i18n="settingsAppLegal">App & Legal</div>
+        <div class="settings-item" id="btn-install-settings">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            </div>
+            <div class="settings-item-label" id="install-settings-label" data-i18n="installBannerTitle">Add to Home Screen</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="btn-tos-settings">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 18 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsTos">Terms of Service</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="btn-privacy-settings">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsPrivacy">Privacy Policy</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsStaff">Staff</div>
+        <div class="settings-item" id="btn-change-password">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsChangePassword">Change Password</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="btn-lock-app">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsLockApp">Lock App (Exit Staff Mode)</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsCampaign">Stamp Campaign</div>
+        <div class="campaign-card">
+          <div class="campaign-card-top">
+            <div>
+              <div class="campaign-card-title" data-i18n="campaignDoubleStamps">Double Stamps</div>
+              <div class="campaign-card-sub" id="campaign-status-text" data-i18n="campaignInactive">Inactive</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="campaign-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsDataCloud">Data & Cloud</div>
+        <div class="settings-item" id="btn-export-data">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsExport">Export Local Backup</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="btn-clear-data">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsReset">Reset Local Data</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="app-info">
+      </div>
+    </div>
+
+    <!-- ==========================================
+         BOTTOM NAVIGATION
+         ========================================== -->
+    <nav class="bottom-nav hidden" id="bottom-nav">
+      <!-- Customer Nav (shown when NOT admin) -->
+      <div class="nav-item active customer-nav-item" data-target="view-home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span class="nav-label" data-i18n="navCard">Card</span>
+      </div>
+      <div class="nav-item customer-nav-item" data-target="view-menu">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="nav-label" data-i18n="navMenu">Menu</span>
+      </div>
+      <div class="nav-item customer-nav-item" data-target="view-leaderboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 21h8"></path>
+          <path d="M12 17v4"></path>
+          <path d="M7 4h10v6a5 5 0 0 1-10 0V4z"></path>
+          <path d="M17 6h2a2 2 0 0 1 0 4h-1"></path>
+          <path d="M7 6H5a2 2 0 0 0 0 4h1"></path>
+        </svg>
+        <span class="nav-label" data-i18n="navLeaderboard">Ranks</span>
+      </div>
+      <!-- Admin Nav (shown only in admin mode) -->
+      <div class="nav-item admin-nav-item hidden" data-target="view-customers">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="nav-label" data-i18n="navCustomers">Customers</span>
+      </div>
+      <div class="nav-item admin-nav-item hidden" data-target="view-admin-menu">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="nav-label" data-i18n="navEditMenu">Edit Menu</span>
+      </div>
+      <div class="nav-item admin-nav-item hidden" data-target="view-activity">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="nav-label" data-i18n="navActivity">Activity</span>
+      </div>
+      <div class="nav-item" data-target="view-settings">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span class="nav-label" data-i18n="navSettings">Settings</span>
+      </div>
+    </nav>
+
+    <!-- Scan QR FAB (Customers view only) — lives outside any .view so its
+         position:fixed isn't broken by the .view slide-transition transform,
+         and so it never scrolls with the customer list. -->
+    <div class="customers-actions hidden" id="customers-fab-actions">
+      <button class="fab scan-fab" id="btn-scan-qr" aria-label="Scan Customer QR">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ==========================================
+         OVERLAYS & MODALS
+         ========================================== -->
+         
+    <!-- Reward Celebration Overlay -->
+    <div class="reward-overlay" id="reward-overlay">
+      <div class="reward-content">
+        <div class="reward-icon-box">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path>
+            <line x1="6" y1="2" x2="6" y2="4"></line>
+            <line x1="10" y1="2" x2="10" y2="4"></line>
+            <line x1="14" y1="2" x2="14" y2="4"></line>
+          </svg>
+        </div>
+        <h2 class="reward-title" data-i18n="rewardTitle">FREE COFFEE UNLOCKED</h2>
+        <p class="reward-subtitle" data-i18n="rewardSubtitle">You collected 10 stamps! Show your barista to redeem or save it to your wallet for later.</p>
+        <div class="reward-actions">
+          <button class="btn-primary btn-block" id="btn-redeem-reward" data-i18n="btnRedeemNow">Redeem Now at Counter</button>
+          <button class="btn-secondary btn-block" id="btn-close-reward" data-i18n="btnKeepWallet">Keep in Wallet & Reset Card</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Menu Item Modal (Staff Only) -->
+    <div class="modal" id="modal-edit-menu-item">
+      <div class="modal-overlay" id="overlay-edit-menu-item"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" id="menu-modal-title">Edit Item</h3>
+        
+        <input type="hidden" id="menu-item-id">
+        <div class="form-group">
+          <label class="form-label" for="menu-item-name" data-i18n="labelName">Name</label>
+          <input type="text" id="menu-item-name" class="form-input" placeholder="e.g. Espresso">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="menu-item-category" data-i18n="labelCategory">Category</label>
+          <input type="text" id="menu-item-category" class="form-input" placeholder="e.g. Espresso Based">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="menu-item-sub" data-i18n="labelSubtext">Subtext (Optional)</label>
+          <input type="text" id="menu-item-sub" class="form-input" placeholder="e.g. Hot / Iced">
+        </div>
+        <div class="form-group" style="display: flex; gap: 12px;">
+          <div style="flex: 1;">
+            <label class="form-label" for="menu-item-price" data-i18n="labelPrice">Price</label>
+            <input type="number" id="menu-item-price" class="form-input" placeholder="1.00" step="0.10">
+          </div>
+          <div style="flex: 1;">
+            <label class="form-label" for="menu-item-stamps" data-i18n="labelBonusStamps">Bonus Stamps</label>
+            <input type="number" id="menu-item-stamps" class="form-input" placeholder="0">
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-danger" id="btn-delete-menu-item" style="display: none;" data-i18n="btnDelete">Delete</button>
+          <button class="btn-secondary" id="btn-cancel-menu-item" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-save-menu-item" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Change Staff Password Modal -->
+    <div class="modal" id="modal-change-password">
+      <div class="modal-overlay" id="overlay-change-password"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="settingsChangePassword">Change Password</h3>
+
+        <div class="form-group">
+          <label class="form-label" for="change-password-current" data-i18n="labelCurrentPassword">Current Password</label>
+          <input type="password" id="change-password-current" class="form-input" autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="change-password-new" data-i18n="labelNewPassword">New Password (6+ chars)</label>
+          <input type="password" id="change-password-new" class="form-input" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="change-password-confirm" data-i18n="labelConfirmPassword">Confirm New Password</label>
+          <input type="password" id="change-password-confirm" class="form-input" autocomplete="new-password">
+        </div>
+        <p class="pin-error" id="change-password-error"></p>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-cancel-change-password" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-save-change-password" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Reset Data Modal -->
+    <div class="modal" id="modal-reset">
+        <div class="modal-overlay" id="overlay-reset"></div>
+        <div class="modal-content">
+          <div class="modal-handle"></div>
+          <h3 class="modal-title" data-i18n="resetTitle">Reset All Data?</h3>
+          <p class="modal-subtitle" data-i18n="resetSubtitle">This will permanently delete all customers and stamps. This action cannot be undone.</p>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="btn-cancel-reset" data-i18n="btnCancel">Cancel</button>
+            <button class="btn-danger" id="btn-confirm-reset" data-i18n="btnDeleteAll">Delete All Data</button>
+          </div>
+        </div>
+    </div>
+
+    <!-- Confirm Redeem Reward Modal -->
+    <div class="modal" id="modal-confirm-redeem">
+      <div class="modal-overlay" id="overlay-confirm-redeem"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="confirmRedeemTitle">Redeem Reward?</h3>
+        <p class="modal-subtitle" data-i18n="confirmRedeemSubtitle">This uses 1 free coffee from the wallet and can't be undone.</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-cancel-redeem" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-redeem" data-i18n="btnConfirmRedeem">Redeem</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show QR Modal (For Customers) -->
+    <div class="modal" id="modal-show-qr">
+      <div class="modal-overlay" id="overlay-show-qr"></div>
+      <div class="modal-content" style="text-align: center;">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="showQrTitle">Your QR Code</h3>
+        <p class="modal-subtitle" data-i18n="showQrSubtitle">Show this to the barista to get your stamps.</p>
+        <div id="qrcode-display" style="background: white; padding: 16px; border-radius: 12px; display: inline-block; margin-bottom: 24px;"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-close-show-qr" data-i18n="btnClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Drink Selector Modal — 1 stamp standard, 2 for double-dose, 3 for multi-item combos -->
+    <div class="modal" id="modal-drink-picker">
+      <div class="modal-overlay" id="overlay-drink-picker"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="drinkPickerTitle">Select Drink</h3>
+        <p class="modal-subtitle" data-i18n="drinkPickerSubtitle">Matcha & Freddo Espresso earn 2 stamps!</p>
+
+        <div class="drink-options-grid">
+          <button class="drink-option-btn" data-stamps="1" data-drink="Standard Drink">
+            <div class="drink-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path>
+                <line x1="6" y1="2" x2="6" y2="4"></line>
+                <line x1="10" y1="2" x2="10" y2="4"></line>
+                <line x1="14" y1="2" x2="14" y2="4"></line>
+              </svg>
+            </div>
+            <div class="drink-option-details">
+              <div class="drink-option-name" data-i18n="drinkStandardName">Standard Coffee / Tea</div>
+              <div class="drink-option-desc" data-i18n="drinkStandardDesc">Espresso, Latte, Americano</div>
+            </div>
+            <div class="drink-badge" data-i18n="stamp1">+1 Stamp</div>
+          </button>
+
+          <button class="drink-option-btn" data-stamps="1" data-drink="Matcha">
+            <div class="drink-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.4 19 2c1 2 2 4.1 2 7 0 6-4.5 11-10 11z"></path>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+              </svg>
+            </div>
+            <div class="drink-option-details">
+              <div class="drink-option-name" data-i18n="drinkMatchaName">Matcha</div>
+              <div class="drink-option-desc" data-i18n="drinkMatchaDesc">Hot or Iced Ceremonial Matcha</div>
+            </div>
+            <div class="drink-badge" data-i18n="stamp1">+1 Stamp</div>
+          </button>
+
+          <button class="drink-option-btn bonus" data-stamps="2" data-drink="Freddo Espresso">
+            <div class="drink-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 11l1-9H6l1 9"></path>
+                <path d="M7 11c0 5 1.8 11 5 11s5-6 5-11"></path>
+                <line x1="12" y1="2" x2="12" y2="7"></line>
+              </svg>
+            </div>
+            <div class="drink-option-details">
+              <div class="drink-option-name" data-i18n="drinkFreddoName">Freddo Espresso</div>
+              <div class="drink-option-desc" data-i18n="drinkFreddoDesc">Signature Double Cold Espresso</div>
+            </div>
+            <div class="drink-badge bonus-badge" data-i18n="stamp2">+2 Stamps</div>
+          </button>
+
+          <button class="drink-option-btn bonus-3" data-stamps="3" data-drink="Specialty / Combo">
+            <div class="drink-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="drink-option-details">
+              <div class="drink-option-name" data-i18n="drinkSpecialtyName">Specialty Combo</div>
+              <div class="drink-option-desc" data-i18n="drinkSpecialtyDesc">Multiple items or large order</div>
+            </div>
+            <div class="drink-badge bonus-badge" data-i18n="stamp3">+3 Stamps</div>
+          </button>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary btn-block" id="btn-cancel-drink-picker" data-i18n="btnCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit / Delete Customer Modal (Staff Only) -->
+    <div class="modal" id="modal-edit-customer">
+      <div class="modal-overlay" id="overlay-edit-customer"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="editCustomerTitle">Edit Customer</h3>
+        <p class="modal-subtitle" id="edit-customer-id-text">Customer ID: cust_---</p>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-customer-name" data-i18n="labelDisplayName">Display Name</label>
+          <input type="text" id="edit-customer-name" class="form-input" placeholder="Customer Name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-customer-phone" data-i18n="labelPhoneUsername">Phone / Username</label>
+          <input type="text" id="edit-customer-phone" class="form-input" placeholder="Phone or Username">
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button class="btn-danger" id="btn-delete-customer" data-i18n="btnDeleteCard">Delete Card</button>
+          <button class="btn-primary" id="btn-save-edit-customer" data-i18n="btnSaveChanges">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal" id="modal-tos">
+      <div class="modal-overlay" id="overlay-tos"></div>
+      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="settingsTos">Terms of Service</h3>
+        <p class="modal-subtitle" data-i18n="tosSubtitle">Eightysix° Loyalty Program Terms</p>
+        <div class="legal-text-content">
+          <p data-i18n-html="tosPara1"><strong>1. Program Overview:</strong> The Eightysix° Loyalty Program allows customers to earn 1 stamp per standard beverage purchase (or 2 stamps for double-dose items like Freddo Espresso).</p>
+          <p data-i18n-html="tosPara2"><strong>2. Reward Redemption:</strong> Collecting 10 stamps unlocks 1 Free Coffee Reward. Rewards can be redeemed at participating Eightysix° locations or saved to your digital Rewards Wallet.</p>
+          <p data-i18n-html="tosPara3"><strong>3. Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials.</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary btn-block" id="btn-close-tos" data-i18n="btnIAgree">I Agree</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal" id="modal-privacy">
+      <div class="modal-overlay" id="overlay-privacy"></div>
+      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="settingsPrivacy">Privacy Policy</h3>
+        <p class="modal-subtitle" data-i18n="privacySubtitle">How Eightysix° protects your data</p>
+        <div class="legal-text-content">
+          <p data-i18n-html="privacyPara1"><strong>1. Data Collection:</strong> We collect only essential information (username/display name and optional phone number) required to sync your loyalty stamps across your devices.</p>
+          <p data-i18n-html="privacyPara2"><strong>2. Storage & Security:</strong> Data is encrypted locally and synced securely to Supabase Cloud infrastructure with anti-tampering checksums.</p>
+          <p data-i18n-html="privacyPara3"><strong>3. No Third-Party Sharing:</strong> Your personal information is strictly used for Eightysix° loyalty services and will never be sold or shared.</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary btn-block" id="btn-close-privacy" data-i18n="btnPrivacyAgree">I Understand</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monochrome Avatar Picker Modal -->
+    <div class="modal" id="modal-avatar-picker">
+      <div class="modal-overlay" id="overlay-avatar-picker"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="avatarModalTitle">Choose Avatar</h3>
+        <p class="modal-subtitle" data-i18n="avatarModalSubtitle">Pick an icon for your card</p>
+
+        <div class="avatar-grid" id="avatar-grid">
+          <!-- 10 Monochrome SVG Avatars injected by JS -->
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button class="btn-secondary btn-block" id="btn-close-avatar-picker" data-i18n="btnClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Install Guide Modal (iOS / Universal) -->
+    <div class="modal" id="modal-install-guide">
+      <div class="modal-overlay" id="overlay-install-guide"></div>
+      <div class="modal-content" style="text-align: center;">
+        <div class="modal-handle"></div>
+        <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="margin: 0 auto 12px; display: block; height: 32px; width: auto; filter: brightness(0) invert(1);">
+        <h3 class="modal-title" data-i18n="installBannerTitle">Add to Home Screen</h3>
+        <p class="modal-subtitle" data-i18n="installGuideSubtitle">Install Eightysix° for instant full-screen access and offline support.</p>
+
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-info">
+              <div class="install-step-title" data-i18n="installStep1Title">Tap the Share Icon</div>
+              <div class="install-step-desc" data-i18n-html="installStep1Desc">Tap the <strong>Share</strong> button at the bottom of your browser screen</div>
+            </div>
+            <div class="install-step-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-info">
+              <div class="install-step-title" data-i18n="installStep2Title">Select "Add to Home Screen"</div>
+              <div class="install-step-desc" data-i18n-html="installStep2Desc">Scroll down the menu options and tap <strong>Add to Home Screen</strong></div>
+            </div>
+            <div class="install-step-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="install-step-num">3</div>
+            <div class="install-step-info">
+              <div class="install-step-title" data-i18n="installStep3Title">Tap "Add"</div>
+              <div class="install-step-desc" data-i18n-html="installStep3Desc">Confirm by tapping <strong>Add</strong> in the top right corner</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button class="btn-primary btn-block" id="btn-close-install-guide" data-i18n="btnGotIt">Got It</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scan QR Modal (For Admin) -->
+    <div class="modal" id="modal-scan-qr">
+      <div class="modal-overlay" id="overlay-scan-qr"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="scanQrTitle">Scan Customer QR</h3>
+        <p class="modal-subtitle" data-i18n="scanQrSubtitle">Point camera at customer's QR code.</p>
+        <div id="qr-reader" style="width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 24px;"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-cancel-scan-qr" data-i18n="btnCancelScan">Cancel Scan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast" id="toast">
+      <div class="toast-icon" id="toast-icon">✓</div>
+      <div class="toast-message" id="toast-message">Action successful</div>
+    </div>
+
+    <!-- New Version Available Banner -->
+    <div class="update-banner" id="update-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+      <span data-i18n="updateAvailable">New version available — tap to refresh</span>
+    </div>
+
+  </div>
+
+  <!-- Cloud SDK (Supabase) & QR Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./lib/qrcode.min.js"></script>
+  <script src="./lib/html5-qrcode.min.js"></script>
+  
+  <!-- App Logic -->
+  <script src="./app.js"></script>
+</body>
+</html>
+
