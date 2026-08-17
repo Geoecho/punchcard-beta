@@ -347,9 +347,14 @@
         <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
         <div>
           <h2 style="margin: 0;" data-i18n="leaderboardTitle">Leaderboard</h2>
-          <p class="lb-header-subtitle" data-i18n="leaderboardSubtitle">Ranked by lifetime stamps earned</p>
+          <p class="lb-header-subtitle" id="leaderboard-subtitle" data-i18n="leaderboardSubtitle">Ranked by lifetime stamps earned</p>
         </div>
       </header>
+
+      <div class="filter-chips" id="leaderboard-period-chips">
+        <button class="chip active" data-period="all" data-i18n="lbPeriodAllTime">All Time</button>
+        <button class="chip" data-period="month" data-i18n="lbPeriodMonthly">This Month</button>
+      </div>
 
       <div class="lb-scroll-area" id="leaderboard-container">
         <!-- Dynamically rendered leaderboard rows go here -->

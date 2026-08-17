@@ -240,10 +240,13 @@ const TRANSLATIONS = {
     catWarmComfort: "Warm Comfort",
     leaderboardTitle: "Leaderboard",
     leaderboardSubtitle: "Ranked by lifetime stamps earned",
+    leaderboardSubtitleMonthly: "Ranked by stamps earned this month",
     leaderboardEmpty: "No one's on the board yet — be the first!",
     leaderboardYourRank: "Your Rank",
     leaderboardNotRanked: "Earn your first stamp to join the leaderboard!",
     lifetimeStampsShort: "stamps",
+    lbPeriodAllTime: "All Time",
+    lbPeriodMonthly: "This Month",
     settingsLeaderboard: "Leaderboard",
     campaignBannerTitle: "Double Stamps Today!",
     campaignBannerSubtitle: "Every order earns 2x stamps right now"
@@ -449,10 +452,13 @@ const TRANSLATIONS = {
     catWarmComfort: "Топли пијалаци",
     leaderboardTitle: "Табела на лидери",
     leaderboardSubtitle: "Рангирано според освоени печати",
+    leaderboardSubtitleMonthly: "Рангирано според печати освоени овој месец",
     leaderboardEmpty: "Сè уште никој не е на табелата — биди прв!",
     leaderboardYourRank: "Твојот ранг",
     leaderboardNotRanked: "Освои го твојот прв печат за да се приклучиш на табелата!",
     lifetimeStampsShort: "печати",
+    lbPeriodAllTime: "Досега",
+    lbPeriodMonthly: "Овој месец",
     settingsLeaderboard: "Табела на лидери",
     campaignBannerTitle: "Двојни печати денес!",
     campaignBannerSubtitle: "Секоја нарачка носи 2x печати во моментов"
@@ -658,10 +664,13 @@ const TRANSLATIONS = {
     catWarmComfort: "Ngrohje e Këndshme",
     leaderboardTitle: "Renditja",
     leaderboardSubtitle: "Renditur sipas vulave të fituara gjithsej",
+    leaderboardSubtitleMonthly: "Renditur sipas vulave të fituara këtë muaj",
     leaderboardEmpty: "Ende askush në renditje — bëhu i pari!",
     leaderboardYourRank: "Renditja Jote",
     leaderboardNotRanked: "Fito vulën e parë për t'u bashkuar në renditje!",
     lifetimeStampsShort: "vula",
+    lbPeriodAllTime: "Gjithsej",
+    lbPeriodMonthly: "Këtë Muaj",
     settingsLeaderboard: "Renditja",
     campaignBannerTitle: "Vula të Dyfishta Sot!",
     campaignBannerSubtitle: "Çdo porosi fiton 2x vula tani"
@@ -763,6 +772,7 @@ const state = {
   isAdmin: false,
   language: 'en',
   currentView: 'view-home',
+  leaderboardPeriod: 'all',
   customers: [],
   selectedCustomerId: null,
   myCustomerId: null,
@@ -1104,6 +1114,24 @@ const cloud = {
     }
   },
 
+  // Staff-portal shortcut for the 3 whitelisted personal Gmail accounts —
+  // if the caller already has a live Supabase Auth session from
+  // "Continue with Google" (customer login), this exchanges it for a
+  // staff session with no separate password. Returns null for anyone not
+  // both signed in with Google AND on the google_email allowlist (see
+  // supabase-staff-google-login.sql), so it fails closed for everyone else.
+  async staffLoginGoogle() {
+    if (!supabaseClient) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_login_google'), 4000);
+      if (res.error || !res.data || !res.data.length) return null;
+      const d = res.data[0];
+      return { token: d.token, staffId: d.staff_id, name: d.name, email: d.email };
+    } catch (e) {
+      return null;
+    }
+  },
+
   async staffLogout(token) {
     if (!supabaseClient || !token) return;
     try {
@@ -1173,7 +1201,26 @@ const cloud = {
         supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
         4000
       );
-      if (res.error || !res.data || !res.data.length) return null;
+      if (res.error) {
+        // Customer exists locally (e.g. a QR scan whose staff_create_customer
+        // call failed earlier and silently fell back to a local-only record)
+        // but was never actually created server-side. Recreate it from the
+        // local copy and retry once, instead of surfacing a "check your
+        // connection" error for what's really a stale local record.
+        if (String(res.error.message || '').includes('customer_not_found')) {
+          const local = await db.getCustomer(customerId);
+          const created = await this.staffCreateCustomer(token, customerId, local ? local.name : 'Customer', local ? local.phone : '');
+          if (!created) return null;
+          const retry = await withTimeout(
+            supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
+            4000
+          );
+          if (retry.error || !retry.data || !retry.data.length) return null;
+          return mapDbRowToCustomer(retry.data[0]);
+        }
+        return null;
+      }
+      if (!res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
       return null;
@@ -1268,24 +1315,33 @@ const cloud = {
   },
 
   // ---- Stamp campaign ----
-  async getLeaderboard(limit) {
+  // period: 'all' (lifetime, default) or 'month' (calendar month to date).
+  async getLeaderboard(limit, period) {
     if (!supabaseClient) return [];
     try {
-      const res = await withTimeout(supabaseClient.rpc('get_leaderboard', { p_limit: limit || 20 }), 2500);
+      const isMonthly = period === 'month';
+      const res = await withTimeout(
+        supabaseClient.rpc(isMonthly ? 'get_leaderboard_monthly' : 'get_leaderboard', { p_limit: limit || 20 }),
+        2500
+      );
       if (res.error || !res.data) return [];
-      return res.data.map(d => ({ name: d.name, avatar: d.avatar || 'person', totalStampsEarned: d.total_stamps_earned || 0 }));
+      return res.data.map(d => ({ name: d.name, avatar: d.avatar || 'person', totalStampsEarned: (isMonthly ? d.monthly_stamps : d.total_stamps_earned) || 0 }));
     } catch (e) {
       return [];
     }
   },
 
-  async getMyRank(customerId) {
+  async getMyRank(customerId, period) {
     if (!supabaseClient || !customerId) return null;
     try {
-      const res = await withTimeout(supabaseClient.rpc('get_my_rank', { p_id: customerId }), 2500);
+      const isMonthly = period === 'month';
+      const res = await withTimeout(
+        supabaseClient.rpc(isMonthly ? 'get_my_rank_monthly' : 'get_my_rank', { p_id: customerId }),
+        2500
+      );
       if (res.error || !res.data || !res.data.length) return null;
       const d = res.data[0];
-      return { rank: d.my_rank, totalStampsEarned: d.total_stamps_earned || 0 };
+      return { rank: d.my_rank, totalStampsEarned: (isMonthly ? d.monthly_stamps : d.total_stamps_earned) || 0 };
     } catch (e) {
       return null;
     }
@@ -1870,6 +1926,8 @@ const DOM = {
 
   // Leaderboard Elements
   leaderboardContainer: document.getElementById('leaderboard-container'),
+  leaderboardSubtitle: document.getElementById('leaderboard-subtitle'),
+  leaderboardPeriodChips: document.querySelectorAll('#leaderboard-period-chips .chip'),
 
   // Campaign Banner (Customer View)
   campaignBanner: document.getElementById('campaign-banner'),
@@ -2443,6 +2501,19 @@ function setupEventListeners() {
     });
   }
 
+  // Leaderboard Period Chips (All Time / This Month)
+  if (DOM.leaderboardPeriodChips) {
+    DOM.leaderboardPeriodChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.classList.contains('active')) return;
+        DOM.leaderboardPeriodChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.leaderboardPeriod = chip.dataset.period || 'all';
+        renderLeaderboard();
+      });
+    });
+  }
+
 
   // Secret 5-tap gesture on Settings title
   let tapCount = 0;
@@ -2467,8 +2538,15 @@ function setupEventListeners() {
           }
         } catch (e) {}
       } else {
-        switchView('view-admin-login');
-        showToast('Entering Staff Portal...', 'info');
+        // Whitelisted staff who are already signed in on this device with
+        // their personal Google account skip the email/password form.
+        const googleResult = await cloud.staffLoginGoogle();
+        if (googleResult) {
+          await finishStaffLogin(googleResult);
+        } else {
+          switchView('view-admin-login');
+          showToast('Entering Staff Portal...', 'info');
+        }
       }
     }
   };
@@ -3228,11 +3306,18 @@ function setupEventListeners() {
           if (!customer) customer = await db.getCustomer(custId);
 
           if (!customer) {
-            const created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
+            let created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
+            if (!created) {
+              // One retry — most failures here are a transient blip, not a
+              // real outage, and it's worth the extra second to avoid
+              // leaving a local-only record that later stamp actions can't
+              // find server-side.
+              created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
+            }
             customer = created || await db.addCustomer(custName || 'Customer', custPhone || '', custId);
             await db.saveCustomer(customer);
             state.customers = await db.getAllCustomers();
-            showToast('New customer synced!', 'success');
+            showToast(created ? 'New customer synced!' : 'Saved locally — will sync when adding a stamp', created ? 'success' : 'info');
           } else {
             await db.saveCustomer(customer);
             state.customers = await db.getAllCustomers();
@@ -4069,9 +4154,14 @@ async function renderLeaderboard() {
   const loadToken = (state._lbLoadToken = (state._lbLoadToken || 0) + 1);
   DOM.leaderboardContainer.innerHTML = '<div class="lb-loading">···</div>';
 
+  const period = state.leaderboardPeriod || 'all';
+  if (DOM.leaderboardSubtitle) {
+    DOM.leaderboardSubtitle.textContent = t(period === 'month' ? 'leaderboardSubtitleMonthly' : 'leaderboardSubtitle');
+  }
+
   const [list, myRank] = await Promise.all([
-    cloud.getLeaderboard(20),
-    state.myCustomerId ? cloud.getMyRank(state.myCustomerId) : Promise.resolve(null)
+    cloud.getLeaderboard(20, period),
+    state.myCustomerId ? cloud.getMyRank(state.myCustomerId, period) : Promise.resolve(null)
   ]);
 
   if (loadToken !== state._lbLoadToken) return;
