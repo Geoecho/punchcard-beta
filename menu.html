@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Eightysix° — Menu</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+<link rel="stylesheet" href="./styles.css">
+<style>
+  /* Standalone TV-display page — not part of the SPA's view-switching.
+     Sized with vw/vh so it scales cleanly on any always-on kiosk
+     display, from a small backroom monitor up to a 65" wall TV. */
+  html, body {
+    overflow: auto;
+    height: 100%;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(20px, 2.6vw, 48px) clamp(24px, 3.2vw, 64px);
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  .tv-glow {
+    position: fixed;
+    top: -20vh;
+    left: 50%;
+    width: 140vw;
+    max-width: 1600px;
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---------- Header ---------- */
+  .tv-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: clamp(16px, 1.8vw, 28px);
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: clamp(20px, 2.2vw, 36px);
+    flex-shrink: 0;
+  }
+  .tv-brand { display: flex; align-items: center; gap: clamp(14px, 1.4vw, 22px); }
+  .tv-logo { height: clamp(36px, 3.4vw, 56px); width: auto; filter: brightness(0) invert(1); }
+  .tv-brand-text { display: flex; flex-direction: column; gap: 2px; }
+  .tv-title {
+    font-size: clamp(22px, 2.1vw, 34px);
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .tv-subtitle {
+    font-size: clamp(11px, 0.85vw, 14px);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .tv-clock {
+    font-size: clamp(24px, 2.6vw, 42px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    text-align: right;
+  }
+  .tv-date {
+    font-size: clamp(11px, 0.85vw, 14px);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-align: right;
+  }
+
+  /* ---------- Campaign banner ---------- */
+  .tv-campaign {
+    position: relative;
+    z-index: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    border-radius: var(--radius-lg);
+    padding: clamp(10px, 1.1vw, 16px);
+    margin-bottom: clamp(20px, 2.2vw, 32px);
+    font-weight: 800;
+    font-size: clamp(14px, 1.3vw, 20px);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    animation: tvCampaignPulse 2.4s ease-in-out infinite;
+  }
+  .tv-campaign.show { display: flex; }
+  @keyframes tvCampaignPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+    50% { box-shadow: 0 0 30px 4px rgba(255,255,255,0.15); }
+  }
+
+  /* ---------- Menu grid ---------- */
+  .tv-main { position: relative; z-index: 1; flex: 1; min-height: 0; }
+  .tv-grid {
+    column-count: 2;
+    column-gap: clamp(28px, 3vw, 56px);
+  }
+  @media (min-width: 1100px) { .tv-grid { column-count: 3; } }
+  @media (min-width: 1700px) { .tv-grid { column-count: 4; } }
+
+  .tv-category {
+    break-inside: avoid;
+    margin-bottom: clamp(20px, 2.2vw, 34px);
+  }
+  .tv-category-title {
+    font-size: clamp(14px, 1.15vw, 18px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    padding-bottom: clamp(8px, 0.8vw, 12px);
+    margin-bottom: clamp(10px, 1vw, 16px);
+    border-bottom: 1px solid var(--border-glass-strong);
+  }
+  .tv-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: clamp(6px, 0.65vw, 10px) 0;
+  }
+  .tv-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .tv-item-name {
+    font-size: clamp(15px, 1.15vw, 19px);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tv-item-sub {
+    font-size: clamp(11px, 0.8vw, 13px);
+    color: var(--text-muted);
+  }
+  .tv-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .tv-item-price {
+    font-size: clamp(15px, 1.15vw, 19px);
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .tv-item-bonus {
+    font-size: clamp(9px, 0.68vw, 11px);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text-inverse);
+    background: var(--accent-main);
+    border-radius: var(--radius-full);
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+  .tv-empty {
+    color: var(--text-muted);
+    font-size: clamp(16px, 1.3vw, 22px);
+    text-align: center;
+    padding: 10vh 0;
+  }
+
+  /* ---------- Join QR corner card ---------- */
+  .tv-join {
+    position: fixed;
+    bottom: clamp(20px, 2.2vw, 36px);
+    right: clamp(20px, 2.2vw, 36px);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.2vw, 18px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass-strong);
+    border-radius: var(--radius-xl);
+    padding: clamp(12px, 1.2vw, 18px) clamp(16px, 1.6vw, 24px);
+    box-shadow: var(--shadow-lg);
+  }
+  .tv-join-qr { background: #fff; padding: 8px; border-radius: var(--radius-sm); line-height: 0; }
+  .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(64px, 6vw, 96px); height: clamp(64px, 6vw, 96px); }
+  .tv-join-text { display: flex; flex-direction: column; gap: 2px; }
+  .tv-join-title {
+    font-size: clamp(13px, 1.05vw, 17px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tv-join-sub {
+    font-size: clamp(11px, 0.85vw, 14px);
+    color: var(--text-secondary);
+    max-width: 22ch;
+  }
+
+  /* ---------- Footer ---------- */
+  .tv-footer {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    text-align: center;
+    padding-top: clamp(16px, 1.8vw, 26px);
+    font-size: clamp(10px, 0.8vw, 13px);
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div class="tv-glow" aria-hidden="true"></div>
+
+  <header class="tv-header">
+    <div class="tv-brand">
+      <img src="Group 9.png" alt="Eightysix° Logo" class="tv-logo">
+      <div class="tv-brand-text">
+        <div class="tv-title">Menu</div>
+        <div class="tv-subtitle">Eightysix° Coffee</div>
+      </div>
+    </div>
+    <div>
+      <div class="tv-clock" id="tv-clock">--:--</div>
+      <div class="tv-date" id="tv-date">—</div>
+    </div>
+  </header>
+
+  <div class="tv-campaign" id="tv-campaign"></div>
+
+  <main class="tv-main">
+    <div class="tv-grid" id="tv-grid">
+      <div class="tv-empty">Loading menu…</div>
+    </div>
+  </main>
+
+  <div class="tv-join">
+    <div class="tv-join-qr" id="tv-join-qr"></div>
+    <div class="tv-join-text">
+      <div class="tv-join-title">Scan to Join</div>
+      <div class="tv-join-sub">Earn a stamp per order — free coffee at 10</div>
+    </div>
+  </div>
+
+  <footer class="tv-footer">@eightysixdeg &nbsp;·&nbsp; eightysixdeg.com</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./lib/qrcode.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ---- Join QR ----
+    new QRCode(document.getElementById('tv-join-qr'), {
+      text: window.location.origin + '/index.html#signup',
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // ---- Live clock ----
+    function tickClock() {
+      const now = new Date();
+      document.getElementById('tv-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('tv-date').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    // ---- Menu rendering ----
+    function renderMenu(items) {
+      const grid = document.getElementById('tv-grid');
+      grid.innerHTML = '';
+      if (!items || !items.length) {
+        grid.innerHTML = '<div class="tv-empty">Menu coming soon.</div>';
+        return;
+      }
+
+      const categories = {};
+      items.forEach(item => {
+        if (!categories[item.category]) categories[item.category] = [];
+        categories[item.category].push(item);
+      });
+
+      for (const [catName, catItems] of Object.entries(categories)) {
+        const catDiv = document.createElement('div');
+        catDiv.className = 'tv-category';
+
+        const title = document.createElement('div');
+        title.className = 'tv-category-title';
+        title.textContent = catName;
+        catDiv.appendChild(title);
+
+        catItems.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'tv-item';
+
+          const main = document.createElement('div');
+          main.className = 'tv-item-main';
+          const name = document.createElement('div');
+          name.className = 'tv-item-name';
+          name.textContent = item.name;
+          main.appendChild(name);
+          if (item.sub) {
+            const sub = document.createElement('div');
+            sub.className = 'tv-item-sub';
+            sub.textContent = item.sub;
+            main.appendChild(sub);
+          }
+          row.appendChild(main);
+
+          const right = document.createElement('div');
+          right.className = 'tv-item-right';
+          if (item.stamps > 0) {
+            const bonus = document.createElement('span');
+            bonus.className = 'tv-item-bonus';
+            bonus.textContent = `+${item.stamps} STAMPS`;
+            right.appendChild(bonus);
+          }
+          const price = document.createElement('span');
+          price.className = 'tv-item-price';
+          price.textContent = `${parseFloat(item.price)} MKD`;
+          right.appendChild(price);
+          row.appendChild(right);
+
+          catDiv.appendChild(row);
+        });
+
+        grid.appendChild(catDiv);
+      }
+    }
+
+    // ---- Cache-first paint (same key the main app uses), then network ----
+    try {
+      const cached = localStorage.getItem('86_menu');
+      if (cached) renderMenu(JSON.parse(cached));
+    } catch (e) {}
+
+    async function fetchMenu() {
+      try {
+        const { data, error } = await sb.from('menu_items').select('*').order('created_at', { ascending: true });
+        if (error || !data) return;
+        const items = data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 }));
+        renderMenu(items);
+        localStorage.setItem('86_menu', JSON.stringify(items));
+      } catch (e) {}
+    }
+
+    async function fetchCampaign() {
+      try {
+        const { data, error } = await sb.rpc('get_campaign_status');
+        const el = document.getElementById('tv-campaign');
+        if (error || !data || !data.length || !data[0].active) {
+          el.classList.remove('show');
+          return;
+        }
+        el.textContent = `✨ ${data[0].label || 'Double Stamps'} — ${data[0].multiplier}x stamps on every order!`;
+        el.classList.add('show');
+      } catch (e) {}
+    }
+
+    fetchMenu();
+    fetchCampaign();
+
+    // Realtime — any staff edit to the menu or campaign shows up here
+    // within moments, same as the customer-facing app.
+    sb.channel('tv-menu-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, fetchMenu)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, fetchCampaign)
+      .subscribe();
+
+    // Polling fallback in case realtime drops on a long-running kiosk tab.
+    setInterval(fetchMenu, 60000);
+    setInterval(fetchCampaign, 60000);
+
+    // An always-on TV tab can accumulate memory/stale-connection issues
+    // over days — a clean reload once every 6 hours keeps it healthy.
+    setTimeout(() => window.location.reload(), 6 * 60 * 60 * 1000);
+  </script>
+</body>
+</html>

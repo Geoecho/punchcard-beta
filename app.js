@@ -4012,15 +4012,30 @@ function hapticPulse(pattern) {
 // gesture — creating or resuming it from an async callback (like a realtime
 // stamp update arriving while the customer is just passively looking at
 // their card, having tapped nothing since) is silently ignored, so no sound
-// plays even though nothing errors. Unlocking it here on the very first tap
-// anywhere in the app keeps it running from then on, so it's already live
-// by the time a stamp arrives later. This is why sound worked for staff
+// plays even though nothing errors. This is why sound worked for staff
 // (their own tap on the drink button was the gesture) but not for the
-// customer receiving it passively.
-function unlockAudioOnce() { getAudioCtx(); }
-document.addEventListener('pointerdown', unlockAudioOnce, { once: true });
-document.addEventListener('touchstart', unlockAudioOnce, { once: true });
-document.addEventListener('keydown', unlockAudioOnce, { once: true });
+// customer receiving it passively — there's no way around that from code,
+// it's a platform rule, not a bug.
+//
+// What IS fixable: getting the context unlocked as early and as durably as
+// possible so it's already running by the time a stamp arrives.
+//   - Listen on every plausible first-interaction event (not just one), and
+//     keep listening for the app's whole lifetime instead of unsubscribing
+//     after the first hit — iOS/Chrome can silently re-suspend an idle
+//     AudioContext after the tab sits backgrounded for a while, so a taps a
+//     minute apart should each get a chance to re-resume it.
+//   - Also try to resume on tab-foreground: this can't unlock a context
+//     that's never been started (that still needs a real gesture), but it
+//     CAN successfully resume one that was already unlocked earlier in the
+//     session and got auto-suspended while backgrounded — no fresh gesture
+//     required for that case per spec.
+function unlockAudio() { getAudioCtx(); }
+['pointerdown', 'touchstart', 'keydown', 'click'].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { passive: true });
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+});
 
 function showToast(message, type = 'info') {
   DOM.toastMessage.textContent = message;
