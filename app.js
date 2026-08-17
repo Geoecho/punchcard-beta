@@ -7,6 +7,7 @@
 // CONFIGURATION & CONSTANTS
 // ==========================================
 const MAX_STAMPS = 10;
+const REGULARS_MIN_STAMPS = 30;
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -119,6 +120,10 @@ const TRANSLATIONS = {
     statStampsToday: "Stamps Today",
     statRewardsGiven: "Rewards Given",
     statActiveCards: "Active Cards",
+    settingsMyProfile: "My Profile",
+    statYourStampsToday: "Stamps Today",
+    statYourRewardsToday: "Rewards Today",
+    statYourStampsTotal: "Lifetime Stamps",
     settingsLanguage: "Language",
     settingsAccount: "Account",
     settingsChooseAvatar: "Choose Avatar",
@@ -137,13 +142,8 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. No Third-Party Sharing:</strong> Your personal information is strictly used for Eightysix° loyalty services and will never be sold or shared.",
     privacyPara4: "<strong>4. Signing In With Google:</strong> If you use \"Continue with Google\", we receive only your name and email address from Google to create and identify your card — never your Google password, and we never access any other part of your Google account.",
     btnPrivacyAgree: "I Understand",
-    settingsStaff: "Staff",
-    settingsLockApp: "Lock App (Exit Staff Mode)",
     settingsDataCloud: "Data & Cloud",
     settingsExport: "Export Local Backup",
-    settingsReset: "Reset Local Data",
-    resetTitle: "Reset All Data?",
-    resetSubtitle: "This will permanently delete all customers and stamps. This action cannot be undone.",
     confirmRedeemTitle: "Redeem Reward?",
     confirmRedeemSubtitle: "This uses 1 free coffee from the wallet and can't be undone.",
     btnConfirmRedeem: "Redeem",
@@ -227,10 +227,6 @@ const TRANSLATIONS = {
     badge_silver: "Neighbor",
     badge_gold: "Local",
     badge_platinum: "Mayor of Eightysix°",
-    settingsChangePassword: "Change Password",
-    labelCurrentPassword: "Current Password",
-    labelNewPassword: "New Password (6+ chars)",
-    labelConfirmPassword: "Confirm New Password",
     menuBonusNoteTitle: "Double Dose Bonus",
     menuBonusNoteBody: "Double-dose drinks like Freddo Espresso earn <strong>2 stamps</strong> instead of 1. Every 10 stamps unlocks 1 free coffee.",
     catEspressoBased: "Espresso Based",
@@ -331,6 +327,10 @@ const TRANSLATIONS = {
     statStampsToday: "Печати денес",
     statRewardsGiven: "Дадени награди",
     statActiveCards: "Активни картички",
+    settingsMyProfile: "Мојот профил",
+    statYourStampsToday: "Печати денес",
+    statYourRewardsToday: "Награди денес",
+    statYourStampsTotal: "Вкупно печати",
     settingsLanguage: "Јазик",
     settingsAccount: "Профил",
     settingsChooseAvatar: "Избери аватар",
@@ -349,13 +349,8 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. Без споделување со трети лица:</strong> Вашите лични податоци се користат исклучиво за услугите на лојалност на Eightysix° и никогаш нема да бидат продадени или споделени.",
     privacyPara4: "<strong>4. Најава со Google:</strong> Ако користите „Продолжи со Google“, добиваме само вашето име и е-пошта од Google за да го создадеме и препознаеме вашиот профил — никогаш вашата Google лозинка, и никогаш не пристапуваме до кој било друг дел од вашиот Google профил.",
     btnPrivacyAgree: "Разбирам",
-    settingsStaff: "Персонал",
-    settingsLockApp: "Заклучи ја апликацијата (излези од режим за вработени)",
     settingsDataCloud: "Податоци и облак",
     settingsExport: "Извези локална резервна копија",
-    settingsReset: "Ресетирај локални податоци",
-    resetTitle: "Да ги ресетирам сите податоци?",
-    resetSubtitle: "Ова трајно ќе ги избрише сите клиенти и печати. Дејството не може да се врати.",
     confirmRedeemTitle: "Да се искористи наградата?",
     confirmRedeemSubtitle: "Ова троши 1 бесплатно кафе од паричникот и не може да се врати.",
     btnConfirmRedeem: "Искористи",
@@ -439,10 +434,6 @@ const TRANSLATIONS = {
     badge_silver: "Сосед",
     badge_gold: "Мештанин",
     badge_platinum: "Градоначалник на Eightysix°",
-    settingsChangePassword: "Промени лозинка",
-    labelCurrentPassword: "Тековна лозинка",
-    labelNewPassword: "Нова лозинка (6+ карактери)",
-    labelConfirmPassword: "Потврди нова лозинка",
     menuBonusNoteTitle: "Бонус за двојна доза",
     menuBonusNoteBody: "Пијалаците со двојна доза (пр. Фредо еспресо) носат <strong>2 печати</strong> наместо 1. Секои 10 печати отклучуваат 1 бесплатно кафе.",
     catEspressoBased: "Еспресо пијалаци",
@@ -450,7 +441,7 @@ const TRANSLATIONS = {
     catMatchaSpecialty: "Мача и специјалитети",
     catSoftDrinks: "Безалкохолни пијалаци",
     catWarmComfort: "Топли пијалаци",
-    leaderboardTitle: "Табела на лидери",
+    leaderboardTitle: "Ранг листа",
     leaderboardSubtitle: "Рангирано според освоени печати",
     leaderboardSubtitleMonthly: "Рангирано според печати освоени овој месец",
     leaderboardEmpty: "Сè уште никој не е на табелата — биди прв!",
@@ -543,6 +534,10 @@ const TRANSLATIONS = {
     statStampsToday: "Vula Sot",
     statRewardsGiven: "Shpërblime të Dhëna",
     statActiveCards: "Karta Aktive",
+    settingsMyProfile: "Profili Im",
+    statYourStampsToday: "Vula Sot",
+    statYourRewardsToday: "Shpërblime Sot",
+    statYourStampsTotal: "Vula Gjithsej",
     settingsLanguage: "Gjuha",
     settingsAccount: "Llogaria",
     settingsChooseAvatar: "Zgjidh Avatarin",
@@ -561,13 +556,8 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. Pa Ndarje me Palë të Treta:</strong> Informacioni juaj personal përdoret rreptësisht për shërbimet e besnikërisë të Eightysix° dhe nuk do të shitet apo ndahet kurrë.",
     privacyPara4: "<strong>4. Identifikimi me Google:</strong> Nëse përdorni \"Vazhdo me Google\", marrim vetëm emrin dhe email-in tuaj nga Google për të krijuar dhe identifikuar kartën tuaj — kurrë fjalëkalimin tuaj të Google-it, dhe nuk aksesojmë kurrë ndonjë pjesë tjetër të llogarisë suaj Google.",
     btnPrivacyAgree: "E Kuptoj",
-    settingsStaff: "Stafi",
-    settingsLockApp: "Kyç Aplikacionin (Dil nga Modaliteti i Stafit)",
     settingsDataCloud: "Të Dhënat & Cloud",
     settingsExport: "Eksporto Kopjen Rezervë Lokale",
-    settingsReset: "Rivendos të Dhënat Lokale",
-    resetTitle: "Të rivendosen të gjitha të dhënat?",
-    resetSubtitle: "Kjo do të fshijë përgjithmonë të gjithë klientët dhe vulat. Ky veprim nuk mund të kthehet.",
     confirmRedeemTitle: "Të shfrytëzohet shpërblimi?",
     confirmRedeemSubtitle: "Kjo përdor 1 kafe falas nga portofoli dhe nuk mund të kthehet.",
     btnConfirmRedeem: "Shfrytëzo",
@@ -651,10 +641,6 @@ const TRANSLATIONS = {
     badge_silver: "Fqinj",
     badge_gold: "Vendas",
     badge_platinum: "Kryetari i Eightysix°",
-    settingsChangePassword: "Ndrysho Fjalëkalimin",
-    labelCurrentPassword: "Fjalëkalimi Aktual",
-    labelNewPassword: "Fjalëkalimi i Ri (6+ shkronja)",
-    labelConfirmPassword: "Konfirmo Fjalëkalimin e Ri",
     menuBonusNoteTitle: "Bonus për Dozë të Dyfishtë",
     menuBonusNoteBody: "Pijet me dozë të dyfishtë (p.sh. Freddo Espresso) fitojnë <strong>2 vula</strong> në vend të 1. Çdo 10 vula zhbllokojnë 1 kafe falas.",
     catEspressoBased: "Bazuar në Espresso",
@@ -779,6 +765,8 @@ const state = {
   myToken: null,
   staffToken: null,
   staffName: null,
+  staffAvatar: 'person',
+  editingStaffAvatar: false,
   pinFailedAttempts: 0,
   pinLockoutUntil: 0,
   activityFilter: 'all', // 'all' | 'redemption' | 'stamp'
@@ -1139,6 +1127,30 @@ const cloud = {
     } catch (e) {}
   },
 
+  async staffGetSelf(token) {
+    if (!supabaseClient || !token) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_get_self', { p_token: token }), 3000);
+      if (res.error || !res.data || !res.data.length) return null;
+      const d = res.data[0];
+      return { staffId: d.staff_id, name: d.name, email: d.email, avatar: d.avatar || 'person' };
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async staffSetOwnAvatar(token, avatar) {
+    if (!supabaseClient || !token) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_set_own_avatar', { p_token: token, p_avatar: avatar }), 3000);
+      if (res.error || !res.data || !res.data.length) return null;
+      const d = res.data[0];
+      return { staffId: d.staff_id, name: d.name, email: d.email, avatar: d.avatar || 'person' };
+    } catch (e) {
+      return null;
+    }
+  },
+
   // Kicks off the Google OAuth redirect for a customer. Supabase-js sends
   // the browser to Google and back; the actual customer find-or-create
   // happens in completeGoogleLogin() once we're back with a Supabase
@@ -1171,25 +1183,6 @@ const cloud = {
       return { customer: mapDbRowToCustomer(d), isNew: d.is_new };
     } catch (e) {
       return null;
-    }
-  },
-
-  async staffChangePassword(token, currentPassword, newPassword) {
-    if (!supabaseClient || !token) return { error: 'offline' };
-    try {
-      const res = await withTimeout(
-        supabaseClient.rpc('staff_change_password', { p_token: token, p_current_password: currentPassword, p_new_password: newPassword }),
-        4000
-      );
-      if (res.error) {
-        const msg = res.error.message || '';
-        if (msg.includes('incorrect_password')) return { error: 'incorrect_password' };
-        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
-        return { error: 'unknown' };
-      }
-      return { ok: true };
-    } catch (e) {
-      return { error: 'offline' };
     }
   },
 
@@ -1479,7 +1472,12 @@ const cloud = {
               cup.classList.add('earning');
               setTimeout(() => cup.classList.remove('earning'), 600);
             }
-            showToast('New Stamp Received!', 'success');
+            // New stamp entries are prepended, so [0] is the one that
+            // just landed — its staffName tells the customer who rang
+            // them up, since "New Stamp Received!" alone didn't.
+            const latestEntry = updatedCustomer.history && updatedCustomer.history[0];
+            const stampedBy = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffName : null;
+            showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success');
 
             if (updatedCustomer.stamps === MAX_STAMPS && !state.isAdmin) {
               playRewardSound();
@@ -1537,7 +1535,9 @@ function startCloudPolling() {
         }
 
         if (cloudCustomer.stamps > previousStamps) {
-          showToast('New Stamp Received!', 'success');
+          const latestEntry = cloudCustomer.history && cloudCustomer.history[0];
+          const stampedBy = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffName : null;
+          showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success');
           if (cloudCustomer.stamps === MAX_STAMPS && !state.isAdmin) {
             openModal(DOM.rewardOverlay);
             fireConfetti();
@@ -1836,18 +1836,8 @@ const DOM = {
   // Settings View
   btnLogoutUser: document.getElementById('btn-logout-user'),
   userAccountLabel: document.getElementById('user-account-label'),
-  btnLockApp: document.getElementById('btn-lock-app'),
   campaignToggle: document.getElementById('campaign-toggle'),
   campaignStatusText: document.getElementById('campaign-status-text'),
-  btnChangePassword: document.getElementById('btn-change-password'),
-  modalChangePassword: document.getElementById('modal-change-password'),
-  overlayChangePassword: document.getElementById('overlay-change-password'),
-  changePasswordCurrent: document.getElementById('change-password-current'),
-  changePasswordNew: document.getElementById('change-password-new'),
-  changePasswordConfirm: document.getElementById('change-password-confirm'),
-  changePasswordError: document.getElementById('change-password-error'),
-  btnCancelChangePassword: document.getElementById('btn-cancel-change-password'),
-  btnSaveChangePassword: document.getElementById('btn-save-change-password'),
   modalSetUsername: document.getElementById('modal-set-username'),
   overlaySetUsername: document.getElementById('overlay-set-username'),
   setUsernameInput: document.getElementById('set-username-input'),
@@ -1855,10 +1845,17 @@ const DOM = {
   btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
   btnSetUsernameSave: document.getElementById('btn-set-username-save'),
   btnExportData: document.getElementById('btn-export-data'),
-  btnClearData: document.getElementById('btn-clear-data'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
   statActiveCards: document.getElementById('stat-active-cards'),
+  btnStaffAvatar: document.getElementById('btn-staff-avatar'),
+  staffAvatarDisplay: document.getElementById('staff-avatar-display'),
+  staffProfileName: document.getElementById('staff-profile-name'),
+  statMyStampsToday: document.getElementById('stat-my-stamps-today'),
+  statMyRewardsToday: document.getElementById('stat-my-rewards-today'),
+  statMyStampsTotal: document.getElementById('stat-my-stamps-total'),
+  staffTeamStatsList: document.getElementById('staff-team-stats-list'),
+  btnStaffLogout: document.getElementById('btn-staff-logout'),
   settingsTitle: document.getElementById('settings-title'),
   btnTosSettings: document.getElementById('btn-tos-settings'),
   btnPrivacySettings: document.getElementById('btn-privacy-settings'),
@@ -1875,11 +1872,6 @@ const DOM = {
   btnClosePrivacy: document.getElementById('btn-close-privacy'),
 
   // Modals
-
-  modalReset: document.getElementById('modal-reset'),
-  overlayReset: document.getElementById('overlay-reset'),
-  btnConfirmReset: document.getElementById('btn-confirm-reset'),
-  btnCancelReset: document.getElementById('btn-cancel-reset'),
 
   modalConfirmRedeem: document.getElementById('modal-confirm-redeem'),
   overlayConfirmRedeem: document.getElementById('overlay-confirm-redeem'),
@@ -2096,6 +2088,7 @@ async function initApp() {
         if (staffSession && staffSession.token) {
           state.staffToken = staffSession.token;
           state.staffName = staffSession.name;
+          state.staffAvatar = staffSession.avatar || 'person';
         }
       } catch (e) {}
     }
@@ -2112,6 +2105,7 @@ async function initApp() {
         toggleAdminMode(true);
         DOM.nav.classList.remove('hidden');
         targetView = 'view-customers';
+        renderStaffProfile();
         try {
           const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
           if (cloudCustomers.length > 0) {
@@ -2278,6 +2272,25 @@ function initAvatarPickerModal() {
     btn.innerHTML = MONOCHROME_AVATARS[key];
 
     btn.addEventListener('click', async () => {
+      if (state.isAdmin && state.editingStaffAvatar) {
+        if (!state.staffToken) return;
+        const saved = await cloud.staffSetOwnAvatar(state.staffToken, key);
+        if (!saved) {
+          showToast(t('errServerConnection'), 'error');
+          return;
+        }
+        state.staffAvatar = saved.avatar;
+        const staffSession = JSON.parse(localStorage.getItem('86_staff_session') || 'null');
+        if (staffSession) {
+          staffSession.avatar = saved.avatar;
+          localStorage.setItem('86_staff_session', JSON.stringify(staffSession));
+        }
+        closeModal(DOM.modalAvatarPicker);
+        renderStaffProfile();
+        showToast('Avatar updated!', 'success');
+        return;
+      }
+
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
       const isSelf = !state.isAdmin && activeId === state.myCustomerId;
@@ -2371,6 +2384,7 @@ function setupEventListeners() {
     DOM.btnChangeAvatar.addEventListener('click', () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
+      state.editingStaffAvatar = false;
       openModal(DOM.modalAvatarPicker);
     });
   }
@@ -2380,6 +2394,7 @@ function setupEventListeners() {
     DOM.userAvatarDisplay.addEventListener('click', () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
+      state.editingStaffAvatar = false;
       openModal(DOM.modalAvatarPicker);
     });
     DOM.userAvatarDisplay.style.cursor = 'pointer';
@@ -2536,6 +2551,7 @@ function setupEventListeners() {
         toggleAdminMode(true);
         DOM.nav.classList.remove('hidden');
         switchView('view-customers');
+        renderStaffProfile();
         try {
           const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
           if (cloudCustomers.length > 0) {
@@ -2609,7 +2625,6 @@ function setupEventListeners() {
   }
 
   // Close Modals on Overlay Click
-  DOM.overlayReset.addEventListener('click', () => closeModal(DOM.modalReset));
   DOM.overlayShowQr.addEventListener('click', () => closeModal(DOM.modalShowQr));
   if (DOM.overlayEditCustomer) DOM.overlayEditCustomer.addEventListener('click', () => closeModal(DOM.modalEditCustomer));
 
@@ -2779,6 +2794,18 @@ function setupEventListeners() {
 
   if (DOM.btnLogoutHeader) DOM.btnLogoutHeader.addEventListener('click', handleUserLogout);
   if (DOM.btnLogoutUser) DOM.btnLogoutUser.addEventListener('click', handleUserLogout);
+  if (DOM.btnStaffLogout) DOM.btnStaffLogout.addEventListener('click', handleUserLogout);
+
+  // Staff Profile: avatar (reuses the same picker modal as the customer
+  // "Choose Avatar" flow, but flagged so the click handler inside it saves
+  // to this staff member's own row instead of a customer's).
+  if (DOM.btnStaffAvatar) {
+    DOM.btnStaffAvatar.addEventListener('click', () => {
+      if (!state.staffToken) return;
+      state.editingStaffAvatar = true;
+      openModal(DOM.modalAvatarPicker);
+    });
+  }
 
   // Staff Edit & Delete Customer Handlers
   if (DOM.btnSaveEditCustomer) {
@@ -3045,78 +3072,6 @@ function setupEventListeners() {
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', handleRedeem);
   }
 
-  // App Lock (Settings) — a full logout of this device, symmetric with
-  // the customer logout above: clears the staff session AND any
-  // lingering customer session, so this shared device has nothing
-  // left signed in either direction.
-  DOM.btnLockApp.addEventListener('click', () => {
-    if (state.staffToken) cloud.staffLogout(state.staffToken);
-    state.staffToken = null;
-    state.staffName = null;
-    localStorage.removeItem('86_staff_session');
-    toggleAdminMode(false);
-
-    cloud.unsubscribe();
-    if (supabaseClient) supabaseClient.auth.signOut().catch(() => {});
-    localStorage.removeItem('86_user_session');
-    state.myCustomerId = null;
-    state.myToken = null;
-    state.selectedCustomerId = null;
-
-    DOM.nav.classList.add('hidden');
-    switchView('view-signup');
-    showToast('App Locked', 'success');
-  });
-
-  // Staff: Change Password
-  if (DOM.btnChangePassword) {
-    DOM.btnChangePassword.addEventListener('click', () => {
-      DOM.changePasswordCurrent.value = '';
-      DOM.changePasswordNew.value = '';
-      DOM.changePasswordConfirm.value = '';
-      DOM.changePasswordError.textContent = '';
-      openModal(DOM.modalChangePassword);
-    });
-  }
-  if (DOM.btnCancelChangePassword) DOM.btnCancelChangePassword.addEventListener('click', () => closeModal(DOM.modalChangePassword));
-  if (DOM.overlayChangePassword) DOM.overlayChangePassword.addEventListener('click', () => closeModal(DOM.modalChangePassword));
-  if (DOM.btnSaveChangePassword) {
-    DOM.btnSaveChangePassword.addEventListener('click', async () => {
-      if (!state.staffToken) return;
-      const current = DOM.changePasswordCurrent.value;
-      const next = DOM.changePasswordNew.value;
-      const confirm = DOM.changePasswordConfirm.value;
-
-      if (!current || !next) {
-        DOM.changePasswordError.textContent = 'Fill in both password fields';
-        return;
-      }
-      if (next.length < 6) {
-        DOM.changePasswordError.textContent = 'New password must be at least 6 characters';
-        return;
-      }
-      if (next !== confirm) {
-        DOM.changePasswordError.textContent = 'New passwords don\'t match';
-        return;
-      }
-
-      DOM.btnSaveChangePassword.disabled = true;
-      const result = await cloud.staffChangePassword(state.staffToken, current, next);
-      DOM.btnSaveChangePassword.disabled = false;
-
-      if (result.error === 'incorrect_password') {
-        DOM.changePasswordError.textContent = 'Current password is incorrect';
-        return;
-      }
-      if (result.error) {
-        DOM.changePasswordError.textContent = 'Could not update password — check your connection';
-        return;
-      }
-      closeModal(DOM.modalChangePassword);
-      showToast('Password updated', 'success');
-    });
-  }
-
   // Set/Change Username modal (opened from Settings > Account).
   if (DOM.btnSetUsernameSkip) DOM.btnSetUsernameSkip.addEventListener('click', () => closeModal(DOM.modalSetUsername));
   if (DOM.overlaySetUsername) DOM.overlaySetUsername.addEventListener('click', () => closeModal(DOM.modalSetUsername));
@@ -3175,21 +3130,7 @@ function setupEventListeners() {
     });
   }
 
-  // Reset & Export
-  DOM.btnClearData.addEventListener('click', () => openModal(DOM.modalReset));
-  DOM.btnCancelReset.addEventListener('click', () => closeModal(DOM.modalReset));
-  DOM.btnConfirmReset.addEventListener('click', async () => {
-    await db.deleteDatabase();
-    localStorage.removeItem('86_user_session');
-    cloud.unsubscribe();
-    state.customers = [];
-    state.selectedCustomerId = null;
-    state.myCustomerId = null;
-    closeModal(DOM.modalReset);
-    showToast('Data reset complete', 'success');
-    setTimeout(() => window.location.reload(), 800);
-  });
-
+  // Export
   DOM.btnExportData.addEventListener('click', () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.customers));
     const a = document.createElement('a');
@@ -3444,9 +3385,15 @@ function renderPosterQr() {
 async function finishStaffLogin(result) {
   state.staffToken = result.token;
   state.staffName = result.name;
-  localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, name: result.name, email: result.email }));
-  if (DOM.staffLoginError) DOM.staffLoginError.textContent = '';
   toggleAdminMode(true);
+
+  try {
+    const self = await cloud.staffGetSelf(result.token);
+    if (self) state.staffAvatar = self.avatar;
+  } catch (e) {}
+  localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, name: result.name, email: result.email, avatar: state.staffAvatar }));
+  if (DOM.staffLoginError) DOM.staffLoginError.textContent = '';
+  renderStaffProfile();
 
   try {
     const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
@@ -3460,6 +3407,14 @@ async function finishStaffLogin(result) {
 
   switchView('view-customers');
   showToast(`Welcome, ${result.name}!`, 'success');
+}
+
+function renderStaffProfile() {
+  if (!state.isAdmin) return;
+  if (DOM.staffProfileName) DOM.staffProfileName.textContent = state.staffName || 'Staff';
+  if (DOM.staffAvatarDisplay) {
+    DOM.staffAvatarDisplay.innerHTML = MONOCHROME_AVATARS[state.staffAvatar] || MONOCHROME_AVATARS.person;
+  }
 }
 
 function toggleAdminMode(isActive) {
@@ -3734,17 +3689,37 @@ function canVoidRedemption(customer) {
 
 function updateSettingsStats() {
   if (!state.isAdmin) return;
+  renderStaffProfile();
 
   let stampsToday = 0;
   let rewardsGiven = 0;
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // staffName -> { today, total, rewardsToday } — lets the profile
+  // screen show both "my" numbers and a per-teammate breakdown from the
+  // same single pass over everyone's history.
+  const perStaff = {};
+  const bump = (name) => {
+    const key = name || 'Unknown';
+    if (!perStaff[key]) perStaff[key] = { today: 0, total: 0, rewardsToday: 0 };
+    return perStaff[key];
+  };
+
   state.customers.forEach(c => {
     if (c.history && Array.isArray(c.history)) {
       c.history.forEach(h => {
-        if (h.timestamp && h.timestamp.startsWith(todayStr)) {
-          if (h.type === 'stamp') stampsToday += (h.stampsAdded || 1);
-          if (h.type === 'redemption') rewardsGiven += 1;
+        const isToday = h.timestamp && h.timestamp.startsWith(todayStr);
+        if (h.type === 'stamp') {
+          const amount = h.stamps || 1;
+          if (isToday) stampsToday += amount;
+          const s = bump(h.staffName);
+          s.total += amount;
+          if (isToday) s.today += amount;
+        } else if (h.type === 'redemption') {
+          if (isToday) {
+            rewardsGiven += 1;
+            bump(h.staffName).rewardsToday += 1;
+          }
         }
       });
     }
@@ -3753,6 +3728,33 @@ function updateSettingsStats() {
   if (DOM.statStampsToday) DOM.statStampsToday.textContent = stampsToday;
   if (DOM.statRewardsGiven) DOM.statRewardsGiven.textContent = rewardsGiven;
   if (DOM.statActiveCards) DOM.statActiveCards.textContent = state.customers.length;
+
+  const mine = perStaff[state.staffName] || { today: 0, total: 0, rewardsToday: 0 };
+  if (DOM.statMyStampsToday) DOM.statMyStampsToday.textContent = mine.today;
+  if (DOM.statMyRewardsToday) DOM.statMyRewardsToday.textContent = mine.rewardsToday;
+  if (DOM.statMyStampsTotal) DOM.statMyStampsTotal.textContent = mine.total;
+
+  if (DOM.staffTeamStatsList) {
+    DOM.staffTeamStatsList.innerHTML = '';
+    Object.keys(perStaff)
+      .sort((a, b) => perStaff[b].total - perStaff[a].total)
+      .forEach(name => {
+        const row = document.createElement('div');
+        row.className = 'staff-stat-row';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'staff-stat-row-name';
+        nameEl.textContent = name;
+
+        const countEl = document.createElement('span');
+        countEl.className = 'staff-stat-row-count';
+        countEl.textContent = `${perStaff[name].total} lifetime · ${perStaff[name].today} today`;
+
+        row.appendChild(nameEl);
+        row.appendChild(countEl);
+        DOM.staffTeamStatsList.appendChild(row);
+      });
+  }
 
   refreshCampaignStatus();
 }
@@ -3794,7 +3796,9 @@ function renderCustomersList(searchTerm = '') {
 
   let sorted = filtered.slice().reverse();
   if (state.customerSort === 'regulars') {
-    sorted = filtered.slice().sort((a, b) => (b.totalStampsEarned || 0) - (a.totalStampsEarned || 0));
+    sorted = filtered
+      .filter(c => (c.totalStampsEarned || 0) >= REGULARS_MIN_STAMPS)
+      .sort((a, b) => (b.totalStampsEarned || 0) - (a.totalStampsEarned || 0));
   }
 
   sorted.forEach(customer => {
@@ -4194,7 +4198,11 @@ async function renderLeaderboard() {
   const myCard = document.createElement('div');
   myCard.className = 'lb-your-rank';
   if (myRank && myRank.totalStampsEarned > 0) {
-    const badge = getEarnedBadge(myRank.totalStampsEarned);
+    // Badge tiers (10/50/100/250) are calibrated for lifetime totals — on
+    // a monthly count they'd either never show or misleadingly award a
+    // "Mayor of Eightysix°"-tier badge for one good month, so they only
+    // make sense in the All Time view.
+    const badge = period === 'all' ? getEarnedBadge(myRank.totalStampsEarned) : null;
 
     const label = document.createElement('div');
     label.className = 'lb-your-rank-label';
@@ -4274,7 +4282,7 @@ async function renderLeaderboard() {
     nameEl.textContent = entry.name;
     info.appendChild(nameEl);
 
-    const badge = getEarnedBadge(entry.totalStampsEarned);
+    const badge = period === 'all' ? getEarnedBadge(entry.totalStampsEarned) : null;
     if (badge) {
       const badgeEl = document.createElement('div');
       badgeEl.className = 'lb-badge-label';

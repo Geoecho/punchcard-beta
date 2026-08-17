@@ -883,6 +883,18 @@ input { font: inherit; color: inherit; }
 .stat-card { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px 12px; text-align: center; }
 .stat-value { font-family: var(--font-heading); font-size: 26px; font-weight: 700; color: var(--accent-main); margin-bottom: 4px; }
 .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+/* .quick-stats is normally a direct child of #view-settings with its own
+   24px horizontal padding; nested inside .settings-section (My Profile)
+   that padding would stack with the section's own, so cancel it there. */
+.settings-section .quick-stats { padding: 0 0 16px; }
+.staff-team-stats { padding: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.staff-stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--bg-glass); border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm); font-size: 13px;
+}
+.staff-stat-row-name { font-weight: 600; color: var(--text-primary); }
+.staff-stat-row-count { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .settings-section { padding: 0 24px; margin-bottom: 24px; }
 .settings-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; }
@@ -1788,7 +1800,12 @@ input { font: inherit; color: inherit; }
   body { background: #050505; }
 
   /* Keep customer-facing "card" content at a comfortable reading width
-     instead of letting it stretch across the wider shell. */
+     instead of letting it stretch across the wider shell. These are flex
+     items inside .view (column flex, default align-items: stretch) — an
+     auto cross-axis margin on its own makes a flex item shrink to its
+     content size instead of stretching first, so without `width: 100%`
+     here every one of these collapsed down to ~220px (content width)
+     instead of filling out to the 520px cap before centering. */
   .home-header,
   .card-container,
   .rewards-wallet-card,
@@ -1797,6 +1814,7 @@ input { font: inherit; color: inherit; }
   .home-actions,
   .admin-actions,
   .empty-state {
+    width: 100%;
     max-width: 520px;
     margin-left: auto;
     margin-right: auto;
@@ -1833,7 +1851,7 @@ input { font: inherit; color: inherit; }
   }
   .menu-stamp-note { grid-column: 1 / -1; }
   .menu-category { margin-bottom: 8px; }
-  .lb-your-rank { max-width: 520px; margin-left: auto; margin-right: auto; }
+  .lb-your-rank { width: 100%; max-width: 520px; margin-left: auto; margin-right: auto; }
   .lb-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

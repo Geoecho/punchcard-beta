@@ -469,7 +469,45 @@
         </div>
       </div>
 
-      <div class="settings-section">
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsMyProfile">My Profile</div>
+        <div class="settings-item" id="btn-staff-avatar">
+          <div class="settings-item-left">
+            <div class="user-avatar-display" id="staff-avatar-display"></div>
+            <div>
+              <div class="settings-item-label" id="staff-profile-name">Staff</div>
+              <div class="settings-item-sublabel" data-i18n="settingsChooseAvatar">Choose Avatar</div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="quick-stats" style="margin-top: 8px;">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-my-stamps-today">0</div>
+            <div class="stat-label" data-i18n="statYourStampsToday">Stamps Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-my-rewards-today">0</div>
+            <div class="stat-label" data-i18n="statYourRewardsToday">Rewards Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-my-stamps-total">0</div>
+            <div class="stat-label" data-i18n="statYourStampsTotal">Lifetime Stamps</div>
+          </div>
+        </div>
+        <div class="staff-team-stats" id="staff-team-stats-list"></div>
+        <div class="settings-item" id="btn-staff-logout">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+      </div>
+
+      <div class="settings-section customer-only">
         <div class="settings-section-title" data-i18n="settingsAccount">Account</div>
         <div class="settings-item" id="btn-change-avatar">
           <div class="settings-item-left">
@@ -514,7 +552,7 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
-        <div class="settings-item" id="btn-tos-settings">
+        <div class="settings-item customer-only" id="btn-tos-settings">
           <div class="settings-item-left">
             <div class="settings-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 18 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -523,34 +561,12 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
-        <div class="settings-item" id="btn-privacy-settings">
+        <div class="settings-item customer-only" id="btn-privacy-settings">
           <div class="settings-item-left">
             <div class="settings-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </div>
             <div class="settings-item-label" data-i18n="settingsPrivacy">Privacy Policy</div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
-      </div>
-
-      <div class="settings-section admin-only">
-        <div class="settings-section-title" data-i18n="settingsStaff">Staff</div>
-        <div class="settings-item" id="btn-change-password">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </div>
-            <div class="settings-item-label" data-i18n="settingsChangePassword">Change Password</div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
-        <div class="settings-item" id="btn-lock-app">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </div>
-            <div class="settings-item-label" data-i18n="settingsLockApp">Lock App (Exit Staff Mode)</div>
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
@@ -580,15 +596,6 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             </div>
             <div class="settings-item-label" data-i18n="settingsExport">Export Local Backup</div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
-        <div class="settings-item" id="btn-clear-data">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            </div>
-            <div class="settings-item-label" data-i18n="settingsReset">Reset Local Data</div>
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
@@ -745,34 +752,6 @@
       </div>
     </div>
     
-    <!-- Change Staff Password Modal -->
-    <div class="modal" id="modal-change-password">
-      <div class="modal-overlay" id="overlay-change-password"></div>
-      <div class="modal-content">
-        <div class="modal-handle"></div>
-        <h3 class="modal-title" data-i18n="settingsChangePassword">Change Password</h3>
-
-        <div class="form-group">
-          <label class="form-label" for="change-password-current" data-i18n="labelCurrentPassword">Current Password</label>
-          <input type="password" id="change-password-current" class="form-input" autocomplete="current-password">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="change-password-new" data-i18n="labelNewPassword">New Password (6+ chars)</label>
-          <input type="password" id="change-password-new" class="form-input" autocomplete="new-password">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="change-password-confirm" data-i18n="labelConfirmPassword">Confirm New Password</label>
-          <input type="password" id="change-password-confirm" class="form-input" autocomplete="new-password">
-        </div>
-        <p class="pin-error" id="change-password-error"></p>
-
-        <div class="modal-actions" style="margin-top: 16px;">
-          <button class="btn-secondary" id="btn-cancel-change-password" data-i18n="btnCancel">Cancel</button>
-          <button class="btn-primary" id="btn-save-change-password" data-i18n="btnSave">Save</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Set/Change Username Modal (from Settings > Account) -->
     <div class="modal" id="modal-set-username">
       <div class="modal-overlay" id="overlay-set-username"></div>
@@ -793,19 +772,6 @@
       </div>
     </div>
 
-    <!-- Confirm Reset Data Modal -->
-    <div class="modal" id="modal-reset">
-        <div class="modal-overlay" id="overlay-reset"></div>
-        <div class="modal-content">
-          <div class="modal-handle"></div>
-          <h3 class="modal-title" data-i18n="resetTitle">Reset All Data?</h3>
-          <p class="modal-subtitle" data-i18n="resetSubtitle">This will permanently delete all customers and stamps. This action cannot be undone.</p>
-          <div class="modal-actions">
-            <button class="btn-secondary" id="btn-cancel-reset" data-i18n="btnCancel">Cancel</button>
-            <button class="btn-danger" id="btn-confirm-reset" data-i18n="btnDeleteAll">Delete All Data</button>
-          </div>
-        </div>
-    </div>
 
     <!-- Confirm Redeem Reward Modal -->
     <div class="modal" id="modal-confirm-redeem">
