@@ -2067,12 +2067,20 @@ async function initApp() {
       try {
         const { data } = await withTimeout(supabaseClient.auth.getSession(), 4000);
         if (data && data.session) {
-          const googleResult = await cloud.completeGoogleLogin();
-          if (googleResult) {
-            await db.saveCustomer(googleResult.customer);
-            saveUserSession(googleResult.customer);
+          // Whitelisted staff Gmail accounts are admin-only — check that
+          // first so those 3 emails never fall through to a regular
+          // customer card. Everyone else's Google sign-in is unaffected.
+          const staffResult = await cloud.staffLoginGoogle();
+          if (staffResult) {
+            await finishStaffLogin(staffResult);
           } else {
-            await supabaseClient.auth.signOut().catch(() => {});
+            const googleResult = await cloud.completeGoogleLogin();
+            if (googleResult) {
+              await db.saveCustomer(googleResult.customer);
+              saveUserSession(googleResult.customer);
+            } else {
+              await supabaseClient.auth.signOut().catch(() => {});
+            }
           }
         }
       } catch (e) {}
