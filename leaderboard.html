@@ -18,16 +18,27 @@
      mounted TV), so this is written portrait-first with clamp() sizes
      tuned for ~600-1200px-wide viewports; a landscape media query
      switches to a side-by-side layout as a secondary fallback. */
+  /* Static display, no scrolling — #fit-wrapper is measured against the
+     viewport in JS and scaled down as a whole (transform: scale) if its
+     natural content height would overflow, instead of ever clipping or
+     requiring a scroll. See autoFit() below. */
   html, body {
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
     height: 100%;
   }
   body {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     min-height: 100%;
+  }
+  #fit-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1600px;
     padding: clamp(20px, 4vw, 44px) clamp(18px, 4.2vw, 40px);
+    transform-origin: center center;
   }
   ::-webkit-scrollbar { display: none; }
 
@@ -313,29 +324,18 @@
     box-shadow: var(--shadow-lg);
     margin-top: clamp(28px, 5vw, 44px);
   }
-  .tv-join-qr { background: #fff; padding: 8px; border-radius: var(--radius-sm); line-height: 0; flex-shrink: 0; }
+  .tv-join-qr { line-height: 0; flex-shrink: 0; }
   .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(64px, 11vw, 84px); height: clamp(64px, 11vw, 84px); }
   .tv-join-text { display: flex; flex-direction: column; gap: 2px; }
   .tv-join-title { font-size: clamp(14px, 2.6vw, 18px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
   .tv-join-sub { font-size: clamp(11px, 2vw, 14px); color: var(--text-secondary); max-width: 26ch; }
 
-  /* ---------- Footer ---------- */
-  .tv-footer {
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0;
-    text-align: center;
-    padding-top: clamp(16px, 2.8vw, 24px);
-    font-size: clamp(10px, 1.6vw, 12px);
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
 </style>
 </head>
 <body>
   <div class="tv-glow" aria-hidden="true"></div>
 
+  <div id="fit-wrapper">
   <header class="tv-header">
     <div class="tv-brand">
       <img src="Group 9.png" alt="Eightysix° Logo" class="tv-logo">
@@ -383,8 +383,7 @@
       <div class="tv-join-sub">Earn a stamp per order — free coffee at 10</div>
     </div>
   </div>
-
-  <footer class="tv-footer">@eightysixdeg &nbsp;·&nbsp; eightysixdeg.com</footer>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./lib/qrcode.min.js"></script>
@@ -406,6 +405,34 @@
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
+
+    // ==========================================
+    // STATIC FIT — no scrolling. #fit-wrapper is measured against the
+    // real viewport height and, if its natural content would overflow,
+    // scaled down as a whole (uniform transform: scale) until it fits.
+    // transform doesn't affect layout/scrollHeight, so this is safe to
+    // call repeatedly regardless of any scale already applied. Runs
+    // after every render that can change content height (menu/
+    // leaderboard/campaign updates, period rotation) and on resize.
+    // ==========================================
+    function autoFit() {
+      const wrapper = document.getElementById('fit-wrapper');
+      wrapper.style.transform = 'none';
+      const contentHeight = wrapper.scrollHeight;
+      const available = window.innerHeight;
+      const scale = Math.min(1, available / contentHeight);
+      wrapper.style.transform = scale < 0.999 ? `scale(${scale})` : 'none';
+    }
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(autoFit, 150);
+    });
+    // Web fonts can finish loading fractionally after first paint and
+    // nudge text metrics — re-check once they're settled.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(autoFit).catch(() => {});
+    }
 
     // ---- Live clock ----
     function tickClock() {
@@ -439,6 +466,7 @@
         empty.className = 'lb-panel-empty';
         empty.textContent = lbPeriod === 'month' ? 'No stamps yet this month — be the first!' : 'No stamps yet — be the first!';
         list.appendChild(empty);
+        autoFit();
         return;
       }
 
@@ -473,6 +501,7 @@
 
         list.appendChild(row);
       });
+      autoFit();
     }
 
     async function fetchLeaderboards() {
@@ -532,6 +561,7 @@
       grid.innerHTML = '';
       if (!items || !items.length) {
         grid.innerHTML = '<div class="tv-empty">Menu coming soon.</div>';
+        autoFit();
         return;
       }
 
@@ -587,6 +617,7 @@
 
         grid.appendChild(catDiv);
       }
+      autoFit();
     }
 
     // Cache-first paint (same key the main app uses), then network.
@@ -611,10 +642,12 @@
         const el = document.getElementById('tv-campaign');
         if (error || !data || !data.length || !data[0].active) {
           el.classList.remove('show');
+          autoFit();
           return;
         }
         el.textContent = `✨ ${data[0].label || 'Double Stamps'} — ${data[0].multiplier}x stamps on every order!`;
         el.classList.add('show');
+        autoFit();
       } catch (e) {}
     }
 
