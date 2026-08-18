@@ -18,8 +18,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 
 // Netaville app store links — the "student discount" promo banner stays
 // hidden until these are filled in, so it can't ever point somewhere broken.
-const NETAVILLE_ANDROID_URL = '';
-const NETAVILLE_IOS_URL = '';
+const NETAVILLE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.netcetera.android.netaville.prod&hl=en&gl=US&pli=1';
+const NETAVILLE_IOS_URL = 'https://apps.apple.com/us/app/netaville/id1643904350';
 
 let supabaseClient = null;
 let realtimeChannel = null;
