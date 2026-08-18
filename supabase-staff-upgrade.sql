@@ -58,15 +58,19 @@ create table if not exists public.campaigns (
 insert into public.campaigns (id) values (1) on conflict (id) do nothing;
 alter table public.campaigns enable row level security;
 
--- Seed the 3 staff accounts you asked for. Passwords are hashed with
--- bcrypt — the plain password is never stored. Change these passwords
--- later via Settings once that's built, or by re-running signup-style
--- logic; for now this is a one-time seed.
+-- Seed the 3 staff accounts. Passwords are hashed with bcrypt — the
+-- plain password is never stored in this file (this project has since
+-- moved to Google-only admin login anyway; see
+-- supabase-staff-google-login.sql / supabase-block-staff-customer-login.sql
+-- — password login is disabled for all staff accounts via a rotated,
+-- unknown password_hash). If you ever need a new password-login staff
+-- account, set REPLACE_WITH_YOUR_OWN_PASSWORD to a real value before
+-- running this, then rotate it immediately after.
 insert into public.staff_users (email, name, password_hash)
 values
-  ('stacy@eightysix.com', 'Stacy', crypt('Kokakola123', gen_salt('bf'))),
-  ('kiko@eightysix.com', 'Kiko', crypt('Kokakola123', gen_salt('bf'))),
-  ('iva@eightysix.com', 'Iva', crypt('Kokakola123', gen_salt('bf')))
+  ('stacy@eightysix.com', 'Stacy', crypt('REPLACE_WITH_YOUR_OWN_PASSWORD', gen_salt('bf'))),
+  ('kiko@eightysix.com', 'Kiko', crypt('REPLACE_WITH_YOUR_OWN_PASSWORD', gen_salt('bf'))),
+  ('iva@eightysix.com', 'Iva', crypt('REPLACE_WITH_YOUR_OWN_PASSWORD', gen_salt('bf')))
 on conflict (lower(email)) do nothing;
 
 -- ============================================================
