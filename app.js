@@ -64,6 +64,8 @@ const TRANSLATIONS = {
     pwReqNumber: "Number",
     errPasswordMismatch: "Passwords don't match",
     errChooseUsername: "Please choose a username",
+    errChooseDisplayName: "Please enter a display name",
+    errDisplayNameRateLimited: "You can change your name again on {date}",
     errPasswordMinLength: "Password must be at least 6 characters",
     errPasswordWeak: "Password must be 8+ characters with an uppercase letter, a lowercase letter, and a number",
     errUsernameTaken: "That username is taken. Wrong password? Use \"Find My Card\" to log in.",
@@ -203,6 +205,10 @@ const TRANSLATIONS = {
     setUsernameTitle: "Username",
     setUsernameSubtitle: "Lets you log in without Google, too.",
     toastUsernameSaved: "Username saved!",
+    settingsChangeDisplayName: "Display Name",
+    setDisplayNameTitle: "Display Name",
+    setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
+    toastDisplayNameSaved: "Display name saved!",
     homeGreetingGuest: "Hi, Guest",
     hiName: "Hi, {name}",
     homeSubtitleGuest: "Please sign in or ask staff to create a card.",
@@ -271,6 +277,8 @@ const TRANSLATIONS = {
     pwReqNumber: "Број",
     errPasswordMismatch: "Лозинките не се совпаѓаат",
     errChooseUsername: "Ве молиме изберете корисничко име",
+    errChooseDisplayName: "Ве молиме внесете име за прикажување",
+    errDisplayNameRateLimited: "Можете повторно да го смените вашето име на {date}",
     errPasswordMinLength: "Лозинката мора да има најмалку 6 карактери",
     errPasswordWeak: "Лозинката мора да има 8+ карактери, голема буква, мала буква и број",
     errUsernameTaken: "Тоа корисничко име е зафатено. Погрешна лозинка? Користете „Најди ја мојата картичка“ за да се најавите.",
@@ -410,6 +418,10 @@ const TRANSLATIONS = {
     setUsernameTitle: "Корисничко име",
     setUsernameSubtitle: "Ви овозможува да се најавите и без Google.",
     toastUsernameSaved: "Корисничкото име е зачувано!",
+    settingsChangeDisplayName: "Име за прикажување",
+    setDisplayNameTitle: "Име за прикажување",
+    setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
+    toastDisplayNameSaved: "Името е зачувано!",
     homeGreetingGuest: "Здраво, Гостин",
     hiName: "Здраво, {name}",
     homeSubtitleGuest: "Најавете се или замолете вработен да направи картичка.",
@@ -478,6 +490,8 @@ const TRANSLATIONS = {
     pwReqNumber: "Numër",
     errPasswordMismatch: "Fjalëkalimet nuk përputhen",
     errChooseUsername: "Ju lutemi zgjidhni një emër përdoruesi",
+    errChooseDisplayName: "Ju lutemi vendosni një emër shfaqjeje",
+    errDisplayNameRateLimited: "Mund ta ndryshoni emrin tuaj përsëri më {date}",
     errPasswordMinLength: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
     errPasswordWeak: "Fjalëkalimi duhet të ketë 8+ shkronja, një shkronjë të madhe, një të vogël dhe një numër",
     errUsernameTaken: "Ky emër përdoruesi është i zënë. Fjalëkalim i gabuar? Përdor \"Gjej Kartën Time\" për t'u identifikuar.",
@@ -617,6 +631,10 @@ const TRANSLATIONS = {
     setUsernameTitle: "Emri i Përdoruesit",
     setUsernameSubtitle: "Të lejon të identifikohesh edhe pa Google.",
     toastUsernameSaved: "Emri i përdoruesit u ruajt!",
+    settingsChangeDisplayName: "Emri i Shfaqur",
+    setDisplayNameTitle: "Emri i Shfaqur",
+    setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
+    toastDisplayNameSaved: "Emri u ruajt!",
     homeGreetingGuest: "Përshëndetje, Mysafir",
     hiName: "Përshëndetje, {name}",
     homeSubtitleGuest: "Identifikohu ose kërko stafit të krijojë një kartë.",
@@ -1062,6 +1080,34 @@ const cloud = {
       if (res.error) {
         const msg = res.error.message || '';
         if (msg.includes('username_taken')) return { error: 'username_taken' };
+        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  // Display name (customers.name — shown on the card/QR/leaderboard) is
+  // deliberately separate from the login username (customers.phone):
+  // rate-limited to once every 14 days, enforced server-side. On a
+  // cooldown violation the RPC raises 'rate_limited:<ISO timestamp>' —
+  // pull that timestamp out so the UI can say exactly when it unlocks.
+  async setDisplayName(token, name) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_set_display_name', { p_token: token || null, p_name: name }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.startsWith('rate_limited')) {
+          const nextChangeAt = msg.split(':').slice(1).join(':').split('"')[0] || null;
+          return { error: 'rate_limited', nextChangeAt };
+        }
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         return { error: 'unknown' };
       }
@@ -1844,6 +1890,13 @@ const DOM = {
   setUsernameError: document.getElementById('set-username-error'),
   btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
   btnSetUsernameSave: document.getElementById('btn-set-username-save'),
+  btnChangeDisplayName: document.getElementById('btn-change-displayname'),
+  modalSetDisplayName: document.getElementById('modal-set-displayname'),
+  overlaySetDisplayName: document.getElementById('overlay-set-displayname'),
+  setDisplayNameInput: document.getElementById('set-displayname-input'),
+  setDisplayNameError: document.getElementById('set-displayname-error'),
+  btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
+  btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
   btnExportData: document.getElementById('btn-export-data'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
@@ -2414,6 +2467,19 @@ function setupEventListeners() {
       if (DOM.setUsernameInput) DOM.setUsernameInput.value = (customer && customer.phone) || '';
       if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
       openModal(DOM.modalSetUsername);
+    });
+  }
+
+  // Change Display Name (Settings > Account) — separate from the login
+  // username above; this is the name shown on the card/QR/leaderboard.
+  if (DOM.btnChangeDisplayName) {
+    DOM.btnChangeDisplayName.addEventListener('click', async () => {
+      const activeId = state.myCustomerId;
+      if (!activeId) return;
+      const customer = await db.getCustomer(activeId);
+      if (DOM.setDisplayNameInput) DOM.setDisplayNameInput.value = (customer && customer.name) || '';
+      if (DOM.setDisplayNameError) DOM.setDisplayNameError.textContent = '';
+      openModal(DOM.modalSetDisplayName);
     });
   }
 
@@ -3108,6 +3174,47 @@ function setupEventListeners() {
       }
       closeModal(DOM.modalSetUsername);
       showToast(t('toastUsernameSaved'), 'success');
+    });
+  }
+
+  if (DOM.btnSetDisplayNameSkip) DOM.btnSetDisplayNameSkip.addEventListener('click', () => closeModal(DOM.modalSetDisplayName));
+  if (DOM.overlaySetDisplayName) DOM.overlaySetDisplayName.addEventListener('click', () => closeModal(DOM.modalSetDisplayName));
+  if (DOM.btnSetDisplayNameSave) {
+    DOM.btnSetDisplayNameSave.addEventListener('click', async () => {
+      const name = (DOM.setDisplayNameInput ? DOM.setDisplayNameInput.value : '').trim();
+      if (!name) {
+        DOM.setDisplayNameError.textContent = t('errChooseDisplayName');
+        return;
+      }
+      if (!state.myCustomerId) {
+        closeModal(DOM.modalSetDisplayName);
+        return;
+      }
+
+      DOM.btnSetDisplayNameSave.disabled = true;
+      const result = await cloud.setDisplayName(state.myToken, name);
+      DOM.btnSetDisplayNameSave.disabled = false;
+
+      if (result.error === 'rate_limited') {
+        const dateStr = result.nextChangeAt ? new Date(result.nextChangeAt).toLocaleDateString() : '';
+        DOM.setDisplayNameError.textContent = t('errDisplayNameRateLimited', { date: dateStr });
+        return;
+      }
+      if (result.error) {
+        DOM.setDisplayNameError.textContent = t('errServerConnection');
+        return;
+      }
+
+      await db.saveCustomer(result.customer);
+      state.customers = await db.getAllCustomers();
+      const savedSession = JSON.parse(localStorage.getItem('86_user_session') || 'null');
+      if (savedSession && savedSession.id === result.customer.id) {
+        savedSession.name = result.customer.name;
+        localStorage.setItem('86_user_session', JSON.stringify(savedSession));
+      }
+      closeModal(DOM.modalSetDisplayName);
+      await updateCardUI();
+      showToast(t('toastDisplayNameSaved'), 'success');
     });
   }
 

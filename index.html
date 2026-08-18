@@ -527,6 +527,15 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
+        <div class="settings-item" id="btn-change-displayname">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsChangeDisplayName">Display Name</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
         <div class="settings-item" id="btn-logout-user">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -772,6 +781,25 @@
       </div>
     </div>
 
+    <!-- Set/Change Display Name Modal (from Settings > Account) -->
+    <div class="modal" id="modal-set-displayname">
+      <div class="modal-overlay" id="overlay-set-displayname"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="setDisplayNameTitle">Display Name</h3>
+        <p class="modal-subtitle" data-i18n="setDisplayNameSubtitle">The name shown on your card. Changeable once every 14 days.</p>
+
+        <div class="form-group">
+          <input type="text" id="set-displayname-input" class="form-input" placeholder="Display Name" autocomplete="name" data-i18n-placeholder="phDisplayName">
+        </div>
+        <p class="pin-error" id="set-displayname-error"></p>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-set-displayname-skip" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-set-displayname-save" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Confirm Redeem Reward Modal -->
     <div class="modal" id="modal-confirm-redeem">
