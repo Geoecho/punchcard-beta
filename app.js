@@ -144,8 +144,6 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. No Third-Party Sharing:</strong> Your personal information is strictly used for Eightysix° loyalty services and will never be sold or shared.",
     privacyPara4: "<strong>4. Signing In With Google:</strong> If you use \"Continue with Google\", we receive only your name and email address from Google to create and identify your card — never your Google password, and we never access any other part of your Google account.",
     btnPrivacyAgree: "I Understand",
-    settingsDataCloud: "Data & Cloud",
-    settingsExport: "Export Local Backup",
     confirmRedeemTitle: "Redeem Reward?",
     confirmRedeemSubtitle: "This uses 1 free coffee from the wallet and can't be undone.",
     btnConfirmRedeem: "Redeem",
@@ -357,8 +355,6 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. Без споделување со трети лица:</strong> Вашите лични податоци се користат исклучиво за услугите на лојалност на Eightysix° и никогаш нема да бидат продадени или споделени.",
     privacyPara4: "<strong>4. Најава со Google:</strong> Ако користите „Продолжи со Google“, добиваме само вашето име и е-пошта од Google за да го создадеме и препознаеме вашиот профил — никогаш вашата Google лозинка, и никогаш не пристапуваме до кој било друг дел од вашиот Google профил.",
     btnPrivacyAgree: "Разбирам",
-    settingsDataCloud: "Податоци и облак",
-    settingsExport: "Извези локална резервна копија",
     confirmRedeemTitle: "Да се искористи наградата?",
     confirmRedeemSubtitle: "Ова троши 1 бесплатно кафе од паричникот и не може да се врати.",
     btnConfirmRedeem: "Искористи",
@@ -570,8 +566,6 @@ const TRANSLATIONS = {
     privacyPara3: "<strong>3. Pa Ndarje me Palë të Treta:</strong> Informacioni juaj personal përdoret rreptësisht për shërbimet e besnikërisë të Eightysix° dhe nuk do të shitet apo ndahet kurrë.",
     privacyPara4: "<strong>4. Identifikimi me Google:</strong> Nëse përdorni \"Vazhdo me Google\", marrim vetëm emrin dhe email-in tuaj nga Google për të krijuar dhe identifikuar kartën tuaj — kurrë fjalëkalimin tuaj të Google-it, dhe nuk aksesojmë kurrë ndonjë pjesë tjetër të llogarisë suaj Google.",
     btnPrivacyAgree: "E Kuptoj",
-    settingsDataCloud: "Të Dhënat & Cloud",
-    settingsExport: "Eksporto Kopjen Rezervë Lokale",
     confirmRedeemTitle: "Të shfrytëzohet shpërblimi?",
     confirmRedeemSubtitle: "Kjo përdor 1 kafe falas nga portofoli dhe nuk mund të kthehet.",
     btnConfirmRedeem: "Shfrytëzo",
@@ -1751,16 +1745,6 @@ const db = {
       }
     });
   },
-
-  async deleteDatabase() {
-    return new Promise((resolve) => {
-      if (this.instance) this.instance.close();
-      const req = indexedDB.deleteDatabase(DB_NAME);
-      req.onsuccess = () => resolve();
-      req.onerror = () => resolve();
-      req.onblocked = () => resolve();
-    });
-  }
 };
 
 // ==========================================
@@ -1897,7 +1881,6 @@ const DOM = {
   setDisplayNameError: document.getElementById('set-displayname-error'),
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
-  btnExportData: document.getElementById('btn-export-data'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
   statActiveCards: document.getElementById('stat-active-cards'),
@@ -2529,25 +2512,47 @@ function setupEventListeners() {
         };
       }
 
-      try {
-        const ts = Date.now();
-        const sig = computeIntegrityHash(customer);
-        const payloadObj = { v: 2, id: customer.id, name: customer.name, phone: customer.phone || '', ts, sig };
-        const payload = JSON.stringify(payloadObj);
+      const ts = Date.now();
+      const sig = computeIntegrityHash(customer);
+      // Truncate before encoding — the QR lib's capacity math (auto-picks
+      // a QR version from an estimated byte length) has edge cases with
+      // multi-byte UTF-8 text like Cyrillic names where the estimate
+      // undershoots the real encoded size and throws "code length
+      // overflow" well before any sane string length. Staff only need
+      // enough of the name/phone to recognize the customer when
+      // onboarding a scan — the id is what actually matters.
+      const safeName = (customer.name || '').slice(0, 24);
+      const safePhone = (customer.phone || '').slice(0, 24);
+      const buildPayload = (withDetails) => JSON.stringify(
+        withDetails
+          ? { v: 2, id: customer.id, name: safeName, phone: safePhone, ts, sig }
+          : { v: 2, id: customer.id, ts, sig }
+      );
 
+      const renderQr = (text) => {
         DOM.qrcodeDisplay.innerHTML = '';
         new QRCode(DOM.qrcodeDisplay, {
-          text: payload,
+          text,
           width: 200,
           height: 200,
           colorDark: "#000000",
           colorLight: "#ffffff",
           correctLevel: QRCode.CorrectLevel.H
         });
+      };
+
+      try {
+        renderQr(buildPayload(true));
         openModal(DOM.modalShowQr);
       } catch (err) {
-        console.error("QR Code display error:", err);
-        showToast('Failed to generate QR code', 'error');
+        console.warn("QR Code with name/phone overflowed, retrying with a minimal payload:", err);
+        try {
+          renderQr(buildPayload(false));
+          openModal(DOM.modalShowQr);
+        } catch (err2) {
+          console.error("QR Code display error:", err2);
+          showToast('Failed to generate QR code', 'error');
+        }
       }
     };
 
@@ -3236,18 +3241,6 @@ function setupEventListeners() {
       showToast(result.active ? 'Double Stamps campaign is live!' : 'Campaign turned off', 'success');
     });
   }
-
-  // Export
-  DOM.btnExportData.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.customers));
-    const a = document.createElement('a');
-    a.setAttribute("href", dataStr);
-    a.setAttribute("download", "86_punchcard_export.json");
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    showToast('Data exported', 'success');
-  });
 
   // ==========================================
   // ADD TO HOME SCREEN / INSTALL ENGINE
