@@ -161,6 +161,56 @@ input { font: inherit; color: inherit; }
   margin: 0 0 20px 0;
 }
 
+/* Eightysix × Netaville co-brand lockup — the Netaville mark is already
+   a white silhouette (built for dark backgrounds), so unlike the
+   Eightysix wordmark it needs no invert filter. */
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-lockup .brand-logo-large,
+.brand-lockup .brand-logo {
+  margin: 0;
+}
+.brand-lockup-x {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1;
+}
+.brand-lockup-netaville {
+  width: auto;
+  object-fit: contain;
+}
+.brand-lockup-large {
+  margin: 0 0 20px 0;
+}
+.brand-lockup-large .brand-lockup-netaville {
+  height: 52px;
+}
+.brand-lockup-poster {
+  margin-bottom: 18px;
+  animation: posterLogoFloat 4s ease-in-out infinite;
+}
+.brand-lockup-poster .poster-logo {
+  margin-bottom: 0;
+  animation: none;
+}
+.brand-lockup-poster .brand-lockup-netaville {
+  height: 52px;
+}
+.brand-lockup-compact {
+  gap: 8px;
+}
+.brand-lockup-compact .brand-lockup-x {
+  font-size: 13px;
+}
+.brand-lockup-compact .brand-lockup-netaville {
+  height: 24px;
+}
+
 /* ── Splash Screen ────────────────────────────────────────── */
 #view-splash {
   z-index: 100;
