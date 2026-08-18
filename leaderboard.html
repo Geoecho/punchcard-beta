@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Eightysix° — Leaderboard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+<link rel="stylesheet" href="./styles.css">
+<style>
+  /* Standalone TV/tablet display — not part of the SPA's view-switching.
+     Same sizing approach as menu.html: clamp()-based so it scales
+     cleanly from a tablet propped on a counter up to a wall TV. */
+  html, body {
+    overflow: auto;
+    height: 100%;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(20px, 2.6vw, 48px) clamp(24px, 3.2vw, 64px);
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  .tv-glow {
+    position: fixed;
+    top: -20vh;
+    left: 50%;
+    width: 140vw;
+    max-width: 1600px;
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---------- Header ---------- */
+  .tv-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: clamp(16px, 1.8vw, 28px);
+    border-bottom: 1px solid var(--border-glass);
+    margin-bottom: clamp(20px, 2.2vw, 36px);
+    flex-shrink: 0;
+  }
+  .tv-brand { display: flex; align-items: center; gap: clamp(14px, 1.4vw, 22px); }
+  .tv-logo { height: clamp(36px, 3.4vw, 56px); width: auto; filter: brightness(0) invert(1); }
+  .tv-brand-text { display: flex; flex-direction: column; gap: 2px; }
+  .tv-title {
+    font-size: clamp(22px, 2.1vw, 34px);
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .tv-subtitle {
+    font-size: clamp(11px, 0.85vw, 14px);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .tv-clock {
+    font-size: clamp(24px, 2.6vw, 42px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    text-align: right;
+  }
+  .tv-date {
+    font-size: clamp(11px, 0.85vw, 14px);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-align: right;
+  }
+
+  /* ---------- Campaign banner ---------- */
+  .tv-campaign {
+    position: relative;
+    z-index: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--text-primary);
+    color: var(--text-inverse);
+    border-radius: var(--radius-lg);
+    padding: clamp(10px, 1.1vw, 16px);
+    margin-bottom: clamp(20px, 2.2vw, 32px);
+    font-weight: 800;
+    font-size: clamp(14px, 1.3vw, 20px);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    animation: tvCampaignPulse 2.4s ease-in-out infinite;
+  }
+  .tv-campaign.show { display: flex; }
+  @keyframes tvCampaignPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+    50% { box-shadow: 0 0 30px 4px rgba(255,255,255,0.15); }
+  }
+
+  /* ---------- Split layout: half leaderboard, half menu ---------- */
+  .split-main {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+    gap: clamp(24px, 2.8vw, 48px);
+  }
+  /* Portrait tablets stack instead of squeezing two columns sideways. */
+  @media (max-aspect-ratio: 1/1) {
+    .split-main { flex-direction: column; }
+    .split-divider { display: none; }
+  }
+  .split-panel { flex: 1 1 50%; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .split-divider { width: 1px; background: var(--border-glass-strong); flex-shrink: 0; }
+
+  /* ---------- Leaderboard panel ---------- */
+  .lb-panel-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: clamp(12px, 1.4vw, 20px);
+    border-bottom: 1px solid var(--border-glass-strong);
+    margin-bottom: clamp(14px, 1.6vw, 24px);
+    flex-shrink: 0;
+  }
+  .lb-panel-title {
+    font-size: clamp(16px, 1.5vw, 24px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .lb-panel-period {
+    font-size: clamp(10px, 0.85vw, 14px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-main);
+    padding: 4px 12px;
+    border: 1px solid var(--border-glass-strong);
+    border-radius: var(--radius-full);
+    transition: opacity 0.4s ease;
+  }
+  .lb-panel-list {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 0.9vw, 14px);
+    transition: opacity 0.4s ease;
+  }
+  .lb-panel-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.2vw, 18px);
+    padding: clamp(8px, 0.9vw, 14px) clamp(12px, 1.1vw, 18px);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+  }
+  .lb-panel-row.lb-panel-top1 { border-color: var(--accent-main); box-shadow: 0 4px 20px rgba(255,255,255,0.10); }
+  .lb-panel-rank {
+    width: clamp(26px, 2.2vw, 38px);
+    flex-shrink: 0;
+    text-align: center;
+    font-size: clamp(15px, 1.3vw, 21px);
+    font-weight: 800;
+    color: var(--text-secondary);
+  }
+  .lb-panel-rank.lb-panel-medal { font-size: clamp(19px, 1.7vw, 27px); }
+  .lb-panel-avatar {
+    width: clamp(34px, 3vw, 50px);
+    height: clamp(34px, 3vw, 50px);
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #fff;
+  }
+  .lb-panel-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lb-panel-name {
+    flex: 1;
+    min-width: 0;
+    font-size: clamp(13px, 1.15vw, 19px);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lb-panel-stamps {
+    flex-shrink: 0;
+    font-size: clamp(13px, 1.2vw, 19px);
+    font-weight: 800;
+    color: var(--accent-main);
+    white-space: nowrap;
+  }
+  .lb-panel-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 8vh 0;
+    font-size: clamp(14px, 1.1vw, 18px);
+  }
+
+  /* ---------- Menu panel (condensed version of menu.html's grid) ---------- */
+  .menu-panel-title {
+    font-size: clamp(16px, 1.5vw, 24px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding-bottom: clamp(12px, 1.4vw, 20px);
+    border-bottom: 1px solid var(--border-glass-strong);
+    margin-bottom: clamp(14px, 1.6vw, 24px);
+    flex-shrink: 0;
+  }
+  .tv-grid { column-count: 1; column-gap: clamp(24px, 2.6vw, 44px); overflow: hidden; }
+  @media (min-width: 1400px) { .tv-grid { column-count: 2; } }
+  .tv-category { break-inside: avoid; margin-bottom: clamp(16px, 1.8vw, 28px); }
+  .tv-category-title {
+    font-size: clamp(12px, 1vw, 16px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    padding-bottom: clamp(6px, 0.7vw, 10px);
+    margin-bottom: clamp(8px, 0.9vw, 14px);
+    border-bottom: 1px solid var(--border-glass-strong);
+  }
+  .tv-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: clamp(5px, 0.55vw, 8px) 0; }
+  .tv-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .tv-item-name {
+    font-size: clamp(13px, 1vw, 17px);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tv-item-sub { font-size: clamp(10px, 0.72vw, 12px); color: var(--text-muted); }
+  .tv-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .tv-item-price { font-size: clamp(13px, 1vw, 17px); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+  .tv-item-bonus {
+    font-size: clamp(8px, 0.6vw, 10px);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text-inverse);
+    background: var(--accent-main);
+    border-radius: var(--radius-full);
+    padding: 3px 7px;
+    white-space: nowrap;
+  }
+  .tv-empty { color: var(--text-muted); font-size: clamp(14px, 1.1vw, 18px); text-align: center; padding: 8vh 0; }
+
+  /* ---------- Join QR corner card ---------- */
+  .tv-join {
+    position: fixed;
+    bottom: clamp(20px, 2.2vw, 36px);
+    right: clamp(20px, 2.2vw, 36px);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.2vw, 18px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass-strong);
+    border-radius: var(--radius-xl);
+    padding: clamp(12px, 1.2vw, 18px) clamp(16px, 1.6vw, 24px);
+    box-shadow: var(--shadow-lg);
+  }
+  .tv-join-qr { background: #fff; padding: 8px; border-radius: var(--radius-sm); line-height: 0; }
+  .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(60px, 5.4vw, 88px); height: clamp(60px, 5.4vw, 88px); }
+  .tv-join-text { display: flex; flex-direction: column; gap: 2px; }
+  .tv-join-title { font-size: clamp(13px, 1.05vw, 17px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tv-join-sub { font-size: clamp(11px, 0.85vw, 14px); color: var(--text-secondary); max-width: 22ch; }
+
+  /* ---------- Footer ---------- */
+  .tv-footer {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    text-align: center;
+    padding-top: clamp(16px, 1.8vw, 26px);
+    font-size: clamp(10px, 0.8vw, 13px);
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div class="tv-glow" aria-hidden="true"></div>
+
+  <header class="tv-header">
+    <div class="tv-brand">
+      <img src="Group 9.png" alt="Eightysix° Logo" class="tv-logo">
+      <div class="tv-brand-text">
+        <div class="tv-title">Leaderboard</div>
+        <div class="tv-subtitle">Eightysix° Coffee</div>
+      </div>
+    </div>
+    <div>
+      <div class="tv-clock" id="tv-clock">--:--</div>
+      <div class="tv-date" id="tv-date">—</div>
+    </div>
+  </header>
+
+  <div class="tv-campaign" id="tv-campaign"></div>
+
+  <main class="split-main">
+    <section class="split-panel">
+      <div class="lb-panel-header">
+        <div class="lb-panel-title">🏆 Top Regulars</div>
+        <div class="lb-panel-period" id="lb-period-label">This Month</div>
+      </div>
+      <div class="lb-panel-list" id="lb-panel-list">
+        <div class="lb-panel-empty">Loading leaderboard…</div>
+      </div>
+    </section>
+
+    <div class="split-divider"></div>
+
+    <section class="split-panel">
+      <div class="menu-panel-title">Menu</div>
+      <div class="tv-grid" id="tv-grid">
+        <div class="tv-empty">Loading menu…</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="tv-join">
+    <div class="tv-join-qr" id="tv-join-qr"></div>
+    <div class="tv-join-text">
+      <div class="tv-join-title">Scan to Join</div>
+      <div class="tv-join-sub">Earn a stamp per order — free coffee at 10</div>
+    </div>
+  </div>
+
+  <footer class="tv-footer">@eightysixdeg &nbsp;·&nbsp; eightysixdeg.com</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./lib/qrcode.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const DICEBEAR_STYLE = 'croodles-neutral';
+    function avatarUrl(seed) {
+      return `https://api.dicebear.com/10.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed || 'person')}&backgroundColor=ffffff`;
+    }
+
+    // ---- Join QR ----
+    new QRCode(document.getElementById('tv-join-qr'), {
+      text: window.location.origin + '/index.html#signup',
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // ---- Live clock ----
+    function tickClock() {
+      const now = new Date();
+      document.getElementById('tv-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('tv-date').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    // ==========================================
+    // LEADERBOARD — alternates between "This Month" and "All Time"
+    // every 12s so an unattended display stays interesting instead of
+    // showing one static list all day. Both lists are fetched together;
+    // the rotation just toggles which cached list is shown.
+    // ==========================================
+    let lbPeriod = 'month';
+    let lbMonthly = [];
+    let lbAllTime = [];
+
+    function renderLeaderboardPanel() {
+      const data = lbPeriod === 'month' ? lbMonthly : lbAllTime;
+      const list = document.getElementById('lb-panel-list');
+      document.getElementById('lb-period-label').textContent = lbPeriod === 'month' ? 'This Month' : 'All Time';
+      list.innerHTML = '';
+
+      if (!data.length) {
+        const empty = document.createElement('div');
+        empty.className = 'lb-panel-empty';
+        empty.textContent = lbPeriod === 'month' ? 'No stamps yet this month — be the first!' : 'No stamps yet — be the first!';
+        list.appendChild(empty);
+        return;
+      }
+
+      data.forEach((entry, idx) => {
+        const rank = idx + 1;
+        const row = document.createElement('div');
+        row.className = 'lb-panel-row' + (rank === 1 ? ' lb-panel-top1' : '');
+
+        const rankEl = document.createElement('div');
+        rankEl.className = 'lb-panel-rank' + (rank <= 3 ? ' lb-panel-medal' : '');
+        rankEl.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
+        row.appendChild(rankEl);
+
+        const avatar = document.createElement('div');
+        avatar.className = 'lb-panel-avatar';
+        const img = document.createElement('img');
+        img.src = avatarUrl(entry.avatar);
+        img.alt = '';
+        img.loading = 'lazy';
+        avatar.appendChild(img);
+        row.appendChild(avatar);
+
+        const name = document.createElement('div');
+        name.className = 'lb-panel-name';
+        name.textContent = entry.name;
+        row.appendChild(name);
+
+        const stamps = document.createElement('div');
+        stamps.className = 'lb-panel-stamps';
+        stamps.textContent = `${entry.stamps} ☕`;
+        row.appendChild(stamps);
+
+        list.appendChild(row);
+      });
+    }
+
+    async function fetchLeaderboards() {
+      try {
+        const [monthRes, allRes] = await Promise.all([
+          sb.rpc('get_leaderboard_monthly', { p_limit: 8 }),
+          sb.rpc('get_leaderboard', { p_limit: 8 })
+        ]);
+        if (!monthRes.error && monthRes.data) {
+          lbMonthly = monthRes.data.map(d => ({ name: d.name, avatar: d.avatar, stamps: d.monthly_stamps }));
+        }
+        if (!allRes.error && allRes.data) {
+          lbAllTime = allRes.data.map(d => ({ name: d.name, avatar: d.avatar, stamps: d.total_stamps_earned }));
+        }
+        renderLeaderboardPanel();
+      } catch (e) {}
+    }
+
+    function rotateLeaderboardPeriod() {
+      const list = document.getElementById('lb-panel-list');
+      const label = document.getElementById('lb-period-label');
+      list.style.opacity = '0';
+      label.style.opacity = '0';
+      setTimeout(() => {
+        lbPeriod = lbPeriod === 'month' ? 'alltime' : 'month';
+        renderLeaderboardPanel();
+        list.style.opacity = '1';
+        label.style.opacity = '1';
+      }, 400);
+    }
+
+    // ==========================================
+    // MENU (right half) — same rendering as menu.html.
+    // ==========================================
+    function renderMenu(items) {
+      const grid = document.getElementById('tv-grid');
+      grid.innerHTML = '';
+      if (!items || !items.length) {
+        grid.innerHTML = '<div class="tv-empty">Menu coming soon.</div>';
+        return;
+      }
+
+      const categories = {};
+      items.forEach(item => {
+        if (!categories[item.category]) categories[item.category] = [];
+        categories[item.category].push(item);
+      });
+
+      for (const [catName, catItems] of Object.entries(categories)) {
+        const catDiv = document.createElement('div');
+        catDiv.className = 'tv-category';
+
+        const title = document.createElement('div');
+        title.className = 'tv-category-title';
+        title.textContent = catName;
+        catDiv.appendChild(title);
+
+        catItems.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'tv-item';
+
+          const main = document.createElement('div');
+          main.className = 'tv-item-main';
+          const name = document.createElement('div');
+          name.className = 'tv-item-name';
+          name.textContent = item.name;
+          main.appendChild(name);
+          if (item.sub) {
+            const sub = document.createElement('div');
+            sub.className = 'tv-item-sub';
+            sub.textContent = item.sub;
+            main.appendChild(sub);
+          }
+          row.appendChild(main);
+
+          const right = document.createElement('div');
+          right.className = 'tv-item-right';
+          if (item.stamps > 0) {
+            const bonus = document.createElement('span');
+            bonus.className = 'tv-item-bonus';
+            bonus.textContent = `+${item.stamps} STAMPS`;
+            right.appendChild(bonus);
+          }
+          const price = document.createElement('span');
+          price.className = 'tv-item-price';
+          price.textContent = `${parseFloat(item.price)} MKD`;
+          right.appendChild(price);
+          row.appendChild(right);
+
+          catDiv.appendChild(row);
+        });
+
+        grid.appendChild(catDiv);
+      }
+    }
+
+    // Cache-first paint (same key the main app uses), then network.
+    try {
+      const cached = localStorage.getItem('86_menu');
+      if (cached) renderMenu(JSON.parse(cached));
+    } catch (e) {}
+
+    async function fetchMenu() {
+      try {
+        const { data, error } = await sb.from('menu_items').select('*').order('created_at', { ascending: true });
+        if (error || !data) return;
+        const items = data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 }));
+        renderMenu(items);
+        localStorage.setItem('86_menu', JSON.stringify(items));
+      } catch (e) {}
+    }
+
+    async function fetchCampaign() {
+      try {
+        const { data, error } = await sb.rpc('get_campaign_status');
+        const el = document.getElementById('tv-campaign');
+        if (error || !data || !data.length || !data[0].active) {
+          el.classList.remove('show');
+          return;
+        }
+        el.textContent = `✨ ${data[0].label || 'Double Stamps'} — ${data[0].multiplier}x stamps on every order!`;
+        el.classList.add('show');
+      } catch (e) {}
+    }
+
+    fetchLeaderboards();
+    fetchMenu();
+    fetchCampaign();
+
+    // Realtime for menu/campaign — both tables are intentionally public-
+    // readable so this actually works. The leaderboard is derived from
+    // the customers table, which (correctly) has no public read grant —
+    // realtime can't subscribe to it from here, so it's covered by the
+    // polling loop below instead.
+    sb.channel('tv-leaderboard-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, fetchMenu)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, fetchCampaign)
+      .subscribe();
+
+    setInterval(fetchLeaderboards, 60000);
+    setInterval(fetchMenu, 60000);
+    setInterval(fetchCampaign, 60000);
+    setInterval(rotateLeaderboardPeriod, 12000);
+
+    // An always-on TV/tablet tab can accumulate memory/stale-connection
+    // issues over days — a clean reload once every 6 hours keeps it healthy.
+    setTimeout(() => window.location.reload(), 6 * 60 * 60 * 1000);
+  </script>
+</body>
+</html>
