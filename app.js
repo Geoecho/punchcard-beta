@@ -2236,10 +2236,22 @@ function showUpdateBanner() {
   if (!banner || banner.classList.contains('show')) return;
   banner.classList.add('show');
   // The new service worker already calls skipWaiting()/clients.claim() on
-  // its own, so it's active and in control well before this is tapped —
+  // its own, so it's active and in control well before this fires —
   // reloading is all that's needed to actually re-fetch and re-run the
   // new app.js instead of continuing on the copy already sitting in memory.
-  banner.addEventListener('click', () => window.location.reload(), { once: true });
+  const reload = () => window.location.reload();
+  banner.addEventListener('click', reload, { once: true });
+
+  // A banner that just sits there waiting to be tapped is too easy to
+  // miss (an unattended kiosk tablet/TV will never tap it at all) —
+  // auto-apply shortly after, unless someone's actively mid-keystroke in
+  // a form, where losing a half-typed signup would be worse than a
+  // few extra seconds on the old version.
+  setTimeout(() => {
+    const active = document.activeElement;
+    const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+    if (!isTyping) reload();
+  }, 5000);
 }
 
 // token is only passed on an actual login/signup — omit it (e.g. when
