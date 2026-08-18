@@ -1,7 +1,7 @@
 // 86° Punchcard — Service Worker
 // Network-first for API, Stale-While-Revalidate for app shell
 
-const CACHE_NAME = '86-punchcard-v35';
+const CACHE_NAME = '86-punchcard-v36';
 const APP_SHELL = [
   './',
   './index.html',
@@ -48,6 +48,12 @@ self.addEventListener('fetch', (event) => {
 
   const url = event.request.url;
 
+  // The Cache API only supports http(s) requests — a browser extension's
+  // own chrome-extension:// (or moz-extension://, etc.) requests can end
+  // up passing through here on some setups, and cache.put() throws for
+  // any other scheme. Let the browser handle those directly.
+  if (!url.startsWith('http:') && !url.startsWith('https:')) return;
+
   // NEVER cache Supabase API or any external API calls — always go to network
   if (url.includes('supabase.co') || url.includes('cdn.jsdelivr.net')) {
     event.respondWith(
@@ -64,7 +70,8 @@ self.addEventListener('fetch', (event) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME)
-              .then(cache => cache.put(event.request, responseClone));
+              .then(cache => cache.put(event.request, responseClone))
+              .catch(() => {});
           }
           return networkResponse;
         })
