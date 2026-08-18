@@ -14,16 +14,20 @@
 <link rel="stylesheet" href="./styles.css">
 <style>
   /* Standalone TV/tablet display — not part of the SPA's view-switching.
-     Same sizing approach as menu.html: clamp()-based so it scales
-     cleanly from a tablet propped on a counter up to a wall TV. */
+     Portrait/vertical is the primary target (a tablet or vertically-
+     mounted TV), so this is written portrait-first with clamp() sizes
+     tuned for ~600-1200px-wide viewports; a landscape media query
+     switches to a side-by-side layout as a secondary fallback. */
   html, body {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     height: 100%;
   }
   body {
     display: flex;
     flex-direction: column;
-    padding: clamp(20px, 2.6vw, 48px) clamp(24px, 3.2vw, 64px);
+    min-height: 100%;
+    padding: clamp(20px, 4vw, 44px) clamp(18px, 4.2vw, 40px);
   }
   ::-webkit-scrollbar { display: none; }
 
@@ -31,8 +35,8 @@
     position: fixed;
     top: -20vh;
     left: 50%;
-    width: 140vw;
-    max-width: 1600px;
+    width: 160vw;
+    max-width: 1400px;
     aspect-ratio: 1;
     transform: translateX(-50%);
     background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 60%);
@@ -47,40 +51,43 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: clamp(16px, 1.8vw, 28px);
+    gap: 12px;
+    padding-bottom: clamp(14px, 2.4vw, 24px);
     border-bottom: 1px solid var(--border-glass);
-    margin-bottom: clamp(20px, 2.2vw, 36px);
+    margin-bottom: clamp(18px, 3vw, 32px);
     flex-shrink: 0;
   }
-  .tv-brand { display: flex; align-items: center; gap: clamp(14px, 1.4vw, 22px); }
-  .tv-logo { height: clamp(36px, 3.4vw, 56px); width: auto; filter: brightness(0) invert(1); }
-  .tv-brand-text { display: flex; flex-direction: column; gap: 2px; }
+  .tv-brand { display: flex; align-items: center; gap: clamp(12px, 2vw, 20px); min-width: 0; }
+  .tv-logo { height: clamp(30px, 4.6vw, 48px); width: auto; filter: brightness(0) invert(1); flex-shrink: 0; }
+  .tv-brand-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .tv-title {
-    font-size: clamp(22px, 2.1vw, 34px);
+    font-size: clamp(18px, 3.4vw, 30px);
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
   }
   .tv-subtitle {
-    font-size: clamp(11px, 0.85vw, 14px);
+    font-size: clamp(9px, 1.5vw, 13px);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 2px;
     font-weight: 600;
   }
   .tv-clock {
-    font-size: clamp(24px, 2.6vw, 42px);
+    font-size: clamp(18px, 3.8vw, 34px);
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: 1px;
     text-align: right;
+    white-space: nowrap;
   }
   .tv-date {
-    font-size: clamp(11px, 0.85vw, 14px);
+    font-size: clamp(9px, 1.5vw, 13px);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     text-align: right;
+    white-space: nowrap;
   }
 
   /* ---------- Campaign banner ---------- */
@@ -90,14 +97,15 @@
     display: none;
     align-items: center;
     justify-content: center;
+    text-align: center;
     gap: 12px;
     background: var(--text-primary);
     color: var(--text-inverse);
     border-radius: var(--radius-lg);
-    padding: clamp(10px, 1.1vw, 16px);
-    margin-bottom: clamp(20px, 2.2vw, 32px);
+    padding: clamp(10px, 2vw, 16px);
+    margin-bottom: clamp(18px, 3vw, 28px);
     font-weight: 800;
-    font-size: clamp(14px, 1.3vw, 20px);
+    font-size: clamp(12px, 2.2vw, 18px);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     flex-shrink: 0;
@@ -109,42 +117,47 @@
     50% { box-shadow: 0 0 30px 4px rgba(255,255,255,0.15); }
   }
 
-  /* ---------- Split layout: half leaderboard, half menu ---------- */
+  /* ---------- Split layout: leaderboard + menu ---------- */
+  /* Portrait/default: stacked, each section sized to its content —
+     the page scrolls as a whole rather than clipping either list. */
   .split-main {
     position: relative;
     z-index: 1;
     flex: 1;
-    min-height: 0;
     display: flex;
-    flex-direction: row;
-    gap: clamp(24px, 2.8vw, 48px);
+    flex-direction: column;
+    gap: clamp(28px, 5vw, 44px);
   }
-  /* Portrait tablets stack instead of squeezing two columns sideways. */
-  @media (max-aspect-ratio: 1/1) {
-    .split-main { flex-direction: column; }
-    .split-divider { display: none; }
+  .split-panel { display: flex; flex-direction: column; min-width: 0; }
+  .split-divider { display: none; }
+
+  /* Landscape (a TV mounted sideways, or a tablet turned flat) — switch
+     to side-by-side, each half filling the available height. */
+  @media (min-aspect-ratio: 6/5) and (min-width: 900px) {
+    .split-main { flex-direction: row; min-height: 0; }
+    .split-panel { flex: 1 1 50%; min-height: 0; overflow: hidden; }
+    .split-divider { display: block; width: 1px; background: var(--border-glass-strong); flex-shrink: 0; }
   }
-  .split-panel { flex: 1 1 50%; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-  .split-divider { width: 1px; background: var(--border-glass-strong); flex-shrink: 0; }
 
   /* ---------- Leaderboard panel ---------- */
   .lb-panel-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding-bottom: clamp(12px, 1.4vw, 20px);
+    padding-bottom: clamp(12px, 2.2vw, 18px);
     border-bottom: 1px solid var(--border-glass-strong);
-    margin-bottom: clamp(14px, 1.6vw, 24px);
+    margin-bottom: clamp(14px, 2.6vw, 22px);
     flex-shrink: 0;
   }
   .lb-panel-title {
-    font-size: clamp(16px, 1.5vw, 24px);
+    font-size: clamp(15px, 2.8vw, 22px);
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1.5px;
   }
+  .lb-panel-period-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
   .lb-panel-period {
-    font-size: clamp(10px, 0.85vw, 14px);
+    font-size: clamp(10px, 1.7vw, 13px);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -152,39 +165,54 @@
     padding: 4px 12px;
     border: 1px solid var(--border-glass-strong);
     border-radius: var(--radius-full);
-    transition: opacity 0.4s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    white-space: nowrap;
   }
-  .lb-panel-list {
-    flex: 1;
-    min-height: 0;
+  /* Thin progress rail under the period pill — fills up over the 12s
+     rotation so it's visibly, obviously counting down to the next
+     swap instead of just silently changing. */
+  .lb-panel-progress {
+    width: 64px;
+    height: 3px;
+    border-radius: var(--radius-full);
+    background: var(--border-glass-strong);
     overflow: hidden;
+  }
+  .lb-panel-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent-main);
+    border-radius: var(--radius-full);
+  }
+
+  .lb-panel-list {
     display: flex;
     flex-direction: column;
-    gap: clamp(8px, 0.9vw, 14px);
-    transition: opacity 0.4s ease;
+    gap: clamp(9px, 1.8vw, 14px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
   }
   .lb-panel-row {
     display: flex;
     align-items: center;
-    gap: clamp(12px, 1.2vw, 18px);
-    padding: clamp(8px, 0.9vw, 14px) clamp(12px, 1.1vw, 18px);
+    gap: clamp(12px, 2.2vw, 18px);
+    padding: clamp(9px, 1.8vw, 14px) clamp(12px, 2.2vw, 18px);
     border-radius: var(--radius-lg);
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
   }
   .lb-panel-row.lb-panel-top1 { border-color: var(--accent-main); box-shadow: 0 4px 20px rgba(255,255,255,0.10); }
   .lb-panel-rank {
-    width: clamp(26px, 2.2vw, 38px);
+    width: clamp(24px, 4.4vw, 34px);
     flex-shrink: 0;
     text-align: center;
-    font-size: clamp(15px, 1.3vw, 21px);
+    font-size: clamp(14px, 2.6vw, 20px);
     font-weight: 800;
     color: var(--text-secondary);
   }
-  .lb-panel-rank.lb-panel-medal { font-size: clamp(19px, 1.7vw, 27px); }
+  .lb-panel-rank.lb-panel-medal { font-size: clamp(18px, 3.4vw, 26px); }
   .lb-panel-avatar {
-    width: clamp(34px, 3vw, 50px);
-    height: clamp(34px, 3vw, 50px);
+    width: clamp(34px, 6.2vw, 50px);
+    height: clamp(34px, 6.2vw, 50px);
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
@@ -194,7 +222,7 @@
   .lb-panel-name {
     flex: 1;
     min-width: 0;
-    font-size: clamp(13px, 1.15vw, 19px);
+    font-size: clamp(13px, 2.4vw, 18px);
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -202,7 +230,7 @@
   }
   .lb-panel-stamps {
     flex-shrink: 0;
-    font-size: clamp(13px, 1.2vw, 19px);
+    font-size: clamp(13px, 2.4vw, 18px);
     font-weight: 800;
     color: var(--accent-main);
     white-space: nowrap;
@@ -210,49 +238,48 @@
   .lb-panel-empty {
     color: var(--text-muted);
     text-align: center;
-    padding: 8vh 0;
-    font-size: clamp(14px, 1.1vw, 18px);
+    padding: 6vh 0;
+    font-size: clamp(13px, 2.2vw, 17px);
   }
 
-  /* ---------- Menu panel (condensed version of menu.html's grid) ---------- */
+  /* ---------- Menu panel ---------- */
   .menu-panel-title {
-    font-size: clamp(16px, 1.5vw, 24px);
+    font-size: clamp(15px, 2.8vw, 22px);
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    padding-bottom: clamp(12px, 1.4vw, 20px);
+    padding-bottom: clamp(12px, 2.2vw, 18px);
     border-bottom: 1px solid var(--border-glass-strong);
-    margin-bottom: clamp(14px, 1.6vw, 24px);
+    margin-bottom: clamp(14px, 2.6vw, 22px);
     flex-shrink: 0;
   }
-  .tv-grid { column-count: 1; column-gap: clamp(24px, 2.6vw, 44px); overflow: hidden; }
-  @media (min-width: 1400px) { .tv-grid { column-count: 2; } }
-  .tv-category { break-inside: avoid; margin-bottom: clamp(16px, 1.8vw, 28px); }
+  .tv-grid { column-count: 1; }
+  .tv-category { break-inside: avoid; margin-bottom: clamp(14px, 2.8vw, 24px); }
   .tv-category-title {
-    font-size: clamp(12px, 1vw, 16px);
+    font-size: clamp(11px, 1.9vw, 15px);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--text-primary);
-    padding-bottom: clamp(6px, 0.7vw, 10px);
-    margin-bottom: clamp(8px, 0.9vw, 14px);
+    padding-bottom: clamp(6px, 1.2vw, 10px);
+    margin-bottom: clamp(8px, 1.6vw, 13px);
     border-bottom: 1px solid var(--border-glass-strong);
   }
-  .tv-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: clamp(5px, 0.55vw, 8px) 0; }
+  .tv-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: clamp(5px, 1vw, 8px) 0; }
   .tv-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .tv-item-name {
-    font-size: clamp(13px, 1vw, 17px);
+    font-size: clamp(13px, 2.3vw, 17px);
     font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .tv-item-sub { font-size: clamp(10px, 0.72vw, 12px); color: var(--text-muted); }
+  .tv-item-sub { font-size: clamp(10px, 1.6vw, 12px); color: var(--text-muted); }
   .tv-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .tv-item-price { font-size: clamp(13px, 1vw, 17px); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+  .tv-item-price { font-size: clamp(13px, 2.3vw, 17px); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
   .tv-item-bonus {
-    font-size: clamp(8px, 0.6vw, 10px);
+    font-size: clamp(8px, 1.3vw, 10px);
     font-weight: 800;
     letter-spacing: 0.5px;
     color: var(--text-inverse);
@@ -261,28 +288,31 @@
     padding: 3px 7px;
     white-space: nowrap;
   }
-  .tv-empty { color: var(--text-muted); font-size: clamp(14px, 1.1vw, 18px); text-align: center; padding: 8vh 0; }
+  .tv-empty { color: var(--text-muted); font-size: clamp(13px, 2.2vw, 17px); text-align: center; padding: 6vh 0; }
 
-  /* ---------- Join QR corner card ---------- */
+  /* ---------- Join QR card — normal document flow, never overlaps
+     content (it used to float fixed over the bottom of the page,
+     which could sit on top of the last menu items). ---------- */
   .tv-join {
-    position: fixed;
-    bottom: clamp(20px, 2.2vw, 36px);
-    right: clamp(20px, 2.2vw, 36px);
-    z-index: 5;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: clamp(12px, 1.2vw, 18px);
+    justify-content: center;
+    gap: clamp(14px, 2.6vw, 20px);
     background: var(--bg-card);
     border: 1px solid var(--border-glass-strong);
     border-radius: var(--radius-xl);
-    padding: clamp(12px, 1.2vw, 18px) clamp(16px, 1.6vw, 24px);
+    padding: clamp(14px, 2.6vw, 20px) clamp(18px, 3.2vw, 26px);
     box-shadow: var(--shadow-lg);
+    margin-top: clamp(28px, 5vw, 44px);
   }
-  .tv-join-qr { background: #fff; padding: 8px; border-radius: var(--radius-sm); line-height: 0; }
-  .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(60px, 5.4vw, 88px); height: clamp(60px, 5.4vw, 88px); }
+  .tv-join-qr { background: #fff; padding: 8px; border-radius: var(--radius-sm); line-height: 0; flex-shrink: 0; }
+  .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(64px, 11vw, 84px); height: clamp(64px, 11vw, 84px); }
   .tv-join-text { display: flex; flex-direction: column; gap: 2px; }
-  .tv-join-title { font-size: clamp(13px, 1.05vw, 17px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-  .tv-join-sub { font-size: clamp(11px, 0.85vw, 14px); color: var(--text-secondary); max-width: 22ch; }
+  .tv-join-title { font-size: clamp(14px, 2.6vw, 18px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tv-join-sub { font-size: clamp(11px, 2vw, 14px); color: var(--text-secondary); max-width: 26ch; }
 
   /* ---------- Footer ---------- */
   .tv-footer {
@@ -290,8 +320,8 @@
     z-index: 1;
     flex-shrink: 0;
     text-align: center;
-    padding-top: clamp(16px, 1.8vw, 26px);
-    font-size: clamp(10px, 0.8vw, 13px);
+    padding-top: clamp(16px, 2.8vw, 24px);
+    font-size: clamp(10px, 1.6vw, 12px);
     color: var(--text-muted);
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -321,7 +351,10 @@
     <section class="split-panel">
       <div class="lb-panel-header">
         <div class="lb-panel-title">🏆 Top Regulars</div>
-        <div class="lb-panel-period" id="lb-period-label">This Month</div>
+        <div class="lb-panel-period-wrap">
+          <div class="lb-panel-period" id="lb-period-label">This Month</div>
+          <div class="lb-panel-progress"><div class="lb-panel-progress-fill" id="lb-progress-fill"></div></div>
+        </div>
       </div>
       <div class="lb-panel-list" id="lb-panel-list">
         <div class="lb-panel-empty">Loading leaderboard…</div>
@@ -382,7 +415,9 @@
     // LEADERBOARD — alternates between "This Month" and "All Time"
     // every 12s so an unattended display stays interesting instead of
     // showing one static list all day. Both lists are fetched together;
-    // the rotation just toggles which cached list is shown.
+    // the rotation just toggles which cached list is shown. A filling
+    // progress rail under the period pill makes the countdown to the
+    // next swap visible instead of the change just happening silently.
     // ==========================================
     let lbPeriod = 'month';
     let lbMonthly = [];
@@ -455,17 +490,37 @@
       const list = document.getElementById('lb-panel-list');
       const label = document.getElementById('lb-period-label');
       list.style.opacity = '0';
+      list.style.transform = 'translateY(6px)';
       label.style.opacity = '0';
       setTimeout(() => {
         lbPeriod = lbPeriod === 'month' ? 'alltime' : 'month';
         renderLeaderboardPanel();
         list.style.opacity = '1';
+        list.style.transform = 'translateY(0)';
         label.style.opacity = '1';
-      }, 400);
+      }, 350);
     }
 
+    // Restarts the 12s fill animation in sync with each rotation —
+    // toggling the class forces the browser to replay it from 0%.
+    // Toggling a class + reflow restarts a CSS *animation*, but not a
+    // *transition* — the property and the transition itself change
+    // together in one style recalc, so the browser never sees a
+    // separate "before" state to animate from. Driving it via inline
+    // styles with an explicit transition:none reset in between is the
+    // reliable way to restart a transition-based fill like this.
+    function restartProgressRail() {
+      const fill = document.getElementById('lb-progress-fill');
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+      void fill.offsetWidth; // force the reset to actually paint first
+      fill.style.transition = 'width 12s linear';
+      fill.style.width = '100%';
+    }
+    restartProgressRail();
+
     // ==========================================
-    // MENU (right half) — same rendering as menu.html.
+    // MENU — same rendering as menu.html.
     // ==========================================
     function renderMenu(items) {
       const grid = document.getElementById('tv-grid');
@@ -575,7 +630,7 @@
     setInterval(fetchLeaderboards, 60000);
     setInterval(fetchMenu, 60000);
     setInterval(fetchCampaign, 60000);
-    setInterval(rotateLeaderboardPeriod, 12000);
+    setInterval(() => { rotateLeaderboardPeriod(); restartProgressRail(); }, 12000);
 
     // An always-on TV/tablet tab can accumulate memory/stale-connection
     // issues over days — a clean reload once every 6 hours keeps it healthy.
