@@ -103,6 +103,12 @@ const TRANSLATIONS = {
     voidNoRedemption: "No redemption to void for this customer",
     voidErrorConnection: "Could not void — check your connection",
     voidSuccess: "Redemption voided",
+    btnMarkStudent: "Mark as Student",
+    btnUnmarkStudent: "Student ✓ (Tap to Remove)",
+    studentBadgeLabel: "Student",
+    studentStatusOn: "Marked as a verified student",
+    studentStatusOff: "Student status removed",
+    studentStatusError: "Could not update — check your connection",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
     navCard: "Card",
@@ -310,6 +316,12 @@ const TRANSLATIONS = {
     voidNoRedemption: "Нема искористување за поништување за овој клиент",
     voidErrorConnection: "Не можеше да се поништи — проверете ја вашата врска",
     voidSuccess: "Искористувањето е поништено",
+    btnMarkStudent: "Означи како студент",
+    btnUnmarkStudent: "Студент ✓ (Допри за отстранување)",
+    studentBadgeLabel: "Студент",
+    studentStatusOn: "Означен како потврден студент",
+    studentStatusOff: "Статусот на студент е отстранет",
+    studentStatusError: "Не можеше да се ажурира — проверете ја вашата врска",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
     navCard: "Картичка",
@@ -517,6 +529,12 @@ const TRANSLATIONS = {
     voidNoRedemption: "Nuk ka shfrytëzim për të anuluar për këtë klient",
     voidErrorConnection: "Nuk mund të anulohej — kontrollo lidhjen",
     voidSuccess: "Shfrytëzimi u anulua",
+    btnMarkStudent: "Shëno si Student",
+    btnUnmarkStudent: "Student ✓ (Prek për ta hequr)",
+    studentBadgeLabel: "Student",
+    studentStatusOn: "U shënua si student i verifikuar",
+    studentStatusOff: "Statusi i studentit u hoq",
+    studentStatusError: "Nuk mund të përditësohej — kontrollo lidhjen",
     staffModeTitle: "Modaliteti i Stafit Aktiv",
     staffModeText: "Zgjidh një klient nga lista për ta parë dhe vulosur kartën.",
     navCard: "Karta",
@@ -850,7 +868,8 @@ function mapDbRowToCustomer(d) {
     history: d.history || [],
     avatar: d.avatar || 'person',
     totalStampsEarned: d.total_stamps_earned || 0,
-    rewardBankedAt: d.reward_banked_at || null
+    rewardBankedAt: d.reward_banked_at || null,
+    isStudent: !!d.is_student
   });
 }
 
@@ -892,6 +911,23 @@ const cloud = {
     try {
       const res = await withTimeout(
         supabaseClient.rpc('staff_set_avatar', { p_token: staffToken, p_customer_id: customerId, p_avatar: avatar }),
+        2500
+      );
+      if (res.error || !res.data || !res.data.length) return null;
+      return mapDbRowToCustomer(res.data[0]);
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // Staff marking a customer as a verified student (or unmarking) — the
+  // one-time flag that lets the customer's own QR/card screen carry the
+  // student badge from then on, so staff never need a second app/QR.
+  async staffSetStudentStatus(staffToken, customerId, isStudent) {
+    if (!supabaseClient || !staffToken) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_set_student_status', { p_token: staffToken, p_customer_id: customerId, p_is_student: isStudent }),
         2500
       );
       if (res.error || !res.data || !res.data.length) return null;
@@ -1800,6 +1836,9 @@ const DOM = {
   cardNumber: document.getElementById('card-number'),
   stampBadge: document.getElementById('stamp-badge'),
   stampBadgeLabel: document.getElementById('stamp-badge-label'),
+  studentBadge: document.getElementById('student-badge'),
+  btnToggleStudent: document.getElementById('btn-toggle-student'),
+  btnToggleStudentLabel: document.getElementById('btn-toggle-student-label'),
   btnShowQr: document.getElementById('btn-show-qr'),
   btnLogoutHeader: document.getElementById('btn-logout-header'),
 
@@ -3048,6 +3087,27 @@ function setupEventListeners() {
     });
   }
 
+  // Mark/unmark a customer as a verified student — a one-time flag so
+  // staff only ever need to check this app's QR going forward, not a
+  // second one for student proof.
+  if (DOM.btnToggleStudent) {
+    DOM.btnToggleStudent.addEventListener('click', async () => {
+      if (!state.selectedCustomerId || !state.isAdmin || !state.staffToken) return;
+      const current = await db.getCustomer(state.selectedCustomerId);
+      const nextValue = !(current && current.isStudent);
+      const updated = await cloud.staffSetStudentStatus(state.staffToken, state.selectedCustomerId, nextValue);
+      if (!updated) {
+        showToast(t('studentStatusError'), 'error');
+        return;
+      }
+      await db.saveCustomer(updated);
+      state.customers = await db.getAllCustomers();
+      await updateCardUI();
+      renderCustomersList(DOM.customerSearch.value);
+      showToast(nextValue ? t('studentStatusOn') : t('studentStatusOff'), 'success');
+    });
+  }
+
   // Action: Keep in Wallet & Reset Card — the server re-checks stamps
   // itself, so this can no longer be forged by mutating a local object.
   DOM.btnCloseReward.addEventListener('click', async () => {
@@ -3634,6 +3694,14 @@ async function updateCardUI() {
     } else {
       DOM.stampBadge.classList.add('hidden');
     }
+  }
+
+  // Verified-student badge — set once by staff, then shown automatically
+  // on every future visit so a second app/QR is never needed again.
+  if (DOM.studentBadge) DOM.studentBadge.classList.toggle('hidden', !customer.isStudent);
+  if (DOM.btnToggleStudent && DOM.btnToggleStudentLabel) {
+    DOM.btnToggleStudent.classList.toggle('active', !!customer.isStudent);
+    DOM.btnToggleStudentLabel.textContent = customer.isStudent ? t('btnUnmarkStudent') : t('btnMarkStudent');
   }
 
   const stamps = customer.stamps;

@@ -588,6 +588,26 @@ input { font: inherit; color: inherit; }
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
+.student-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.student-badge-mark {
+  width: 10px;
+  height: auto;
+  /* Source mark is a white silhouette (built for dark backgrounds); this
+     badge is an inverted white pill, so flip it dark to stay visible. */
+  filter: invert(1);
+}
 .card-number {
   font-family: var(--font-body);
   font-size: 11px;
@@ -785,6 +805,25 @@ input { font: inherit; color: inherit; }
   transition: all 0.2s var(--ease-out);
 }
 .btn-void-link:active { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
+.btn-student-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border-glass-strong);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  transition: all 0.2s var(--ease-out);
+}
+.btn-student-toggle:active { transform: scale(0.97); }
+.btn-student-toggle.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
+}
 
 /* ── Empty State ──────────────────────────────────────────── */
 .empty-state {
