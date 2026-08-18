@@ -227,10 +227,10 @@ const TRANSLATIONS = {
     settingsCampaign: "Stamp Campaign",
     campaignDoubleStamps: "Double Stamps",
     campaignInactive: "Inactive",
-    badge_bronze: "Guest",
-    badge_silver: "Neighbor",
-    badge_gold: "Local",
-    badge_platinum: "Mayor of Eightysix°",
+    badge_bronze: "Bronze",
+    badge_silver: "Silver",
+    badge_gold: "Gold",
+    badge_platinum: "Platinum",
     menuBonusNoteTitle: "Double Dose Bonus",
     menuBonusNoteBody: "Double-dose drinks like Freddo Espresso earn <strong>2 stamps</strong> instead of 1. Every 10 stamps unlocks 1 free coffee.",
     catEspressoBased: "Espresso Based",
@@ -438,10 +438,10 @@ const TRANSLATIONS = {
     settingsCampaign: "Кампања со печати",
     campaignDoubleStamps: "Двојни печати",
     campaignInactive: "Неактивна",
-    badge_bronze: "Гостин",
-    badge_silver: "Сосед",
-    badge_gold: "Мештанин",
-    badge_platinum: "Градоначалник на Eightysix°",
+    badge_bronze: "Бронза",
+    badge_silver: "Сребро",
+    badge_gold: "Злато",
+    badge_platinum: "Платина",
     menuBonusNoteTitle: "Бонус за двојна доза",
     menuBonusNoteBody: "Пијалаците со двојна доза (пр. Фредо еспресо) носат <strong>2 печати</strong> наместо 1. Секои 10 печати отклучуваат 1 бесплатно кафе.",
     catEspressoBased: "Еспресо пијалаци",
@@ -649,10 +649,10 @@ const TRANSLATIONS = {
     settingsCampaign: "Fushata e Vulave",
     campaignDoubleStamps: "Vula të Dyfishta",
     campaignInactive: "Joaktive",
-    badge_bronze: "Mysafir",
-    badge_silver: "Fqinj",
-    badge_gold: "Vendas",
-    badge_platinum: "Kryetari i Eightysix°",
+    badge_bronze: "Bronz",
+    badge_silver: "Argjend",
+    badge_gold: "Ar",
+    badge_platinum: "Platin",
     menuBonusNoteTitle: "Bonus për Dozë të Dyfishtë",
     menuBonusNoteBody: "Pijet me dozë të dyfishtë (p.sh. Freddo Espresso) fitojnë <strong>2 vula</strong> në vend të 1. Çdo 10 vula zhbllokojnë 1 kafe falas.",
     catEspressoBased: "Bazuar në Espresso",
@@ -1517,7 +1517,8 @@ const cloud = {
             // them up, since "New Stamp Received!" alone didn't.
             const latestEntry = updatedCustomer.history && updatedCustomer.history[0];
             const stampedBy = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffName : null;
-            showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success');
+            const stampedByAvatar = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffAvatar : null;
+            showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success', { avatar: stampedByAvatar, duration: 3500 });
 
             if (updatedCustomer.stamps === MAX_STAMPS && !state.isAdmin) {
               playRewardSound();
@@ -1577,7 +1578,8 @@ function startCloudPolling() {
         if (cloudCustomer.stamps > previousStamps) {
           const latestEntry = cloudCustomer.history && cloudCustomer.history[0];
           const stampedBy = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffName : null;
-          showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success');
+          const stampedByAvatar = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffAvatar : null;
+          showToast(stampedBy ? `New Stamp from ${stampedBy}!` : 'New Stamp Received!', 'success', { avatar: stampedByAvatar, duration: 3500 });
           if (cloudCustomer.stamps === MAX_STAMPS && !state.isAdmin) {
             openModal(DOM.rewardOverlay);
             fireConfetti();
@@ -4149,11 +4151,19 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 });
 
-function showToast(message, type = 'info') {
+let toastHideTimer = null;
+function showToast(message, type = 'info', options = {}) {
   DOM.toastMessage.textContent = message;
-  DOM.toastIcon.textContent = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+  if (options.avatar && MONOCHROME_AVATARS[options.avatar]) {
+    DOM.toastIcon.classList.add('toast-avatar');
+    DOM.toastIcon.innerHTML = MONOCHROME_AVATARS[options.avatar];
+  } else {
+    DOM.toastIcon.classList.remove('toast-avatar');
+    DOM.toastIcon.textContent = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+  }
   DOM.toast.classList.add('show');
-  setTimeout(() => DOM.toast.classList.remove('show'), 2500);
+  clearTimeout(toastHideTimer);
+  toastHideTimer = setTimeout(() => DOM.toast.classList.remove('show'), options.duration || 2500);
 }
 
 // ==========================================
