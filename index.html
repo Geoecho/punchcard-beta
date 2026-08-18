@@ -307,7 +307,19 @@
           <span data-i18n="btnShowQr">Show My QR Code</span>
         </button>
       </div>
-      
+
+      <!-- Student Discount Promo (Customer, not-yet-verified only) -->
+      <div class="student-promo-banner hidden" id="student-promo-banner">
+        <div class="student-promo-left">
+          <img src="icons/netaville-mark.png" alt="" class="student-promo-icon">
+          <div class="student-promo-info">
+            <div class="student-promo-title" data-i18n="studentPromoTitle">Get the Student Discount</div>
+            <div class="student-promo-subtitle" data-i18n="studentPromoSubtitle">Verify with Netaville, then ask staff to confirm</div>
+          </div>
+        </div>
+        <a href="#" id="btn-student-promo-download" class="student-promo-btn" target="_blank" rel="noopener" data-i18n="studentPromoBtn">Get Netaville</a>
+      </div>
+
       <!-- Admin Add Stamp Action (Hidden by default) -->
       <div class="home-actions hidden" id="admin-actions">
         <div class="stamp-actions-row">
@@ -530,6 +542,20 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
+      </div>
+
+      <div class="settings-section customer-only hidden" id="settings-student-section">
+        <div class="settings-section-title" data-i18n="settingsStudentDiscount">Student Discount</div>
+        <a href="#" id="settings-student-link" class="settings-item" target="_blank" rel="noopener">
+          <div class="settings-item-left">
+            <img src="icons/netaville-mark.png" alt="" class="settings-item-icon settings-item-icon-netaville">
+            <div>
+              <div class="settings-item-label" data-i18n="studentPromoTitle">Get the Student Discount</div>
+              <div class="settings-item-sublabel" data-i18n="studentPromoSubtitle">Verify with Netaville, then ask staff to confirm</div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </a>
       </div>
 
       <div class="settings-section customer-only">

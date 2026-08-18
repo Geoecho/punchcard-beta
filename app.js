@@ -16,6 +16,11 @@ const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
 const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 
+// Netaville app store links — the "student discount" promo banner stays
+// hidden until these are filled in, so it can't ever point somewhere broken.
+const NETAVILLE_ANDROID_URL = '';
+const NETAVILLE_IOS_URL = '';
+
 let supabaseClient = null;
 let realtimeChannel = null;
 
@@ -109,6 +114,10 @@ const TRANSLATIONS = {
     studentStatusOn: "Marked as a verified student",
     studentStatusOff: "Student status removed",
     studentStatusError: "Could not update — check your connection",
+    settingsStudentDiscount: "Student Discount",
+    studentPromoTitle: "Get the Student Discount",
+    studentPromoSubtitle: "Verify with Netaville, then ask staff to confirm",
+    studentPromoBtn: "Get Netaville",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
     navCard: "Card",
@@ -322,6 +331,10 @@ const TRANSLATIONS = {
     studentStatusOn: "Означен како потврден студент",
     studentStatusOff: "Статусот на студент е отстранет",
     studentStatusError: "Не можеше да се ажурира — проверете ја вашата врска",
+    settingsStudentDiscount: "Студентски попуст",
+    studentPromoTitle: "Добијте студентски попуст",
+    studentPromoSubtitle: "Потврдете се преку Netaville, потоа побарајте персоналот да потврди",
+    studentPromoBtn: "Преземи Netaville",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
     navCard: "Картичка",
@@ -535,6 +548,10 @@ const TRANSLATIONS = {
     studentStatusOn: "U shënua si student i verifikuar",
     studentStatusOff: "Statusi i studentit u hoq",
     studentStatusError: "Nuk mund të përditësohej — kontrollo lidhjen",
+    settingsStudentDiscount: "Zbritje për Studentë",
+    studentPromoTitle: "Merr Zbritjen për Studentë",
+    studentPromoSubtitle: "Verifikohu me Netaville, pastaj kërko stafit ta konfirmojë",
+    studentPromoBtn: "Merr Netaville",
     staffModeTitle: "Modaliteti i Stafit Aktiv",
     staffModeText: "Zgjidh një klient nga lista për ta parë dhe vulosur kartën.",
     navCard: "Karta",
@@ -1840,6 +1857,10 @@ const DOM = {
   btnToggleStudent: document.getElementById('btn-toggle-student'),
   btnToggleStudentLabel: document.getElementById('btn-toggle-student-label'),
   btnShowQr: document.getElementById('btn-show-qr'),
+  studentPromoBanner: document.getElementById('student-promo-banner'),
+  btnStudentPromoDownload: document.getElementById('btn-student-promo-download'),
+  settingsStudentSection: document.getElementById('settings-student-section'),
+  settingsStudentLink: document.getElementById('settings-student-link'),
   btnLogoutHeader: document.getElementById('btn-logout-header'),
 
   // Avatar Picker Elements
@@ -3652,6 +3673,16 @@ function getEarnedBadge(totalStampsEarned) {
   return STAMP_BADGES.find(b => (totalStampsEarned || 0) >= b.threshold) || null;
 }
 
+// Picks the right store link for the device viewing the app. Falls back
+// to Android for anything that isn't clearly iOS, and returns '' (hides
+// the promo entirely) if neither link is configured yet.
+function netavilleStoreUrl() {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  if (isIOS) return NETAVILLE_IOS_URL || NETAVILLE_ANDROID_URL || '';
+  return NETAVILLE_ANDROID_URL || NETAVILLE_IOS_URL || '';
+}
+
 async function updateCardUI() {
   if (!state.selectedCustomerId) {
     DOM.homeGreeting.textContent = t('homeGreetingGuest');
@@ -3771,6 +3802,20 @@ async function updateCardUI() {
   }
 
   if (!state.isAdmin) refreshCustomerCampaignBanner();
+
+  // Student discount promo — only for customers who aren't verified yet,
+  // and only once real store links are configured (never point somewhere
+  // broken in the meantime).
+  if (DOM.studentPromoBanner && DOM.btnStudentPromoDownload) {
+    const storeUrl = netavilleStoreUrl();
+    const showPromo = !state.isAdmin && !customer.isStudent && !!storeUrl;
+    DOM.btnStudentPromoDownload.href = storeUrl || '#';
+    DOM.studentPromoBanner.classList.toggle('hidden', !showPromo);
+    if (DOM.settingsStudentSection && DOM.settingsStudentLink) {
+      DOM.settingsStudentLink.href = storeUrl || '#';
+      DOM.settingsStudentSection.classList.toggle('hidden', !showPromo);
+    }
+  }
 
   if (state.isAdmin) {
     DOM.btnAddStamp.disabled = stamps >= MAX_STAMPS;

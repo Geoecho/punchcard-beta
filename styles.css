@@ -1002,9 +1002,10 @@ input { font: inherit; color: inherit; }
 .staff-stat-row-count { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .settings-section { padding: 0 24px; margin-bottom: 24px; }
 .settings-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-.settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; }
+.settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
 .settings-item-left { display: flex; align-items: center; gap: 12px; }
 .settings-item-icon { width: 32px; height: 32px; background: var(--bg-secondary); border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.settings-item-icon-netaville { object-fit: contain; padding: 6px; box-sizing: border-box; }
 .settings-item-label { font-size: 14px; font-weight: 500; }
 .settings-item-sublabel { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .settings-item-sublabel:empty { display: none; }
@@ -1435,6 +1436,43 @@ input { font: inherit; color: inherit; }
   border-radius: var(--radius-full);
 }
 .install-prompt-close:active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+
+/* ── Student Discount Promo Banner (Home View) ────────────── */
+.student-promo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin: 16px 20px 0;
+  box-shadow: var(--shadow-md);
+}
+.student-promo-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.student-promo-icon {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+  background: var(--text-primary); padding: 8px; box-sizing: border-box;
+  object-fit: contain;
+  /* Source mark is a white silhouette; this icon sits on a white circle,
+     so flip it dark to stay visible (same trick as .student-badge-mark). */
+  filter: invert(1);
+}
+.student-promo-info { min-width: 0; }
+.student-promo-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.student-promo-subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.student-promo-btn {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.student-promo-btn:active { transform: scale(0.96); }
 
 /* ── Double Stamps Campaign Banner (Home View) ────────────── */
 .campaign-banner {
