@@ -1816,6 +1816,7 @@ const DOM = {
   adminEmptyState: document.getElementById('admin-empty-state'),
   homeGreeting: document.getElementById('home-greeting'),
   homeSubtitle: document.getElementById('home-subtitle'),
+  homeCardId: document.getElementById('home-card-id'),
   cardNumber: document.getElementById('card-number'),
   stampBadge: document.getElementById('stamp-badge'),
   stampBadgeLabel: document.getElementById('stamp-badge-label'),
@@ -3652,6 +3653,7 @@ async function updateCardUI() {
     DOM.homeGreeting.textContent = t('homeGreetingGuest');
     DOM.homeSubtitle.textContent = t('homeSubtitleGuest');
     DOM.cardNumber.textContent = "CARD #---";
+    if (DOM.homeCardId) DOM.homeCardId.textContent = '';
     for (let i = 0; i < MAX_STAMPS; i++) {
       const cup = document.getElementById(`stamp-${i}`);
       if (cup) cup.classList.remove('earned', 'earning');
@@ -3670,6 +3672,7 @@ async function updateCardUI() {
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
+  if (DOM.homeCardId) DOM.homeCardId.textContent = `CARD #${customer.id.substring(0, 6)}`;
   updateGreetingMarquee();
 
   // Render Customer 2D Monochrome Avatar

@@ -471,6 +471,18 @@ input { font: inherit; color: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.home-card-id {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.home-card-id:empty { display: none; }
 
 .btn-logout-header {
   display: flex;
