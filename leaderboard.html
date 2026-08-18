@@ -132,11 +132,16 @@
   .split-divider { display: none; }
 
   /* Landscape (a TV mounted sideways, or a tablet turned flat) — switch
-     to side-by-side, each half filling the available height. */
+     to side-by-side columns of equal width. Deliberately NOT clipped to
+     a fixed half-height: a long menu (or, in future, a longer
+     leaderboard) needs to stay fully visible rather than being cut off
+     to fit a rigid box, so each column just grows to its own content
+     height and the page scrolls to reveal whatever doesn't fit on
+     screen at once — same guarantee as portrait mode. */
   @media (min-aspect-ratio: 6/5) and (min-width: 900px) {
-    .split-main { flex-direction: row; min-height: 0; }
-    .split-panel { flex: 1 1 50%; min-height: 0; overflow: hidden; }
-    .split-divider { display: block; width: 1px; background: var(--border-glass-strong); flex-shrink: 0; }
+    .split-main { flex-direction: row; align-items: flex-start; }
+    .split-panel { flex: 1 1 50%; }
+    .split-divider { display: block; align-self: stretch; width: 1px; background: var(--border-glass-strong); flex-shrink: 0; }
   }
 
   /* ---------- Leaderboard panel ---------- */
