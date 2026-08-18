@@ -199,10 +199,6 @@ const TRANSLATIONS = {
     labelBonusStamps: "Bonus Stamps",
     btnDelete: "Delete",
     btnSave: "Save",
-    settingsChangeUsername: "Username",
-    setUsernameTitle: "Username",
-    setUsernameSubtitle: "Lets you log in without Google, too.",
-    toastUsernameSaved: "Username saved!",
     settingsChangeDisplayName: "Display Name",
     setDisplayNameTitle: "Display Name",
     setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
@@ -410,10 +406,6 @@ const TRANSLATIONS = {
     labelBonusStamps: "Бонус печати",
     btnDelete: "Избриши",
     btnSave: "Зачувај",
-    settingsChangeUsername: "Корисничко име",
-    setUsernameTitle: "Корисничко име",
-    setUsernameSubtitle: "Ви овозможува да се најавите и без Google.",
-    toastUsernameSaved: "Корисничкото име е зачувано!",
     settingsChangeDisplayName: "Име за прикажување",
     setDisplayNameTitle: "Име за прикажување",
     setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
@@ -621,10 +613,6 @@ const TRANSLATIONS = {
     labelBonusStamps: "Vula Bonus",
     btnDelete: "Fshi",
     btnSave: "Ruaj",
-    settingsChangeUsername: "Emri i Përdoruesit",
-    setUsernameTitle: "Emri i Përdoruesit",
-    setUsernameSubtitle: "Të lejon të identifikohesh edhe pa Google.",
-    toastUsernameSaved: "Emri i përdoruesit u ruajt!",
     settingsChangeDisplayName: "Emri i Shfaqur",
     setDisplayNameTitle: "Emri i Shfaqur",
     setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
@@ -1059,31 +1047,6 @@ const cloud = {
     }
   },
 
-  // Narrow, single-purpose write — only ever touches phone/username, so
-  // it can't clobber stamps/history the way re-sending a full customer
-  // record could if the local copy is stale (see
-  // supabase-customer-set-username.sql for why this is separate from
-  // customer_save_self).
-  async setUsername(token, username) {
-    if (!supabaseClient) return { error: 'offline' };
-    try {
-      const res = await withTimeout(
-        supabaseClient.rpc('customer_set_username', { p_token: token || null, p_username: username }),
-        4000
-      );
-      if (res.error) {
-        const msg = res.error.message || '';
-        if (msg.includes('username_taken')) return { error: 'username_taken' };
-        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
-        return { error: 'unknown' };
-      }
-      if (!res.data || !res.data.length) return { error: 'unknown' };
-      return { customer: mapDbRowToCustomer(res.data[0]) };
-    } catch (e) {
-      return { error: 'offline' };
-    }
-  },
-
   // Display name (customers.name — shown on the card/QR/leaderboard) is
   // deliberately separate from the login username (customers.phone):
   // rate-limited to once every 14 days, enforced server-side. On a
@@ -1200,7 +1163,14 @@ const cloud = {
     try {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + window.location.pathname }
+        options: {
+          redirectTo: window.location.origin + window.location.pathname,
+          // Without this, Google silently reuses whatever Google session is
+          // already active in the browser instead of showing the account
+          // chooser — so logging out in-app and tapping "Continue with
+          // Google" again just signs back into the same old account.
+          queryParams: { prompt: 'select_account' }
+        }
       });
       if (error) return { error: 'offline' };
       return { ok: true };
@@ -1227,36 +1197,46 @@ const cloud = {
   },
 
   // ---- Staff-attributed writes ----
+  // Returns { customer } on success or { error, customer: null } on
+  // failure — the error reason matters here (see caller) because "check
+  // your connection" is actively misleading for a staff member who was
+  // just online a second ago (an expired 24h session, or a customer
+  // that genuinely never made it to the server, are both much more
+  // likely day-to-day than a real network drop).
   async staffAddStamp(token, customerId, baseStamps, drinkName) {
-    if (!supabaseClient || !token) return null;
+    if (!supabaseClient) return { error: 'offline' };
+    if (!token) return { error: 'session_expired' };
     try {
       const res = await withTimeout(
         supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
         4000
       );
       if (res.error) {
+        const msg = String(res.error.message || '');
+        if (msg.includes('unauthorized')) return { error: 'session_expired' };
+
         // Customer exists locally (e.g. a QR scan whose staff_create_customer
         // call failed earlier and silently fell back to a local-only record)
         // but was never actually created server-side. Recreate it from the
         // local copy and retry once, instead of surfacing a "check your
         // connection" error for what's really a stale local record.
-        if (String(res.error.message || '').includes('customer_not_found')) {
+        if (msg.includes('customer_not_found')) {
           const local = await db.getCustomer(customerId);
           const created = await this.staffCreateCustomer(token, customerId, local ? local.name : 'Customer', local ? local.phone : '');
-          if (!created) return null;
+          if (!created) return { error: 'customer_missing' };
           const retry = await withTimeout(
             supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
             4000
           );
-          if (retry.error || !retry.data || !retry.data.length) return null;
-          return mapDbRowToCustomer(retry.data[0]);
+          if (retry.error || !retry.data || !retry.data.length) return { error: 'customer_missing' };
+          return { customer: mapDbRowToCustomer(retry.data[0]) };
         }
-        return null;
+        return { error: 'unknown' };
       }
-      if (!res.data || !res.data.length) return null;
-      return mapDbRowToCustomer(res.data[0]);
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
-      return null;
+      return { error: 'offline' };
     }
   },
 
@@ -1825,7 +1805,6 @@ const DOM = {
 
   // Avatar Picker Elements
   btnChangeAvatar: document.getElementById('btn-change-avatar'),
-  btnChangeUsername: document.getElementById('btn-change-username'),
   userAvatarDisplay: document.getElementById('user-avatar-display'),
   modalAvatarPicker: document.getElementById('modal-avatar-picker'),
   overlayAvatarPicker: document.getElementById('overlay-avatar-picker'),
@@ -1871,12 +1850,6 @@ const DOM = {
   userAccountLabel: document.getElementById('user-account-label'),
   campaignToggle: document.getElementById('campaign-toggle'),
   campaignStatusText: document.getElementById('campaign-status-text'),
-  modalSetUsername: document.getElementById('modal-set-username'),
-  overlaySetUsername: document.getElementById('overlay-set-username'),
-  setUsernameInput: document.getElementById('set-username-input'),
-  setUsernameError: document.getElementById('set-username-error'),
-  btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
-  btnSetUsernameSave: document.getElementById('btn-set-username-save'),
   btnChangeDisplayName: document.getElementById('btn-change-displayname'),
   modalSetDisplayName: document.getElementById('modal-set-displayname'),
   overlaySetDisplayName: document.getElementById('overlay-set-displayname'),
@@ -2442,20 +2415,6 @@ function setupEventListeners() {
   if (DOM.btnCloseAvatarPicker) DOM.btnCloseAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
   if (DOM.overlayAvatarPicker) DOM.overlayAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
 
-  // Change Username (Settings > Account) — pre-fills with whatever
-  // username the customer already has, blank for Google customers who
-  // never set one.
-  if (DOM.btnChangeUsername) {
-    DOM.btnChangeUsername.addEventListener('click', async () => {
-      const activeId = state.myCustomerId;
-      if (!activeId) return;
-      const customer = await db.getCustomer(activeId);
-      if (DOM.setUsernameInput) DOM.setUsernameInput.value = (customer && customer.phone) || '';
-      if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
-      openModal(DOM.modalSetUsername);
-    });
-  }
-
   // Change Display Name (Settings > Account) — separate from the login
   // username above; this is the name shown on the card/QR/leaderboard.
   if (DOM.btnChangeDisplayName) {
@@ -2986,11 +2945,23 @@ function setupEventListeners() {
 
       closeModal(DOM.modalDrinkPicker);
 
-      const updated = await cloud.staffAddStamp(state.staffToken, state.selectedCustomerId, baseStamps, drinkName);
-      if (!updated) {
-        showToast('Could not add stamp — check your connection', 'error');
+      const result = await cloud.staffAddStamp(state.staffToken, state.selectedCustomerId, baseStamps, drinkName);
+      if (result.error) {
+        if (result.error === 'session_expired') {
+          showToast('Your staff session expired — please log in again', 'error');
+          state.staffToken = null;
+          state.staffName = null;
+          localStorage.removeItem('86_staff_session');
+          toggleAdminMode(false);
+          switchView('view-admin-login');
+        } else if (result.error === 'customer_missing') {
+          showToast('This customer never made it to the server — scan their card again to re-sync', 'error');
+        } else {
+          showToast('Could not add stamp — check your connection', 'error');
+        }
         return;
       }
+      const updated = result.customer;
 
       await db.saveCustomer(updated);
       state.customers = await db.getAllCustomers();
@@ -3144,45 +3115,6 @@ function setupEventListeners() {
   } else {
     if (DOM.btnRedeemBanked) DOM.btnRedeemBanked.addEventListener('click', handleRedeem);
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', handleRedeem);
-  }
-
-  // Set/Change Username modal (opened from Settings > Account).
-  if (DOM.btnSetUsernameSkip) DOM.btnSetUsernameSkip.addEventListener('click', () => closeModal(DOM.modalSetUsername));
-  if (DOM.overlaySetUsername) DOM.overlaySetUsername.addEventListener('click', () => closeModal(DOM.modalSetUsername));
-  if (DOM.btnSetUsernameSave) {
-    DOM.btnSetUsernameSave.addEventListener('click', async () => {
-      const username = (DOM.setUsernameInput ? DOM.setUsernameInput.value : '').trim().toLowerCase();
-      if (!username) {
-        DOM.setUsernameError.textContent = t('errChooseUsername');
-        return;
-      }
-      if (!state.myCustomerId) {
-        closeModal(DOM.modalSetUsername);
-        return;
-      }
-
-      DOM.btnSetUsernameSave.disabled = true;
-      const result = await cloud.setUsername(state.myToken, username);
-      DOM.btnSetUsernameSave.disabled = false;
-
-      if (result.error === 'username_taken') {
-        DOM.setUsernameError.textContent = t('errUsernameTaken');
-        return;
-      }
-      if (result.error) {
-        DOM.setUsernameError.textContent = t('errServerConnection');
-        return;
-      }
-
-      await db.saveCustomer(result.customer);
-      const savedSession = JSON.parse(localStorage.getItem('86_user_session') || 'null');
-      if (savedSession && savedSession.id === result.customer.id) {
-        savedSession.phone = result.customer.phone;
-        localStorage.setItem('86_user_session', JSON.stringify(savedSession));
-      }
-      closeModal(DOM.modalSetUsername);
-      showToast(t('toastUsernameSaved'), 'success');
-    });
   }
 
   if (DOM.btnSetDisplayNameSkip) DOM.btnSetDisplayNameSkip.addEventListener('click', () => closeModal(DOM.modalSetDisplayName));

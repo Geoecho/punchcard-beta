@@ -232,7 +232,11 @@ input { font: inherit; color: inherit; }
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 36px 28px !important;
+  /* Extra top clearance (plus a real safe-area inset for notches/status
+     bars some Android browsers don't otherwise account for) — the
+     language picker is the first element and was getting clipped under
+     the top bar on some Samsung browsers. */
+  padding: calc(56px + env(safe-area-inset-top, 0px)) 28px 36px !important;
   text-align: left;
 }
 
