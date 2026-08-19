@@ -1,0 +1,9 @@
+{
+  "name": "eightysix-punchcard",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static PWA + Supabase; the only server-side code is /api (push notification sending).",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

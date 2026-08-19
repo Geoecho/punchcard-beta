@@ -595,6 +595,26 @@
         </div>
       </div>
 
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsStoreInsights">Store Insights</div>
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-stamps-week">0</div>
+            <div class="stat-label" data-i18n="statStampsWeek">Stamps This Week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-stamps-month">0</div>
+            <div class="stat-label" data-i18n="statStampsMonth">Stamps This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-redemptions-month">0</div>
+            <div class="stat-label" data-i18n="statRedemptionsMonth">Redeemed This Month</div>
+          </div>
+        </div>
+        <div class="settings-item-sublabel" style="margin: 14px 20px 6px;" data-i18n="statTopDrinksLabel">Top Drinks — Last 30 Days</div>
+        <div class="staff-team-stats" id="top-drinks-list"></div>
+      </div>
+
       <div class="settings-section customer-only hidden" id="settings-student-section">
         <div class="settings-section-title" data-i18n="settingsStudentDiscount">Student Discount</div>
         <a href="#" id="settings-student-link" class="settings-item settings-item-promo" target="_blank" rel="noopener">
@@ -630,6 +650,21 @@
             <div class="settings-item-label" data-i18n="settingsChangeDisplayName">Display Name</div>
           </div>
           <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item" id="notifications-toggle-row">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <div>
+              <div class="settings-item-label" data-i18n="settingsNotifications">Notifications</div>
+              <div class="settings-item-sublabel" data-i18n="settingsNotificationsSub">Know the moment a reward's ready</div>
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="notifications-toggle">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
         <div class="settings-item" id="btn-logout-user">
           <div class="settings-item-left">

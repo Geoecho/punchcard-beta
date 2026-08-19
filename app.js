@@ -16,6 +16,11 @@ const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
 const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 
+// Push notifications — public key only (safe to ship client-side; the
+// matching private key that actually signs outgoing pushes lives only
+// in the /api/send-push server function's environment).
+const VAPID_PUBLIC_KEY = 'BFab1o_b_UHZufxv0_ITw8avQ880_qs0ANokCv-3PTNWcluiqotxPurRbVCDt8k3iqG1Q1X69ZMHsHgOAiXHN9c';
+
 // Netaville app store links — the "student discount" promo banner stays
 // hidden until these are filled in, so it can't ever point somewhere broken.
 const NETAVILLE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.netcetera.android.netaville.prod&hl=en&gl=US&pli=1';
@@ -142,6 +147,11 @@ const TRANSLATIONS = {
     statStampsToday: "Stamps Today",
     statRewardsGiven: "Rewards Given",
     statActiveCards: "Active Cards",
+    settingsStoreInsights: "Store Insights",
+    statStampsWeek: "Stamps This Week",
+    statStampsMonth: "Stamps This Month",
+    statRedemptionsMonth: "Redeemed This Month",
+    statTopDrinksLabel: "Top Drinks — Last 30 Days",
     settingsMyProfile: "My Profile",
     statYourStampsToday: "Stamps Today",
     statYourRewardsToday: "Rewards Today",
@@ -228,6 +238,12 @@ const TRANSLATIONS = {
     btnDelete: "Delete",
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
+    settingsNotifications: "Notifications",
+    settingsNotificationsSub: "Know the moment a reward's ready",
+    toastNotificationsEnabled: "Notifications enabled!",
+    toastNotificationsDisabled: "Notifications turned off",
+    errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
+    errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
     setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
     toastDisplayNameSaved: "Display name saved!",
@@ -372,6 +388,11 @@ const TRANSLATIONS = {
     statStampsToday: "Печати денес",
     statRewardsGiven: "Дадени награди",
     statActiveCards: "Активни картички",
+    settingsStoreInsights: "Преглед на продавницата",
+    statStampsWeek: "Печати оваа седмица",
+    statStampsMonth: "Печати овој месец",
+    statRedemptionsMonth: "Искористени овој месец",
+    statTopDrinksLabel: "Најпопуларни пијалоци — последни 30 дена",
     settingsMyProfile: "Мојот профил",
     statYourStampsToday: "Печати денес",
     statYourRewardsToday: "Награди денес",
@@ -458,6 +479,12 @@ const TRANSLATIONS = {
     btnDelete: "Избриши",
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
+    settingsNotifications: "Известувања",
+    settingsNotificationsSub: "Дознајте веднаш штом наградата е достапна",
+    toastNotificationsEnabled: "Известувањата се овозможени!",
+    toastNotificationsDisabled: "Известувањата се исклучени",
+    errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
+    errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
     setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
     toastDisplayNameSaved: "Името е зачувано!",
@@ -602,6 +629,11 @@ const TRANSLATIONS = {
     statStampsToday: "Vula Sot",
     statRewardsGiven: "Shpërblime të Dhëna",
     statActiveCards: "Karta Aktive",
+    settingsStoreInsights: "Statistikat e Dyqanit",
+    statStampsWeek: "Vula Këtë Javë",
+    statStampsMonth: "Vula Këtë Muaj",
+    statRedemptionsMonth: "Shpërblime Këtë Muaj",
+    statTopDrinksLabel: "Pijet Më Të Kërkuara — 30 Ditët e Fundit",
     settingsMyProfile: "Profili Im",
     statYourStampsToday: "Vula Sot",
     statYourRewardsToday: "Shpërblime Sot",
@@ -688,6 +720,12 @@ const TRANSLATIONS = {
     btnDelete: "Fshi",
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
+    settingsNotifications: "Njoftimet",
+    settingsNotificationsSub: "Merr vesh sapo shpërblimi është gati",
+    toastNotificationsEnabled: "Njoftimet u aktivizuan!",
+    toastNotificationsDisabled: "Njoftimet u çaktivizuan",
+    errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
+    errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
     setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
     toastDisplayNameSaved: "Emri u ruajt!",
@@ -1196,6 +1234,60 @@ const cloud = {
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
       return { error: 'offline' };
+    }
+  },
+
+  // ---- Push notifications ----
+  async savePushSubscription(token, subscription) {
+    if (!supabaseClient) return false;
+    try {
+      const json = subscription.toJSON();
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_save_push_subscription', {
+          p_token: token || null,
+          p_endpoint: json.endpoint,
+          p_p256dh: json.keys.p256dh,
+          p_auth: json.keys.auth
+        }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async removePushSubscription(token, endpoint) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_remove_push_subscription', { p_token: token || null, p_endpoint: endpoint }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Fire-and-forget: staff calls this after an action that should notify
+  // a customer (reward earned) or everyone (campaign blast). Never blocks
+  // the action it's attached to — a slow or failed push send shouldn't
+  // stop a stamp from registering.
+  async sendPush({ staffToken, customerId, broadcast, title, body, url }) {
+    try {
+      const res = await withTimeout(
+        fetch('/api/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staffToken, customerId, broadcast, title, body, url })
+        }),
+        6000
+      );
+      if (!res.ok) return { sent: 0 };
+      return await res.json();
+    } catch (e) {
+      return { sent: 0 };
     }
   },
 
@@ -2064,6 +2156,8 @@ const DOM = {
   setDisplayNameError: document.getElementById('set-displayname-error'),
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
+  notificationsToggleRow: document.getElementById('notifications-toggle-row'),
+  notificationsToggle: document.getElementById('notifications-toggle'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
   statActiveCards: document.getElementById('stat-active-cards'),
@@ -2074,6 +2168,10 @@ const DOM = {
   statMyRewardsToday: document.getElementById('stat-my-rewards-today'),
   statMyStampsTotal: document.getElementById('stat-my-stamps-total'),
   staffTeamStatsList: document.getElementById('staff-team-stats-list'),
+  statStampsWeek: document.getElementById('stat-stamps-week'),
+  statStampsMonth: document.getElementById('stat-stamps-month'),
+  statRedemptionsMonth: document.getElementById('stat-redemptions-month'),
+  topDrinksList: document.getElementById('top-drinks-list'),
   btnStaffLogout: document.getElementById('btn-staff-logout'),
   settingsTitle: document.getElementById('settings-title'),
   btnTosSettings: document.getElementById('btn-tos-settings'),
@@ -2493,6 +2591,82 @@ function showUpdateBanner() {
     const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
     if (!isTyping) reload();
   }, 5000);
+}
+
+// ==========================================
+// PUSH NOTIFICATIONS (customer opt-in)
+// ==========================================
+// PushManager wants the VAPID key as a raw Uint8Array, not the
+// base64url string it's stored/transmitted as.
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+  return output;
+}
+
+function pushNotificationsSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+// Reflects actual current state (permission + an active subscription),
+// not just what the customer last clicked — so the toggle is honest
+// after e.g. the OS-level permission gets revoked outside the app.
+async function refreshNotificationsToggleState() {
+  if (!DOM.notificationsToggle) return;
+  if (!pushNotificationsSupported()) {
+    DOM.notificationsToggle.checked = false;
+    if (DOM.notificationsToggleRow) DOM.notificationsToggleRow.style.opacity = '0.5';
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    DOM.notificationsToggle.checked = !!sub && Notification.permission === 'granted';
+  } catch (e) {
+    DOM.notificationsToggle.checked = false;
+  }
+}
+
+async function enablePushNotifications() {
+  if (!pushNotificationsSupported()) return { error: 'unsupported' };
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return { error: 'blocked' };
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    const saved = await cloud.savePushSubscription(state.myToken, sub);
+    if (!saved) return { error: 'offline' };
+    return { ok: true };
+  } catch (e) {
+    return { error: 'offline' };
+  }
+}
+
+async function disablePushNotifications() {
+  if (!pushNotificationsSupported()) return { ok: true };
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      await cloud.removePushSubscription(state.myToken, endpoint);
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: true };
+  }
 }
 
 // token is only passed on an actual login/signup — omit it (e.g. when
@@ -3280,6 +3454,15 @@ function setupEventListeners() {
         playRewardSound();
         hapticPulse([30, 40, 30, 40, 60]);
         showToast(`${drinkName}! Reward Banked for Customer! (${updated.rewardsEarned} Available)`, 'success');
+        // Fire-and-forget — never let a slow/failed push delay the stamp
+        // UI feedback above, which has already happened by this point.
+        cloud.sendPush({
+          staffToken: state.staffToken,
+          customerId: updated.id,
+          title: '🎉 Free coffee unlocked!',
+          body: `${updated.name}, your card is full — come redeem your free drink.`,
+          url: './index.html#signup'
+        });
       } else {
         playStampSound();
         hapticPulse(25);
@@ -3508,6 +3691,35 @@ function setupEventListeners() {
     });
   }
 
+  // Notifications toggle (Settings > Account) — always reflects a
+  // deliberate tap, never an auto-prompt on load. Reverts itself on any
+  // failure so it never shows "on" when the subscription didn't actually
+  // go through.
+  if (DOM.notificationsToggle) {
+    DOM.notificationsToggle.addEventListener('change', async () => {
+      const wantOn = DOM.notificationsToggle.checked;
+      DOM.notificationsToggle.disabled = true;
+
+      if (wantOn) {
+        const result = await enablePushNotifications();
+        if (result.error) {
+          DOM.notificationsToggle.checked = false;
+          const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
+            : result.error === 'blocked' ? t('errNotificationsBlocked')
+            : t('errServerConnection');
+          showToast(msg, 'error');
+        } else {
+          showToast(t('toastNotificationsEnabled'), 'success');
+        }
+      } else {
+        await disablePushNotifications();
+        showToast(t('toastNotificationsDisabled'), 'info');
+      }
+
+      DOM.notificationsToggle.disabled = false;
+    });
+  }
+
   // Stamp Campaign Toggle (e.g. "Double Stamps This Week")
   if (DOM.campaignToggle) {
     DOM.campaignToggle.addEventListener('change', async () => {
@@ -3524,6 +3736,23 @@ function setupEventListeners() {
       state.campaign = result;
       DOM.campaignStatusText.textContent = result.active ? `Active — ${result.multiplier}x stamps` : t('campaignInactive');
       showToast(result.active ? 'Double Stamps campaign is live!' : 'Campaign turned off', 'success');
+
+      // Only offer this on the ON transition — a mass notification is a
+      // bigger deal than a normal toggle flip, so it gets its own
+      // explicit confirmation rather than firing on every flip either way.
+      if (result.active && window.confirm('Notify every subscribed customer that Double Stamps just went live?')) {
+        cloud.sendPush({
+          staffToken: state.staffToken,
+          broadcast: true,
+          title: `✨ ${result.label || 'Double Stamps'} is live!`,
+          body: `${result.multiplier}x stamps on every order today at Eightysix°.`,
+          url: './index.html#signup'
+        }).then(res => {
+          if (res && typeof res.sent === 'number') {
+            showToast(`Notified ${res.sent} customer${res.sent === 1 ? '' : 's'}`, 'info');
+          }
+        });
+      }
     });
   }
 
@@ -3737,6 +3966,7 @@ function switchView(viewId) {
     updateSettingsStats();
     if (!state.isAdmin && state.selectedCustomerId) {
       db.getCustomer(state.selectedCustomerId).then(c => refreshStudentPromoVisibility(c));
+      refreshNotificationsToggleState();
     }
   }
   if (viewId === 'view-activity') renderActivityList();
@@ -4215,6 +4445,18 @@ function updateSettingsStats() {
   let rewardsGiven = 0;
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // "This week" = last 7 days, "this month" = last 30 — rolling windows
+  // rather than calendar week/month, so the numbers stay meaningful no
+  // matter what day it is (a calendar-week counter would read almost
+  // empty every Monday morning).
+  const now = Date.now();
+  const weekCutoff = now - 7 * 24 * 60 * 60 * 1000;
+  const monthCutoff = now - 30 * 24 * 60 * 60 * 1000;
+  let stampsWeek = 0;
+  let stampsMonth = 0;
+  let redemptionsMonth = 0;
+  const drinkCounts = {};
+
   // staffName -> { today, total, rewardsToday } — lets the profile
   // screen show both "my" numbers and a per-teammate breakdown from the
   // same single pass over everyone's history.
@@ -4229,9 +4471,18 @@ function updateSettingsStats() {
     if (c.history && Array.isArray(c.history)) {
       c.history.forEach(h => {
         const isToday = h.timestamp && h.timestamp.startsWith(todayStr);
+        const entryTime = h.timestamp ? new Date(h.timestamp).getTime() : NaN;
         if (h.type === 'stamp') {
           const amount = h.stamps || 1;
           if (isToday) stampsToday += amount;
+          if (!Number.isNaN(entryTime)) {
+            if (entryTime >= weekCutoff) stampsWeek += amount;
+            if (entryTime >= monthCutoff) {
+              stampsMonth += amount;
+              const drinkName = (h.drink || 'Unknown').trim();
+              drinkCounts[drinkName] = (drinkCounts[drinkName] || 0) + 1;
+            }
+          }
           const s = bump(h.staffName);
           s.total += amount;
           if (isToday) s.today += amount;
@@ -4240,6 +4491,7 @@ function updateSettingsStats() {
             rewardsGiven += 1;
             bump(h.staffName).rewardsToday += 1;
           }
+          if (!h.voided && !Number.isNaN(entryTime) && entryTime >= monthCutoff) redemptionsMonth += 1;
         }
       });
     }
@@ -4248,6 +4500,38 @@ function updateSettingsStats() {
   if (DOM.statStampsToday) DOM.statStampsToday.textContent = stampsToday;
   if (DOM.statRewardsGiven) DOM.statRewardsGiven.textContent = rewardsGiven;
   if (DOM.statActiveCards) DOM.statActiveCards.textContent = state.customers.length;
+  if (DOM.statStampsWeek) DOM.statStampsWeek.textContent = stampsWeek;
+  if (DOM.statStampsMonth) DOM.statStampsMonth.textContent = stampsMonth;
+  if (DOM.statRedemptionsMonth) DOM.statRedemptionsMonth.textContent = redemptionsMonth;
+
+  if (DOM.topDrinksList) {
+    DOM.topDrinksList.innerHTML = '';
+    const topDrinks = Object.keys(drinkCounts).sort((a, b) => drinkCounts[b] - drinkCounts[a]).slice(0, 5);
+    if (!topDrinks.length) {
+      const empty = document.createElement('div');
+      empty.className = 'staff-stat-row';
+      empty.style.opacity = '0.6';
+      empty.textContent = 'No stamps in the last 30 days yet.';
+      DOM.topDrinksList.appendChild(empty);
+    } else {
+      topDrinks.forEach(name => {
+        const row = document.createElement('div');
+        row.className = 'staff-stat-row';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'staff-stat-row-name';
+        nameEl.textContent = name;
+
+        const countEl = document.createElement('span');
+        countEl.className = 'staff-stat-row-count';
+        countEl.textContent = `${drinkCounts[name]}×`;
+
+        row.appendChild(nameEl);
+        row.appendChild(countEl);
+        DOM.topDrinksList.appendChild(row);
+      });
+    }
+  }
 
   const mine = perStaff[state.staffName] || { today: 0, total: 0, rewardsToday: 0 };
   if (DOM.statMyStampsToday) DOM.statMyStampsToday.textContent = mine.today;
