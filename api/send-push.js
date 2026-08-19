@@ -23,11 +23,20 @@ const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 const VAPID_PUBLIC_KEY = 'BFab1o_b_UHZufxv0_ITw8avQ880_qs0ANokCv-3PTNWcluiqotxPurRbVCDt8k3iqG1Q1X69ZMHsHgOAiXHN9c';
 
-webpush.setVapidDetails(
-  'mailto:hbristikusicloud@gmail.com',
-  VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// web-push validates/parses the private key synchronously and throws if
+// it's missing or malformed — doing this at module load time would crash
+// the whole function on cold start whenever the env var isn't set yet,
+// before the handler's own "not configured" check ever gets a chance to
+// run. Only set it up once we know there's a key to use; the handler
+// checks VAPID_PRIVATE_KEY before ever reaching the code path that
+// needs this to have succeeded.
+if (process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:hbristikusicloud@gmail.com',
+    VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 async function callRpc(name, body) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
