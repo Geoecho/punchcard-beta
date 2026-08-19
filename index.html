@@ -375,6 +375,21 @@
         <a href="#" id="btn-student-promo-download" class="student-promo-btn" target="_blank" rel="noopener" data-i18n="studentPromoBtn">Get Netaville</a>
       </div>
 
+      <!-- Notifications Opt-In Nudge (Customer, shown once before they've decided) -->
+      <div class="student-promo-banner hidden" id="notif-promo-banner">
+        <button class="notif-promo-close" id="btn-notif-promo-dismiss" aria-label="Dismiss">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <div class="student-promo-header">
+          <div class="student-promo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--bg-primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </div>
+          <div class="student-promo-title" data-i18n="notifPromoTitle">Never Miss a Free Coffee</div>
+        </div>
+        <p class="student-promo-subtitle" data-i18n="notifPromoSubtitle">Turn on notifications to know the moment your card's full, or a friend adds you.</p>
+        <button class="student-promo-btn" id="btn-notif-promo-enable" data-i18n="notifPromoBtn">Turn On Notifications</button>
+      </div>
+
       <!-- Admin Add Stamp Action (Hidden by default) -->
       <div class="home-actions hidden" id="admin-actions">
         <div class="stamp-actions-row">
@@ -1008,6 +1023,20 @@
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn-secondary" id="btn-cancel-gift" data-i18n="btnCancel">Cancel</button>
           <button class="btn-primary" id="btn-confirm-gift" data-i18n="btnConfirmGift">Send Gift</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Remove Friend Modal -->
+    <div class="modal" id="modal-confirm-remove-friend">
+      <div class="modal-overlay" id="overlay-confirm-remove-friend"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="confirmRemoveFriendTitle">Remove Friend?</h3>
+        <p class="modal-subtitle" id="confirm-remove-friend-text">Remove this friend? You'll need to send a new request to add them again.</p>
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-cancel-remove-friend" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-danger" id="btn-confirm-remove-friend" data-i18n="btnConfirmRemoveFriend">Remove</button>
         </div>
       </div>
     </div>

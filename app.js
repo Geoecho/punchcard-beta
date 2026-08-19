@@ -250,6 +250,9 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Notifications turned off",
     errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
     errNotificationsIOSInstall: "On iPhone/iPad, add this app to your Home Screen first — Share, then \"Add to Home Screen\" — notifications only work from the installed app, not a browser tab",
+    notifPromoTitle: "Never Miss a Free Coffee",
+    notifPromoSubtitle: "Turn on notifications to know the moment your card's full, or a friend adds you.",
+    notifPromoBtn: "Turn On Notifications",
     settingsFriends: "Friends",
     settingsFriendsSub: "Gift a free coffee to someone",
     friendsModalTitle: "Friends",
@@ -275,6 +278,9 @@ const TRANSLATIONS = {
     confirmGiftText: "Send your free coffee to {name}? This can't be undone.",
     btnConfirmGift: "Send Gift",
     toastGiftSent: "Gift sent! 🎁",
+    confirmRemoveFriendTitle: "Remove Friend?",
+    confirmRemoveFriendText: "Remove {name}? You'll need to send a new request to add them again.",
+    btnConfirmRemoveFriend: "Remove",
     loadingText: "Loading…",
     errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
@@ -524,6 +530,9 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Известувањата се исклучени",
     errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
     errNotificationsIOSInstall: 'На iPhone/iPad, прво додајте ја апликацијата на почетниот екран — Share, па „Add to Home Screen" — известувањата работат само од инсталираната апликација, не од прелистувач',
+    notifPromoTitle: "Не пропуштајте бесплатно кафе",
+    notifPromoSubtitle: "Вклучете известувања за да дознаете веднаш кога картичката е полна, или кога некој ве додава како пријател.",
+    notifPromoBtn: "Вклучи известувања",
     settingsFriends: "Пријатели",
     settingsFriendsSub: "Подарете бесплатно кафе некому",
     friendsModalTitle: "Пријатели",
@@ -549,6 +558,9 @@ const TRANSLATIONS = {
     confirmGiftText: "Испратете го вашето бесплатно кафе до {name}? Ова не може да се врати.",
     btnConfirmGift: "Испрати подарок",
     toastGiftSent: "Подарокот е испратен! 🎁",
+    confirmRemoveFriendTitle: "Отстрани пријател?",
+    confirmRemoveFriendText: "Да го отстраните {name}? Ќе треба да испратите ново барање за повторно да се додадете.",
+    btnConfirmRemoveFriend: "Отстрани",
     loadingText: "Се вчитува…",
     errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
@@ -798,6 +810,9 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Njoftimet u çaktivizuan",
     errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
     errNotificationsIOSInstall: "Në iPhone/iPad, shto këtë aplikacion në Home Screen fillimisht — Share, pastaj \"Add to Home Screen\" — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
+    notifPromoTitle: "Mos e Humb Asnjë Kafe Falas",
+    notifPromoSubtitle: "Aktivizo njoftimet për të ditur menjëherë kur karta jote është plot, ose kur një mik të shton.",
+    notifPromoBtn: "Aktivizo Njoftimet",
     settingsFriends: "Miqtë",
     settingsFriendsSub: "Dhuro një kafe falas dikujt",
     friendsModalTitle: "Miqtë",
@@ -823,6 +838,9 @@ const TRANSLATIONS = {
     confirmGiftText: "Dërgo kafenë tënde falas te {name}? Kjo nuk mund të kthehet.",
     btnConfirmGift: "Dërgo Dhuratën",
     toastGiftSent: "Dhurata u dërgua! 🎁",
+    confirmRemoveFriendTitle: "Të heq mikun?",
+    confirmRemoveFriendText: "Të heq {name}? Do të duhet të dërgosh një kërkesë të re për ta shtuar përsëri.",
+    btnConfirmRemoveFriend: "Hiq",
     loadingText: "Duke u ngarkuar…",
     errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
@@ -2320,6 +2338,9 @@ const DOM = {
   btnToggleStudentLabel: document.getElementById('btn-toggle-student-label'),
   btnShowQr: document.getElementById('btn-show-qr'),
   studentPromoBanner: document.getElementById('student-promo-banner'),
+  notifPromoBanner: document.getElementById('notif-promo-banner'),
+  btnNotifPromoDismiss: document.getElementById('btn-notif-promo-dismiss'),
+  btnNotifPromoEnable: document.getElementById('btn-notif-promo-enable'),
   btnStudentPromoDownload: document.getElementById('btn-student-promo-download'),
   settingsStudentSection: document.getElementById('settings-student-section'),
   settingsStudentLink: document.getElementById('settings-student-link'),
@@ -2405,6 +2426,11 @@ const DOM = {
   confirmGiftText: document.getElementById('confirm-gift-text'),
   btnCancelGift: document.getElementById('btn-cancel-gift'),
   btnConfirmGift: document.getElementById('btn-confirm-gift'),
+  modalConfirmRemoveFriend: document.getElementById('modal-confirm-remove-friend'),
+  overlayConfirmRemoveFriend: document.getElementById('overlay-confirm-remove-friend'),
+  confirmRemoveFriendText: document.getElementById('confirm-remove-friend-text'),
+  btnCancelRemoveFriend: document.getElementById('btn-cancel-remove-friend'),
+  btnConfirmRemoveFriend: document.getElementById('btn-confirm-remove-friend'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
   statActiveCards: document.getElementById('stat-active-cards'),
@@ -3297,6 +3323,7 @@ function setupEventListeners() {
       // it again out from under them.
       clearTimeout(cardIntroFlipTimer);
       clearTimeout(cardIntroFlipBackTimer);
+      hapticPulse(15);
       setCardFlipped(!DOM.cardFlipInner.classList.contains('flipped'));
     });
   }
@@ -3920,6 +3947,8 @@ function setupEventListeners() {
 
     closeModal(DOM.rewardOverlay);
     await updateCardUI();
+    playRewardSound();
+    hapticPulse([30, 40, 30, 40, 60]);
     showToast('Reward redeemed! Enjoy your free coffee!', 'success');
     renderCustomersList(DOM.customerSearch.value);
     renderActivityList();
@@ -4076,6 +4105,36 @@ function setupEventListeners() {
     });
   }
 
+  // Home-screen notifications nudge — same enablePushNotifications() path
+  // as the Settings toggle, just surfaced at a moment that explains why
+  // it's worth doing instead of requiring someone to go find it.
+  if (DOM.btnNotifPromoDismiss) {
+    DOM.btnNotifPromoDismiss.addEventListener('click', dismissNotifPromo);
+  }
+  if (DOM.btnNotifPromoEnable) {
+    DOM.btnNotifPromoEnable.addEventListener('click', async () => {
+      DOM.btnNotifPromoEnable.disabled = true;
+      const result = await enablePushNotifications();
+      DOM.btnNotifPromoEnable.disabled = false;
+
+      if (result.error) {
+        const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
+          : result.error === 'ios_install_required' ? t('errNotificationsIOSInstall')
+          : result.error === 'blocked' ? t('errNotificationsBlocked')
+          : t('errServerConnection');
+        showToast(msg, 'error');
+        // A denied browser permission prompt can't be re-asked from code —
+        // dismiss the nudge either way so it doesn't keep offering a
+        // button that will just fail the same way every time.
+        dismissNotifPromo();
+        return;
+      }
+      dismissNotifPromo();
+      refreshNotificationsToggleState();
+      showToast(t('toastNotificationsEnabled'), 'success');
+    });
+  }
+
   // Friends & Gifting (Settings > Account > Friends, and Home quick-access)
   const openFriendsModal = async () => {
     if (!state.myCustomerId) return;
@@ -4162,6 +4221,7 @@ function setupEventListeners() {
       btn.disabled = true;
       const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
       if (ok && acceptBtn) {
+        hapticPulse([20, 30, 20]);
         showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName }), 'success');
         const me = state.myCustomerId ? await db.getCustomer(state.myCustomerId) : null;
         const myName = (me && me.name) || 'Someone';
@@ -4190,8 +4250,21 @@ function setupEventListeners() {
       }
       const removeBtn = e.target.closest('.friend-row-remove-btn');
       if (removeBtn) {
-        removeFriendAndRerender(removeBtn.dataset.friendId);
+        openRemoveFriendConfirm(removeBtn.dataset.friendId, removeBtn.dataset.friendName);
       }
+    });
+  }
+
+  if (DOM.btnCancelRemoveFriend) DOM.btnCancelRemoveFriend.addEventListener('click', () => closeModal(DOM.modalConfirmRemoveFriend));
+  if (DOM.overlayConfirmRemoveFriend) DOM.overlayConfirmRemoveFriend.addEventListener('click', () => closeModal(DOM.modalConfirmRemoveFriend));
+  if (DOM.btnConfirmRemoveFriend) {
+    DOM.btnConfirmRemoveFriend.addEventListener('click', async () => {
+      const friendId = DOM.btnConfirmRemoveFriend.dataset.friendId;
+      if (!friendId) return;
+      DOM.btnConfirmRemoveFriend.disabled = true;
+      await removeFriendAndRerender(friendId);
+      DOM.btnConfirmRemoveFriend.disabled = false;
+      closeModal(DOM.modalConfirmRemoveFriend);
     });
   }
 
@@ -4223,6 +4296,7 @@ function setupEventListeners() {
       await db.saveCustomer(result.customer);
       state.customers = await db.getAllCustomers();
       await updateCardUI();
+      hapticPulse([20, 30, 20]);
       showToast(t('toastGiftSent'), 'success');
     });
   }
@@ -4732,6 +4806,26 @@ function refreshStudentPromoVisibility(customer) {
   }
 }
 
+// A one-time nudge on the home screen for customers who haven't decided
+// on notifications yet — the Settings toggle works fine but nobody goes
+// looking for it unprompted, so opt-in stays low without a visible ask
+// at a moment that actually explains the payoff (reward-ready, friend
+// requests). Never shown again once the customer either enables it or
+// dismisses the card, and never shown at all where it'd just be a dead
+// end (iOS outside the installed app, unsupported browsers).
+function refreshNotifPromoVisibility() {
+  if (!DOM.notifPromoBanner) return;
+  const dismissed = localStorage.getItem('86_notif_promo_dismissed') === '1';
+  const eligible = !state.isAdmin && !dismissed && pushNotificationsSupported() && !pushRequiresIOSInstall()
+    && typeof Notification !== 'undefined' && Notification.permission === 'default';
+  DOM.notifPromoBanner.classList.toggle('hidden', !eligible);
+}
+
+function dismissNotifPromo() {
+  localStorage.setItem('86_notif_promo_dismissed', '1');
+  if (DOM.notifPromoBanner) DOM.notifPromoBanner.classList.add('hidden');
+}
+
 let lastCardCustomerId = null;
 let cardBackRankCache = {};
 
@@ -4983,6 +5077,7 @@ async function updateCardUI() {
   if (!state.isAdmin) refreshCustomerCampaignBanner();
 
   refreshStudentPromoVisibility(customer);
+  refreshNotifPromoVisibility();
   updateCardBackStats(customer);
 
   if (state.isAdmin) {
@@ -5131,6 +5226,7 @@ async function renderFriendsList(friends) {
     const removeBtn = document.createElement('button');
     removeBtn.className = 'friend-row-remove-btn';
     removeBtn.dataset.friendId = friend.id;
+    removeBtn.dataset.friendName = friend.name;
     removeBtn.setAttribute('aria-label', 'Remove friend');
     removeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
     row.appendChild(removeBtn);
@@ -5144,6 +5240,13 @@ function openGiftConfirm(friendId, friendName) {
   DOM.btnConfirmGift.dataset.friendId = friendId;
   if (DOM.confirmGiftText) DOM.confirmGiftText.textContent = t('confirmGiftText', { name: friendName });
   openModal(DOM.modalConfirmGift);
+}
+
+function openRemoveFriendConfirm(friendId, friendName) {
+  if (!DOM.modalConfirmRemoveFriend || !DOM.btnConfirmRemoveFriend) return;
+  DOM.btnConfirmRemoveFriend.dataset.friendId = friendId;
+  if (DOM.confirmRemoveFriendText) DOM.confirmRemoveFriendText.textContent = t('confirmRemoveFriendText', { name: friendName });
+  openModal(DOM.modalConfirmRemoveFriend);
 }
 
 async function removeFriendAndRerender(friendId) {

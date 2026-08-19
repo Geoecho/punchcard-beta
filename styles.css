@@ -1849,6 +1849,11 @@ input { font: inherit; color: inherit; }
   text-overflow: ellipsis;
 }
 .student-promo-btn:active { transform: scale(0.98); }
+.student-promo-banner { position: relative; }
+.notif-promo-close {
+  position: absolute; top: 10px; right: 10px;
+  color: var(--text-muted); padding: 4px; cursor: pointer;
+}
 
 /* ── Double Stamps Campaign Banner (Home View) ────────────── */
 .campaign-banner {
