@@ -1285,14 +1285,17 @@ input { font: inherit; color: inherit; }
 .friend-row-gift-btn:not(:disabled):active { transform: scale(0.92); color: var(--accent-main); }
 .friend-row-remove-btn { flex-shrink: 0; color: var(--text-muted); cursor: pointer; padding: 4px; }
 
-.friend-request-accept-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; flex-shrink: 0;
-  border-radius: 50%; border: 1px solid var(--accent-main); background: var(--accent-main);
-  color: #fff; cursor: pointer;
+.friend-request-row {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px 12px; background: var(--bg-glass); border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
 }
-.friend-request-accept-btn:active { transform: scale(0.92); }
-.friend-request-decline-btn { flex-shrink: 0; color: var(--text-muted); cursor: pointer; padding: 4px; }
+.friend-request-top { display: flex; align-items: center; gap: 12px; }
+.friend-request-actions { display: flex; gap: 8px; }
+.friend-request-actions .btn-primary, .friend-request-actions .btn-secondary {
+  flex: 1; padding: 9px 14px; font-size: 13px;
+}
+.friend-request-accept-btn:active, .friend-request-decline-btn:active { transform: scale(0.97); }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;

@@ -5140,7 +5140,10 @@ function renderFriendRequests(requests) {
 
   requests.forEach(req => {
     const row = document.createElement('div');
-    row.className = 'friend-row';
+    row.className = 'friend-request-row';
+
+    const top = document.createElement('div');
+    top.className = 'friend-request-top';
 
     const avatar = document.createElement('div');
     avatar.className = 'friend-row-avatar';
@@ -5149,29 +5152,34 @@ function renderFriendRequests(requests) {
     img.alt = '';
     img.loading = 'lazy';
     avatar.appendChild(img);
-    row.appendChild(avatar);
+    top.appendChild(avatar);
 
     const name = document.createElement('div');
     name.className = 'friend-row-name';
     name.textContent = req.name;
-    row.appendChild(name);
+    top.appendChild(name);
+
+    row.appendChild(top);
+
+    const actions = document.createElement('div');
+    actions.className = 'friend-request-actions';
+
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'btn-secondary friend-request-decline-btn';
+    declineBtn.dataset.requestId = req.requestId;
+    declineBtn.dataset.requestName = req.name;
+    declineBtn.textContent = t('btnDeclineRequest');
+    actions.appendChild(declineBtn);
 
     const acceptBtn = document.createElement('button');
-    acceptBtn.className = 'friend-request-accept-btn';
+    acceptBtn.className = 'btn-primary friend-request-accept-btn';
     acceptBtn.dataset.requestId = req.requestId;
     acceptBtn.dataset.requestName = req.name;
     acceptBtn.dataset.requesterId = req.id;
-    acceptBtn.title = t('btnAcceptRequest');
-    acceptBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    row.appendChild(acceptBtn);
+    acceptBtn.textContent = t('btnAcceptRequest');
+    actions.appendChild(acceptBtn);
 
-    const declineBtn = document.createElement('button');
-    declineBtn.className = 'friend-request-decline-btn';
-    declineBtn.dataset.requestId = req.requestId;
-    declineBtn.dataset.requestName = req.name;
-    declineBtn.setAttribute('aria-label', t('btnDeclineRequest'));
-    declineBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-    row.appendChild(declineBtn);
+    row.appendChild(actions);
 
     DOM.friendRequestsList.appendChild(row);
   });
