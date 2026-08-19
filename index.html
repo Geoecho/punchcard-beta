@@ -352,6 +352,15 @@
           </svg>
           <span data-i18n="btnShowQr">Show My QR Code</span>
         </button>
+        <button class="btn-secondary friends-home-btn" id="btn-open-friends-home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span data-i18n="settingsFriends">Friends</span>
+        </button>
       </div>
 
       <!-- Student Discount Promo (Customer, not-yet-verified only) -->
@@ -925,17 +934,30 @@
       <div class="modal-content">
         <div class="modal-handle"></div>
         <h3 class="modal-title" data-i18n="friendsModalTitle">Friends</h3>
-        <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Add a friend by their username, then gift them a free coffee from your wallet.</p>
+        <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Send a friend request by username. Once they accept, you can gift each other a free coffee.</p>
 
         <div class="form-group friends-add-row">
-          <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's username" autocomplete="off" enterkeyhint="done" data-i18n-placeholder="phFriendUsername">
-          <button class="btn-primary btn-small" id="btn-add-friend" data-i18n="btnAddFriend">Add</button>
+          <!-- Decoy fields ahead of the real input: Safari/Chrome's
+               heuristic autofill sometimes ignores autocomplete="off" on
+               the real field but will "absorb" itself into empty decoys
+               that look more like a login form, keeping account/password
+               suggestions off the actual username field. -->
+          <input type="text" name="username" autocomplete="username" class="visually-hidden" tabindex="-1" aria-hidden="true">
+          <input type="password" name="password" autocomplete="current-password" class="visually-hidden" tabindex="-1" aria-hidden="true">
+          <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's username" name="friend-search-86" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phFriendUsername">
+          <button class="btn-primary" id="btn-add-friend" data-i18n="btnAddFriend">Add</button>
         </div>
         <p class="pin-error" id="add-friend-error"></p>
 
+        <div id="friend-requests-section" class="hidden">
+          <div class="settings-item-sublabel" style="margin: 16px 0 8px;" data-i18n="friendRequestsLabel">Friend Requests</div>
+          <div class="friends-list" id="friend-requests-list"></div>
+        </div>
+
+        <div class="settings-item-sublabel" style="margin: 16px 0 8px;" data-i18n="friendsListLabel">Your Friends</div>
         <div class="friends-list" id="friends-list">
           <div class="empty-state" style="padding: 24px 0;">
-            <p class="empty-text" data-i18n="friendsEmpty">No friends added yet.</p>
+            <p class="empty-text" data-i18n="friendsEmpty">No friends yet — send a request above.</p>
           </div>
         </div>
 

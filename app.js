@@ -247,13 +247,22 @@ const TRANSLATIONS = {
     settingsFriends: "Friends",
     settingsFriendsSub: "Gift a free coffee to someone",
     friendsModalTitle: "Friends",
-    friendsModalSubtitle: "Add a friend by their username, then gift them a free coffee from your wallet.",
+    friendsModalSubtitle: "Send a friend request by username. Once they accept, you can gift each other a free coffee.",
     phFriendUsername: "Friend's username",
     btnAddFriend: "Add",
-    friendsEmpty: "No friends added yet.",
+    friendRequestsLabel: "Friend Requests",
+    friendsListLabel: "Your Friends",
+    friendsEmpty: "No friends yet — send a request above.",
     errFriendNotFound: "No account found with that username",
     errCannotAddSelf: "You can't add yourself",
     toastFriendAdded: "Added {name} as a friend!",
+    toastFriendRequestSent: "Friend request sent to {name}",
+    toastFriendRequestAccepted: "You and {name} are now friends!",
+    errAlreadyFriends: "You're already friends with {name}",
+    errAlreadyPending: "You already sent {name} a friend request",
+    errNotFriends: "You're not friends with this person anymore",
+    btnAcceptRequest: "Accept",
+    btnDeclineRequest: "Decline",
     btnGiftReward: "Gift a free coffee",
     errNoRewardToGift: "You don't have a free coffee to gift right now",
     confirmGiftTitle: "Gift This Reward?",
@@ -506,13 +515,22 @@ const TRANSLATIONS = {
     settingsFriends: "Пријатели",
     settingsFriendsSub: "Подарете бесплатно кафе некому",
     friendsModalTitle: "Пријатели",
-    friendsModalSubtitle: "Додадете пријател по корисничко име, па подарете му бесплатно кафе од вашиот паричник.",
+    friendsModalSubtitle: "Испратете барање за пријателство по корисничко име. Штом прифати, можете да си подарувате бесплатно кафе.",
     phFriendUsername: "Корисничко име на пријателот",
     btnAddFriend: "Додај",
-    friendsEmpty: "Сè уште немате додадено пријатели.",
+    friendRequestsLabel: "Барања за пријателство",
+    friendsListLabel: "Ваши пријатели",
+    friendsEmpty: "Сè уште немате пријатели — испратете барање погоре.",
     errFriendNotFound: "Не е пронајдена сметка со тоа корисничко име",
     errCannotAddSelf: "Не можете да се додадете себеси",
     toastFriendAdded: "{name} е додаден како пријател!",
+    toastFriendRequestSent: "Барањето за пријателство е испратено до {name}",
+    toastFriendRequestAccepted: "Вие и {name} сега сте пријатели!",
+    errAlreadyFriends: "Веќе сте пријатели со {name}",
+    errAlreadyPending: "Веќе испративте барање до {name}",
+    errNotFriends: "Веќе не сте пријатели со оваа личност",
+    btnAcceptRequest: "Прифати",
+    btnDeclineRequest: "Одбиј",
     btnGiftReward: "Подари бесплатно кафе",
     errNoRewardToGift: "Немате бесплатно кафе за подарување во моментов",
     confirmGiftTitle: "Да го подарите ова?",
@@ -765,12 +783,21 @@ const TRANSLATIONS = {
     settingsFriends: "Miqtë",
     settingsFriendsSub: "Dhuro një kafe falas dikujt",
     friendsModalTitle: "Miqtë",
-    friendsModalSubtitle: "Shto një mik me emrin e tij të përdoruesit, pastaj dhuroji një kafe falas nga portofoli yt.",
+    friendsModalSubtitle: "Dërgo një kërkesë miqësie me emrin e përdoruesit. Sapo ta pranojë, mund t'i dhuroni njëri-tjetrit një kafe falas.",
     phFriendUsername: "Emri i përdoruesit të mikut",
     btnAddFriend: "Shto",
-    friendsEmpty: "Ende nuk ke shtuar miq.",
+    friendRequestsLabel: "Kërkesa Miqësie",
+    friendsListLabel: "Miqtë e tu",
+    friendsEmpty: "Ende nuk ke miq — dërgo një kërkesë më lart.",
     errFriendNotFound: "Nuk u gjet asnjë llogari me atë emër përdoruesi",
     errCannotAddSelf: "Nuk mund ta shtosh veten",
+    toastFriendRequestSent: "Kërkesa e miqësisë u dërgua te {name}",
+    toastFriendRequestAccepted: "Ti dhe {name} tani jeni miq!",
+    errAlreadyFriends: "Tashmë je mik me {name}",
+    errAlreadyPending: "Tashmë i ke dërguar një kërkesë miqësie {name}",
+    errNotFriends: "Nuk je më mik me këtë person",
+    btnAcceptRequest: "Prano",
+    btnDeclineRequest: "Refuzo",
     toastFriendAdded: "{name} u shtua si mik!",
     btnGiftReward: "Dhuro një kafe falas",
     errNoRewardToGift: "Nuk ke një kafe falas për të dhuruar tani",
@@ -1346,11 +1373,11 @@ const cloud = {
   },
 
   // ---- Friends & gifting ----
-  async addFriend(token, username) {
+  async sendFriendRequest(token, username) {
     if (!supabaseClient) return { error: 'offline' };
     try {
       const res = await withTimeout(
-        supabaseClient.rpc('customer_add_friend', { p_token: token || null, p_friend_username: username }),
+        supabaseClient.rpc('customer_send_friend_request', { p_token: token || null, p_friend_username: username }),
         4000
       );
       if (res.error) {
@@ -1362,9 +1389,36 @@ const cloud = {
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       const d = res.data[0];
-      return { friend: { id: d.friend_id, name: d.friend_name, avatar: d.friend_avatar || 'person' } };
+      return { status: d.status, friend: { id: d.friend_id, name: d.friend_name, avatar: d.friend_avatar || 'person' } };
     } catch (e) {
       return { error: 'offline' };
+    }
+  },
+
+  async respondFriendRequest(token, requestId, accept) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_respond_friend_request', { p_token: token || null, p_request_id: requestId, p_accept: !!accept }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async listPendingRequests(token) {
+    if (!supabaseClient) return [];
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_list_pending_requests', { p_token: token || null }),
+        4000
+      );
+      if (res.error || !res.data) return [];
+      return res.data.map(d => ({ requestId: d.request_id, id: d.requester_id, name: d.requester_name, avatar: d.requester_avatar || 'person' }));
+    } catch (e) {
+      return [];
     }
   },
 
@@ -1406,6 +1460,7 @@ const cloud = {
         const msg = res.error.message || '';
         if (msg.includes('no_reward_available')) return { error: 'no_reward' };
         if (msg.includes('friend_not_found')) return { error: 'not_found' };
+        if (msg.includes('not_friends')) return { error: 'not_friends' };
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
@@ -2283,12 +2338,15 @@ const DOM = {
   notificationsToggleRow: document.getElementById('notifications-toggle-row'),
   notificationsToggle: document.getElementById('notifications-toggle'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
+  btnOpenFriendsHome: document.getElementById('btn-open-friends-home'),
   modalFriends: document.getElementById('modal-friends'),
   overlayFriends: document.getElementById('overlay-friends'),
   btnCloseFriends: document.getElementById('btn-close-friends'),
   addFriendInput: document.getElementById('add-friend-input'),
   btnAddFriend: document.getElementById('btn-add-friend'),
   addFriendError: document.getElementById('add-friend-error'),
+  friendRequestsSection: document.getElementById('friend-requests-section'),
+  friendRequestsList: document.getElementById('friend-requests-list'),
   friendsList: document.getElementById('friends-list'),
   modalConfirmGift: document.getElementById('modal-confirm-gift'),
   overlayConfirmGift: document.getElementById('overlay-confirm-gift'),
@@ -3900,16 +3958,16 @@ function setupEventListeners() {
     });
   }
 
-  // Friends & Gifting (Settings > Account > Friends)
-  if (DOM.btnOpenFriends) {
-    DOM.btnOpenFriends.addEventListener('click', async () => {
-      if (!state.myCustomerId) return;
-      DOM.addFriendInput.value = '';
-      DOM.addFriendError.textContent = '';
-      openModal(DOM.modalFriends);
-      await loadAndRenderFriends();
-    });
-  }
+  // Friends & Gifting (Settings > Account > Friends, and Home quick-access)
+  const openFriendsModal = async () => {
+    if (!state.myCustomerId) return;
+    DOM.addFriendInput.value = '';
+    DOM.addFriendError.textContent = '';
+    openModal(DOM.modalFriends);
+    await loadAndRenderFriends();
+  };
+  if (DOM.btnOpenFriends) DOM.btnOpenFriends.addEventListener('click', openFriendsModal);
+  if (DOM.btnOpenFriendsHome) DOM.btnOpenFriendsHome.addEventListener('click', openFriendsModal);
   if (DOM.btnCloseFriends) DOM.btnCloseFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
   if (DOM.overlayFriends) DOM.overlayFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
 
@@ -3921,7 +3979,7 @@ function setupEventListeners() {
         return;
       }
       DOM.btnAddFriend.disabled = true;
-      const result = await cloud.addFriend(state.myToken, username);
+      const result = await cloud.sendFriendRequest(state.myToken, username);
       DOM.btnAddFriend.disabled = false;
 
       if (result.error === 'not_found') {
@@ -3939,7 +3997,31 @@ function setupEventListeners() {
 
       DOM.addFriendError.textContent = '';
       DOM.addFriendInput.value = '';
-      showToast(t('toastFriendAdded', { name: result.friend.name }), 'success');
+
+      if (result.status === 'already_friends') {
+        showToast(t('errAlreadyFriends', { name: result.friend.name }), 'error');
+      } else if (result.status === 'already_pending') {
+        showToast(t('errAlreadyPending', { name: result.friend.name }), 'error');
+      } else if (result.status === 'accepted') {
+        showToast(t('toastFriendAdded', { name: result.friend.name }), 'success');
+      } else {
+        showToast(t('toastFriendRequestSent', { name: result.friend.name }), 'success');
+      }
+      await loadAndRenderFriends();
+    });
+  }
+
+  // Accept/decline buttons live inside dynamically-rendered pending-request
+  // rows — one delegated listener instead of re-binding on every render.
+  if (DOM.friendRequestsList) {
+    DOM.friendRequestsList.addEventListener('click', async (e) => {
+      const acceptBtn = e.target.closest('.friend-request-accept-btn');
+      const declineBtn = e.target.closest('.friend-request-decline-btn');
+      const btn = acceptBtn || declineBtn;
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
+      if (ok && acceptBtn) showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName }), 'success');
       await loadAndRenderFriends();
     });
   }
@@ -3974,6 +4056,11 @@ function setupEventListeners() {
 
       if (result.error === 'no_reward') {
         showToast(t('errNoRewardToGift'), 'error');
+        return;
+      }
+      if (result.error === 'not_friends') {
+        showToast(t('errNotFriends'), 'error');
+        await loadAndRenderFriends();
         return;
       }
       if (result.error) {
@@ -4744,8 +4831,62 @@ function canVoidRedemption(customer) {
 async function loadAndRenderFriends() {
   if (!DOM.friendsList) return;
   DOM.friendsList.innerHTML = `<div class="empty-state" style="padding: 24px 0;"><p class="empty-text">${t('loadingText')}</p></div>`;
-  const friends = await cloud.listFriends(state.myToken);
+  const [requests, friends] = await Promise.all([
+    cloud.listPendingRequests(state.myToken),
+    cloud.listFriends(state.myToken)
+  ]);
+  renderFriendRequests(requests);
   renderFriendsList(friends);
+}
+
+function renderFriendRequests(requests) {
+  if (!DOM.friendRequestsSection || !DOM.friendRequestsList) return;
+
+  if (!requests.length) {
+    DOM.friendRequestsSection.classList.add('hidden');
+    DOM.friendRequestsList.innerHTML = '';
+    return;
+  }
+
+  DOM.friendRequestsSection.classList.remove('hidden');
+  DOM.friendRequestsList.innerHTML = '';
+
+  requests.forEach(req => {
+    const row = document.createElement('div');
+    row.className = 'friend-row';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'friend-row-avatar';
+    const img = document.createElement('img');
+    img.src = avatarUrl(req.avatar);
+    img.alt = '';
+    img.loading = 'lazy';
+    avatar.appendChild(img);
+    row.appendChild(avatar);
+
+    const name = document.createElement('div');
+    name.className = 'friend-row-name';
+    name.textContent = req.name;
+    row.appendChild(name);
+
+    const acceptBtn = document.createElement('button');
+    acceptBtn.className = 'friend-request-accept-btn';
+    acceptBtn.dataset.requestId = req.requestId;
+    acceptBtn.dataset.requestName = req.name;
+    acceptBtn.title = t('btnAcceptRequest');
+    acceptBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    row.appendChild(acceptBtn);
+
+    const declineBtn = document.createElement('button');
+    declineBtn.className = 'friend-request-decline-btn';
+    declineBtn.dataset.requestId = req.requestId;
+    declineBtn.dataset.requestName = req.name;
+    declineBtn.setAttribute('aria-label', t('btnDeclineRequest'));
+    declineBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    row.appendChild(declineBtn);
+
+    DOM.friendRequestsList.appendChild(row);
+  });
 }
 
 async function renderFriendsList(friends) {
