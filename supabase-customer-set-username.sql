@@ -30,6 +30,13 @@
 -- can only ever set their own username.
 -- ============================================================
 
+-- The OUT-parameter row type (the returns table(...) shape) is part of
+-- a function's identity in Postgres — CREATE OR REPLACE can't change it
+-- in place, only the body/param names. Whatever's already deployed here
+-- (from an earlier draft of this file, or none at all) needs to be gone
+-- first so this always applies cleanly regardless of what's live.
+drop function if exists public.customer_set_username(text, text);
+
 create or replace function public.customer_set_username(p_token text, p_username text)
 returns table(id text, name text, phone text, avatar text, stamps integer, rewards_earned integer, joined_at timestamptz, history jsonb, total_stamps_earned integer, reward_banked_at timestamptz)
 language plpgsql
