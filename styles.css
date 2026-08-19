@@ -274,6 +274,16 @@ input { font: inherit; color: inherit; }
   transition: opacity 0.4s var(--ease-in-out), transform 0.4s var(--ease-in-out);
 }
 
+/* Floats in the screen's top-right corner instead of sitting in the
+   content flow above the logo — .view is already position:absolute,
+   so it's a valid positioning context without extra markup. */
+.lang-switcher-corner {
+  position: absolute;
+  top: calc(20px + var(--sat));
+  right: 20px;
+  z-index: 5;
+}
+
 /* ── Sign Up / Login View (Left-Aligned) ──────────────────── */
 #view-signup {
   z-index: 10;
@@ -284,9 +294,10 @@ input { font: inherit; color: inherit; }
   align-items: flex-start;
   /* Extra top clearance (plus a real safe-area inset for notches/status
      bars some Android browsers don't otherwise account for) — the
-     language picker is the first element and was getting clipped under
-     the top bar on some Samsung browsers. */
-  padding: calc(56px + env(safe-area-inset-top, 0px)) 28px 36px !important;
+     language picker now floats in the corner above this content (see
+     .lang-switcher-corner), so this keeps the logo clear of it instead
+     of the two nearly touching. */
+  padding: calc(84px + env(safe-area-inset-top, 0px)) 28px 36px !important;
   text-align: left;
 }
 
@@ -1815,6 +1826,30 @@ input { font: inherit; color: inherit; }
 
 /* ── Leaderboard View (Customer Only) ─────────────────────── */
 .lb-header-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+/* All Time / This Month is a 2-way exclusive toggle, same pattern as the
+   auth tabs and language switcher — give it the same radius convention
+   instead of the free-floating pill shape .chip uses for the Activity
+   view's multi-filter row. */
+#leaderboard-period-chips {
+  display: flex;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+#leaderboard-period-chips .chip {
+  flex: 1;
+  height: auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+#leaderboard-period-chips .chip.active {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: transparent;
+  box-shadow: none;
+}
 .lb-scroll-area {
   padding: 8px 20px 100px;
   overflow-y: auto;

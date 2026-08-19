@@ -1,7 +1,7 @@
 // 86° Punchcard — Service Worker
 // Network-first for API, Stale-While-Revalidate for app shell
 
-const CACHE_NAME = '86-punchcard-v40';
+const CACHE_NAME = '86-punchcard-v41';
 const APP_SHELL = [
   './',
   './index.html',

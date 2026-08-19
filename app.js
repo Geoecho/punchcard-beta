@@ -116,7 +116,7 @@ const TRANSLATIONS = {
     studentStatusError: "Could not update — check your connection",
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
-    studentPromoSubtitle: "Verify with Netaville, then ask staff to confirm",
+    studentPromoSubtitle: "Sign up in Netaville with your student email, then ask staff to verify you",
     studentPromoBtn: "Get Netaville",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
@@ -333,7 +333,7 @@ const TRANSLATIONS = {
     studentStatusError: "Не можеше да се ажурира — проверете ја вашата врска",
     settingsStudentDiscount: "Студентски попуст",
     studentPromoTitle: "Добијте студентски попуст",
-    studentPromoSubtitle: "Потврдете се преку Netaville, потоа побарајте персоналот да потврди",
+    studentPromoSubtitle: "Регистрирајте се во Netaville со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди",
     studentPromoBtn: "Преземи Netaville",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
@@ -550,7 +550,7 @@ const TRANSLATIONS = {
     studentStatusError: "Nuk mund të përditësohej — kontrollo lidhjen",
     settingsStudentDiscount: "Zbritje për Studentë",
     studentPromoTitle: "Merr Zbritjen për Studentë",
-    studentPromoSubtitle: "Verifikohu me Netaville, pastaj kërko stafit ta konfirmojë",
+    studentPromoSubtitle: "Regjistrohu në Netaville me email-in tënd të studentit, pastaj kërko stafit të të verifikojë",
     studentPromoBtn: "Merr Netaville",
     staffModeTitle: "Modaliteti i Stafit Aktiv",
     staffModeText: "Zgjidh një klient nga lista për ta parë dhe vulosur kartën.",
@@ -802,6 +802,7 @@ const state = {
   staffName: null,
   staffAvatar: 'person',
   editingStaffAvatar: false,
+  mandatoryDisplayNamePrompt: false,
   pinFailedAttempts: 0,
   pinLockoutUntil: 0,
   activityFilter: 'all', // 'all' | 'redemption' | 'stamp'
@@ -2776,7 +2777,6 @@ function setupEventListeners() {
   // returning customer back into their existing card instead of failing.
   DOM.btnSignupSubmit.addEventListener('click', async (e) => {
     e.preventDefault();
-    const name = (DOM.signupName ? DOM.signupName.value : '').trim();
     const username = (DOM.signupUsername ? DOM.signupUsername.value : '').trim().toLowerCase();
     const password = (DOM.signupPassword ? DOM.signupPassword.value : '');
     const passwordConfirm = (DOM.signupPasswordConfirm ? DOM.signupPasswordConfirm.value : '');
@@ -2801,7 +2801,12 @@ function setupEventListeners() {
 
     DOM.btnSignupSubmit.disabled = true;
     try {
-      const result = await cloud.signupCustomer(username, password, name);
+      // No display name field on this form — a brand new account gets a
+      // placeholder name (defaults to the username server-side) and is
+      // immediately prompted for a real one right after, on the home
+      // screen. A returning customer signing back in via this same form
+      // keeps their existing name untouched.
+      const result = await cloud.signupCustomer(username, password, '');
 
       if (result.error === 'username_taken') {
         showToast(t('errUsernameTaken'), 'error');
@@ -2827,6 +2832,8 @@ function setupEventListeners() {
       toggleAdminMode(false);
       switchView('view-home');
       showToast(result.isNew ? t('toastWelcomeNew') : t('toastWelcomeBack', { name: result.customer.name }), 'success');
+
+      if (result.isNew) promptMandatoryDisplayName();
     } catch (err) {
       console.error('Sign up error:', err);
       showToast(t('errSignupGeneric'), 'error');
@@ -3210,8 +3217,21 @@ function setupEventListeners() {
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', handleRedeem);
   }
 
-  if (DOM.btnSetDisplayNameSkip) DOM.btnSetDisplayNameSkip.addEventListener('click', () => closeModal(DOM.modalSetDisplayName));
-  if (DOM.overlaySetDisplayName) DOM.overlaySetDisplayName.addEventListener('click', () => closeModal(DOM.modalSetDisplayName));
+  // Right after a brand-new signup, this same modal reopens in mandatory
+  // mode (no skip route) so a customer never ends up permanently stuck
+  // with the auto-generated placeholder name — see promptMandatoryDisplayName().
+  if (DOM.btnSetDisplayNameSkip) {
+    DOM.btnSetDisplayNameSkip.addEventListener('click', () => {
+      if (state.mandatoryDisplayNamePrompt) return;
+      closeModal(DOM.modalSetDisplayName);
+    });
+  }
+  if (DOM.overlaySetDisplayName) {
+    DOM.overlaySetDisplayName.addEventListener('click', () => {
+      if (state.mandatoryDisplayNamePrompt) return;
+      closeModal(DOM.modalSetDisplayName);
+    });
+  }
   if (DOM.btnSetDisplayNameSave) {
     DOM.btnSetDisplayNameSave.addEventListener('click', async () => {
       const name = (DOM.setDisplayNameInput ? DOM.setDisplayNameInput.value : '').trim();
@@ -3244,6 +3264,10 @@ function setupEventListeners() {
       if (savedSession && savedSession.id === result.customer.id) {
         savedSession.name = result.customer.name;
         localStorage.setItem('86_user_session', JSON.stringify(savedSession));
+      }
+      if (state.mandatoryDisplayNamePrompt) {
+        state.mandatoryDisplayNamePrompt = false;
+        if (DOM.btnSetDisplayNameSkip) DOM.btnSetDisplayNameSkip.classList.remove('hidden');
       }
       closeModal(DOM.modalSetDisplayName);
       await updateCardUI();
@@ -3601,6 +3625,19 @@ function toggleAdminMode(isActive) {
 
 function openModal(modalEl) { if (modalEl) modalEl.classList.add('active'); }
 function closeModal(modalEl) { if (modalEl) modalEl.classList.remove('active'); }
+
+// Opens the existing Display Name modal in a mode with no way out except
+// submitting a name — used right after a brand-new signup, since that
+// account was created with only a placeholder name (see the New Card
+// form, which deliberately doesn't ask for one up front anymore).
+function promptMandatoryDisplayName() {
+  if (!DOM.modalSetDisplayName) return;
+  state.mandatoryDisplayNamePrompt = true;
+  if (DOM.setDisplayNameInput) DOM.setDisplayNameInput.value = '';
+  if (DOM.setDisplayNameError) DOM.setDisplayNameError.textContent = '';
+  if (DOM.btnSetDisplayNameSkip) DOM.btnSetDisplayNameSkip.classList.add('hidden');
+  openModal(DOM.modalSetDisplayName);
+}
 
 function initStampGrid() {
   DOM.stampGrid.innerHTML = '';
