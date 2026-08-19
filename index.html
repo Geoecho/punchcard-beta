@@ -37,7 +37,6 @@
           <span class="brand-lockup-x">×</span>
           <img src="icons/netaville-mark.png" alt="Netaville Logo" class="brand-lockup-netaville">
         </div>
-        <div class="splash-tagline" data-i18n="splashTagline">Loyalty</div>
         <div class="splash-loader">
           <div class="dot"></div>
           <div class="dot"></div>
@@ -240,34 +239,68 @@
         </div>
       </div>
 
-      <div class="card-container" id="punchcard">
-        <div class="card-header">
-          <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo">
-          <div class="card-header-right">
-            <div class="card-number admin-only" id="card-number">CARD #---</div>
-            <div class="student-badge hidden" id="student-badge" title="Eightysix° × Netaville">
-              <img src="icons/netaville-mark.png" alt="" class="student-badge-mark">
-              <span data-i18n="studentBadgeLabel">Student</span>
+      <div class="card-flip-scene" id="punchcard">
+        <div class="card-flip-inner" id="card-flip-inner">
+          <div class="card-container card-face card-face-front" id="card-face-front">
+            <div class="card-header">
+              <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo">
+              <div class="card-header-right">
+                <div class="card-number admin-only" id="card-number">CARD #---</div>
+                <div class="student-badge hidden" id="student-badge" title="Eightysix° × Netaville">
+                  <img src="icons/netaville-mark.png" alt="" class="student-badge-mark">
+                  <span data-i18n="studentBadgeLabel">Student</span>
+                </div>
+                <div class="stamp-badge hidden" id="stamp-badge">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <span id="stamp-badge-label">Bronze</span>
+                </div>
+                <button class="card-flip-btn" id="btn-card-flip" type="button" aria-label="Flip card">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"></path><path d="M3 12.7V12a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3"></path><path d="M7 21.9l-4-4 4-4"></path><path d="M21 11.3V12a9 9 0 0 1-9 9 9 9 0 0 1-6-2.3"></path></svg>
+                </button>
+              </div>
             </div>
-            <div class="stamp-badge hidden" id="stamp-badge">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-              <span id="stamp-badge-label">Bronze</span>
+
+            <div class="stamp-grid" id="stamp-grid">
+              <!-- Stamps will be injected here by JS -->
+            </div>
+
+            <div class="card-footer">
+              <div class="progress-section">
+                <div class="progress-bar">
+                  <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="stamp-count"><span id="stamp-count-text">0</span>/10</div>
+              </div>
+              <div class="progress-message" id="progress-msg">10 more to your free coffee!</div>
             </div>
           </div>
-        </div>
 
-        <div class="stamp-grid" id="stamp-grid">
-          <!-- Stamps will be injected here by JS -->
-        </div>
-
-        <div class="card-footer">
-          <div class="progress-section">
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+          <div class="card-container card-face card-face-back" id="card-face-back">
+            <div class="card-header">
+              <span class="card-back-title" data-i18n="cardBackTitle">Your Stats</span>
+              <button class="card-flip-btn" id="btn-card-flip-back" type="button" aria-label="Flip card">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"></path><path d="M3 12.7V12a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3"></path><path d="M7 21.9l-4-4 4-4"></path><path d="M21 11.3V12a9 9 0 0 1-9 9 9 9 0 0 1-6-2.3"></path></svg>
+              </button>
             </div>
-            <div class="stamp-count"><span id="stamp-count-text">0</span>/10</div>
+            <div class="card-back-stats">
+              <div class="stat-card card-back-stat">
+                <div class="stat-value" id="card-back-stat-lifetime">0</div>
+                <div class="stat-label" data-i18n="cardBackLifetimeStamps">Lifetime Stamps</div>
+              </div>
+              <div class="stat-card card-back-stat">
+                <div class="stat-value" id="card-back-stat-redeemed">0</div>
+                <div class="stat-label" data-i18n="cardBackRedeemed">Coffees Redeemed</div>
+              </div>
+              <div class="stat-card card-back-stat">
+                <div class="stat-value" id="card-back-stat-rank">—</div>
+                <div class="stat-label" data-i18n="cardBackRank">Leaderboard Rank</div>
+              </div>
+              <div class="stat-card card-back-stat">
+                <div class="stat-value" id="card-back-stat-since">—</div>
+                <div class="stat-label" data-i18n="cardBackMemberSince">Member Since</div>
+              </div>
+            </div>
           </div>
-          <div class="progress-message" id="progress-msg">10 more to your free coffee!</div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 // 86° Punchcard — Service Worker
 // Network-first for API, Stale-While-Revalidate for app shell
 
-const CACHE_NAME = '86-punchcard-v44';
+const CACHE_NAME = '86-punchcard-v45';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const APP_SHELL = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
   './lib/qrcode.min.js',
   './lib/html5-qrcode.min.js'
 ];

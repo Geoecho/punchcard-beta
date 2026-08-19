@@ -240,13 +240,15 @@ input { font: inherit; color: inherit; }
   0% { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-.splash-tagline {
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 4px;
-  text-transform: uppercase;
+/* No tagline anymore — the logos carry the screen alone, so they get a
+   slow, quiet breathing loop once they've settled into place, instead
+   of sitting static while the dots do all the animating work. */
+#view-splash .brand-lockup-large {
+  animation: splash-logo-breathe 2.6s ease-in-out 0.6s infinite;
+}
+@keyframes splash-logo-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
 }
 .splash-loader {
   display: flex;
@@ -650,8 +652,72 @@ input { font: inherit; color: inherit; }
 .btn-close { font-size: 14px; color: var(--text-muted); padding: 4px; }
 
 /* ── Punchcard ────────────────────────────────────────────── */
-.card-container {
+/* ── Flippable Card ───────────────────────────────────────
+   #punchcard is now the 3D scene + hidden/shown toggle target (unchanged
+   from before — JS still just does DOM.punchcard.classList.toggle
+   ('hidden')). The actual card look (bg/border/shadow/padding) lives on
+   .card-container, applied to both faces via .card-face-front/-back so
+   front and back read as the same physical card. .card-flip-inner's
+   height is synced to content by JS (syncCardFlipHeight) since both
+   faces are absolutely positioned and don't contribute to layout. */
+.card-flip-scene {
   margin: 20px 20px 0;
+  perspective: 1400px;
+}
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
+}
+.card-flip-inner.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* min- not height: 100%, so the natural-content measurement JS takes
+     (scrollHeight) isn't circular — this only stretches a shorter face
+     up to match .card-flip-inner's already-set height, so front and
+     back always read as the same physical card thickness. */
+  min-height: 100%;
+  margin: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.card-face-back { transform: rotateY(180deg); }
+.card-flip-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.card-flip-btn:active { transform: scale(0.9); color: var(--text-primary); }
+.card-back-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.card-back-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-card.card-back-stat { padding: 14px 10px; }
+.card-back-stat .stat-value { font-size: 22px; }
+
+.card-container {
   padding: 24px;
   background: var(--bg-card);
   border-radius: var(--radius-xl);
@@ -975,10 +1041,21 @@ input { font: inherit; color: inherit; }
   padding: 6px 16px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  transition: color 0.2s var(--ease-out);
+  background: transparent;
+  transition: color 0.2s var(--ease-out), background-color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.nav-item.active { color: var(--accent-main); }
-.nav-icon { width: 22px; height: 22px; }
+.nav-item:active { transform: scale(0.92); }
+.nav-item.active { color: var(--accent-main); background: rgba(255,255,255,0.06); }
+.nav-icon { width: 22px; height: 22px; transition: transform 0.2s var(--ease-out); }
+/* Replays every time an item newly gains .active, since the animation
+   only matches while that class is present (nav clicks toggle it on
+   the same persistent DOM node, they don't recreate it). */
+.nav-item.active .nav-icon { animation: nav-icon-pop 0.35s var(--ease-out); }
+@keyframes nav-icon-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
 .nav-label { font-size: 11px; font-weight: 500; text-align: center; }
 
 /* ── Customers View ───────────────────────────────────────── */
@@ -2117,7 +2194,7 @@ input { font: inherit; color: inherit; }
      here every one of these collapsed down to ~220px (content width)
      instead of filling out to the 520px cap before centering. */
   .home-header,
-  .card-container,
+  .card-flip-scene,
   .rewards-wallet-card,
   .install-prompt-banner,
   .campaign-banner,
@@ -2129,7 +2206,7 @@ input { font: inherit; color: inherit; }
     margin-left: auto;
     margin-right: auto;
   }
-  .card-container { margin-top: 20px; }
+  .card-flip-scene { margin-top: 20px; }
 
   /* Settings/Dashboard: same full-width admin treatment as Customers/
      Activity/Edit Menu — was previously capped to a narrow centered

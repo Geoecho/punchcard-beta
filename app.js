@@ -113,6 +113,11 @@ const TRANSLATIONS = {
     studentBadgeLabel: "Student",
     studentStatusOn: "Marked as a verified student",
     studentStatusOff: "Student status removed",
+    cardBackTitle: "Your Stats",
+    cardBackLifetimeStamps: "Lifetime Stamps",
+    cardBackRedeemed: "Coffees Redeemed",
+    cardBackRank: "Leaderboard Rank",
+    cardBackMemberSince: "Member Since",
     studentStatusError: "Could not update — check your connection",
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
@@ -200,7 +205,6 @@ const TRANSLATIONS = {
     scanQrTitle: "Scan Customer QR",
     scanQrSubtitle: "Point camera at customer's QR code.",
     btnCancelScan: "Cancel Scan",
-    splashTagline: "Loyalty",
     rewardTitle: "FREE COFFEE UNLOCKED",
     rewardSubtitle: "You collected 10 stamps! Show your barista to redeem or save it to your wallet for later.",
     btnRedeemNow: "Redeem Now at Counter",
@@ -335,6 +339,11 @@ const TRANSLATIONS = {
     studentStatusOn: "Означен како потврден студент",
     studentStatusOff: "Статусот на студент е отстранет",
     studentStatusError: "Не можеше да се ажурира — проверете ја вашата врска",
+    cardBackTitle: "Вашата статистика",
+    cardBackLifetimeStamps: "Вкупно печати",
+    cardBackRedeemed: "Искористени кафиња",
+    cardBackRank: "Ранг на табела",
+    cardBackMemberSince: "Член од",
     settingsStudentDiscount: "Студентски попуст",
     studentPromoTitle: "Добијте студентски попуст",
     studentPromoSubtitle: "Регистрирајте се во Netaville со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди",
@@ -421,7 +430,6 @@ const TRANSLATIONS = {
     scanQrTitle: "Скенирај QR код на клиент",
     scanQrSubtitle: "Насочете ја камерата кон QR кодот на клиентот.",
     btnCancelScan: "Откажи скенирање",
-    splashTagline: "Лојалност",
     rewardTitle: "БЕСПЛАТНО КАФЕ ОТКЛУЧЕНО",
     rewardSubtitle: "Собравте 10 печати! Прикажете му на бариста за да го искористите или зачувајте го во вашиот паричник за подоцна.",
     btnRedeemNow: "Искористи сега на шанкот",
@@ -556,6 +564,11 @@ const TRANSLATIONS = {
     studentStatusOn: "U shënua si student i verifikuar",
     studentStatusOff: "Statusi i studentit u hoq",
     studentStatusError: "Nuk mund të përditësohej — kontrollo lidhjen",
+    cardBackTitle: "Statistikat e Tua",
+    cardBackLifetimeStamps: "Vula Gjithsej",
+    cardBackRedeemed: "Kafe të Shfrytëzuara",
+    cardBackRank: "Renditja në Klasifikim",
+    cardBackMemberSince: "Anëtar Që Nga",
     settingsStudentDiscount: "Zbritje për Studentë",
     studentPromoTitle: "Merr Zbritjen për Studentë",
     studentPromoSubtitle: "Regjistrohu në Netaville me email-in tënd të studentit, pastaj kërko stafit të të verifikojë",
@@ -642,7 +655,6 @@ const TRANSLATIONS = {
     scanQrTitle: "Skano Kodin QR të Klientit",
     scanQrSubtitle: "Drejto kamerën te kodi QR i klientit.",
     btnCancelScan: "Anulo Skanimin",
-    splashTagline: "Besnikëri",
     rewardTitle: "KAFE FALAS U ZHBLLOKUA",
     rewardSubtitle: "Mblodhe 10 vula! Tregoja baristës për ta shfrytëzuar ose ruaje në portofolin tënd për më vonë.",
     btnRedeemNow: "Shfrytëzo Tani te Banaku",
@@ -1862,6 +1874,15 @@ const DOM = {
   adminActions: document.getElementById('admin-actions'),
   btnAddStamp: document.getElementById('btn-add-stamp'),
   punchcard: document.getElementById('punchcard'),
+  cardFlipInner: document.getElementById('card-flip-inner'),
+  cardFaceFront: document.getElementById('card-face-front'),
+  cardFaceBack: document.getElementById('card-face-back'),
+  btnCardFlip: document.getElementById('btn-card-flip'),
+  btnCardFlipBack: document.getElementById('btn-card-flip-back'),
+  cardBackStatLifetime: document.getElementById('card-back-stat-lifetime'),
+  cardBackStatRedeemed: document.getElementById('card-back-stat-redeemed'),
+  cardBackStatRank: document.getElementById('card-back-stat-rank'),
+  cardBackStatSince: document.getElementById('card-back-stat-since'),
   adminEmptyState: document.getElementById('admin-empty-state'),
   homeGreeting: document.getElementById('home-greeting'),
   homeSubtitle: document.getElementById('home-subtitle'),
@@ -2670,6 +2691,17 @@ function setupEventListeners() {
   }
 
   if (DOM.btnCloseShowQr) DOM.btnCloseShowQr.addEventListener('click', () => closeModal(DOM.modalShowQr));
+
+  // Flippable card — tap anywhere on either face to flip (the small
+  // icon buttons are just an affordance hint, clicks on them bubble up
+  // to this same handler rather than getting their own listener, so a
+  // tap never fires the toggle twice).
+  if (DOM.cardFlipInner) {
+    DOM.cardFlipInner.addEventListener('click', () => {
+      DOM.cardFlipInner.classList.toggle('flipped');
+    });
+  }
+  window.addEventListener('resize', () => syncCardFlipHeight());
 
   // ToS & Privacy Policy Modals
   if (DOM.linkTos) DOM.linkTos.addEventListener('click', (e) => { e.preventDefault(); openModal(DOM.modalTos); });
@@ -3835,6 +3867,62 @@ function refreshStudentPromoVisibility(customer) {
   }
 }
 
+let lastCardCustomerId = null;
+let cardBackRankCache = {};
+
+function setCardFlipped(flipped) {
+  if (DOM.cardFlipInner) DOM.cardFlipInner.classList.toggle('flipped', flipped);
+}
+
+// Both faces are absolutely positioned (so they can overlap during the 3D
+// flip), which takes them out of normal flow — .card-flip-inner needs an
+// explicit height or it collapses to 0. Re-measure whenever either face's
+// content could have changed size (stamp count, language, viewport width).
+function syncCardFlipHeight() {
+  if (!DOM.cardFlipInner || !DOM.cardFaceFront || !DOM.cardFaceBack) return;
+  const h = Math.max(DOM.cardFaceFront.scrollHeight, DOM.cardFaceBack.scrollHeight);
+  if (h > 0) DOM.cardFlipInner.style.height = h + 'px';
+}
+
+async function updateCardBackStats(customer) {
+  if (!DOM.cardBackStatLifetime) return;
+
+  DOM.cardBackStatLifetime.textContent = customer.totalStampsEarned || 0;
+
+  const redeemedCount = Array.isArray(customer.history)
+    ? customer.history.filter(h => h.type === 'redemption' && !h.voided).length
+    : 0;
+  if (DOM.cardBackStatRedeemed) DOM.cardBackStatRedeemed.textContent = redeemedCount;
+
+  if (DOM.cardBackStatSince) {
+    const dt = customer.joinedAt ? new Date(customer.joinedAt) : null;
+    DOM.cardBackStatSince.textContent = (dt && !isNaN(dt))
+      ? dt.toLocaleDateString([], { month: 'short', year: 'numeric' })
+      : '—';
+  }
+
+  // Rank needs its own network round-trip — show a placeholder, fetch it
+  // lazily, and cache per customer so re-flipping doesn't refetch.
+  if (DOM.cardBackStatRank) {
+    const cached = cardBackRankCache[customer.id];
+    if (cached) {
+      DOM.cardBackStatRank.textContent = cached;
+    } else {
+      DOM.cardBackStatRank.textContent = '—';
+      cloud.getMyRank(customer.id, 'all').then(res => {
+        const label = res && res.rank ? `#${res.rank}` : '—';
+        cardBackRankCache[customer.id] = label;
+        if (state.selectedCustomerId === customer.id && DOM.cardBackStatRank) {
+          DOM.cardBackStatRank.textContent = label;
+          syncCardFlipHeight();
+        }
+      }).catch(() => {});
+    }
+  }
+
+  syncCardFlipHeight();
+}
+
 async function updateCardUI() {
   if (!state.selectedCustomerId) {
     DOM.homeGreeting.textContent = t('homeGreetingGuest');
@@ -3851,11 +3939,18 @@ async function updateCardUI() {
     if (DOM.btnLogoutHeader) DOM.btnLogoutHeader.classList.add('hidden');
     if (DOM.userAvatarDisplay) DOM.userAvatarDisplay.innerHTML = MONOCHROME_AVATARS.person;
     updateGreetingMarquee();
+    setCardFlipped(false);
+    lastCardCustomerId = null;
     return;
   }
 
   const customer = await db.getCustomer(state.selectedCustomerId);
   if (!customer) return;
+
+  if (lastCardCustomerId !== customer.id) {
+    lastCardCustomerId = customer.id;
+    setCardFlipped(false);
+  }
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
@@ -3956,6 +4051,7 @@ async function updateCardUI() {
   if (!state.isAdmin) refreshCustomerCampaignBanner();
 
   refreshStudentPromoVisibility(customer);
+  updateCardBackStats(customer);
 
   if (state.isAdmin) {
     DOM.btnAddStamp.disabled = stamps >= MAX_STAMPS;
