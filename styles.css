@@ -278,13 +278,52 @@ input { font: inherit; color: inherit; }
   transition: opacity 0.35s var(--ease-in-out);
 }
 
-/* Sits at the bottom of the signup screen, below both forms, centered —
-   deliberately far from the logo so it never visually competes with it
-   (previous attempts placed it centered above the logo, then floating in
-   the top-right corner, and neither read well next to the brand mark). */
-.lang-switcher-footer {
-  align-self: center;
-  margin: 24px 0 4px;
+/* Icon-only globe button, top-right of the signup screen — smallest
+   possible footprint so it never competes with the brand mark (earlier
+   attempts placed a 3-button pill centered, then in the corner, then at
+   the bottom, and each still read as too heavy next to the logo). Tap
+   opens a small popover with the three language options. */
+.lang-switcher-globe {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: 20px;
+  z-index: 20;
+}
+.lang-globe-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.lang-globe-btn:hover, .lang-globe-btn.active {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+.lang-globe-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 2px;
+  min-width: 64px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+}
+.lang-globe-menu .lang-btn {
+  text-align: left;
+  padding: 8px 10px;
 }
 
 /* ── Sign Up / Login View (Left-Aligned) ──────────────────── */
@@ -655,6 +694,10 @@ input { font: inherit; color: inherit; }
   align-items: center;
   gap: 4px;
   padding: 3px 9px;
+  /* Same 1px border thickness as .stamp-badge (in its own background
+     color, so invisible against the fill) — otherwise this chip sits
+     2px shorter than the rank chip despite matching padding/font-size. */
+  border: 1px solid var(--text-primary);
   border-radius: var(--radius-full);
   background: var(--text-primary);
   color: var(--bg-primary);
@@ -664,7 +707,7 @@ input { font: inherit; color: inherit; }
   text-transform: uppercase;
 }
 .student-badge-mark {
-  width: 10px;
+  width: 11px;
   height: auto;
   /* Source mark is a white silhouette (built for dark backgrounds); this
      badge is an inverted white pill, so flip it dark to stay visible. */
@@ -870,14 +913,17 @@ input { font: inherit; color: inherit; }
 .btn-student-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 20px;
   background: transparent;
   border: 1px solid var(--border-glass-strong);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
   transition: all 0.2s var(--ease-out);
 }
 .btn-student-toggle:active { transform: scale(0.97); }
@@ -1282,6 +1328,7 @@ input { font: inherit; color: inherit; }
 .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .form-input { width: 100%; padding: 14px 16px; background: var(--bg-glass); border: 1px solid var(--border-glass-strong); border-radius: var(--radius-md); color: var(--text-primary); font-size: 15px; outline: none; transition: all 0.2s var(--ease-out); }
 .form-input:focus { border-color: var(--accent-main); background: rgba(255,255,255,0.08); }
+.menu-item-discount-preview { font-size: 12px; font-weight: 600; color: var(--accent-main); margin-top: 6px; min-height: 15px; }
 .form-group-password { position: relative; }
 .form-group-password .form-input { padding-right: 46px; }
 .toggle-password-btn {
@@ -1758,15 +1805,33 @@ input { font: inherit; color: inherit; }
   margin-right: 8px;
   white-space: nowrap;
 }
+.menu-item-price-group {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .menu-item-price {
   font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+}
+.menu-item-price-original {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.menu-discount-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: var(--accent-main);
+  color: var(--bg-primary);
+  border-radius: var(--radius-full);
+  letter-spacing: 0.3px;
 }
 .menu-bonus-chip {
   font-size: 10px;
@@ -1836,25 +1901,27 @@ input { font: inherit; color: inherit; }
 
 /* ── Leaderboard View (Customer Only) ─────────────────────── */
 .lb-header-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-/* All Time / This Month is a 2-way exclusive toggle, same pattern as the
-   auth tabs and language switcher — give it the same radius convention
-   instead of the free-floating pill shape .chip uses for the Activity
-   view's multi-filter row. */
-#leaderboard-period-chips {
+#leaderboard-period-chips { margin: 4px 20px 16px; }
+/* Reusable 2/3-way exclusive toggle — same radius convention as the auth
+   tabs and language switcher (bordered container + inner radius-sm
+   buttons), for any either/or control (All Time/This Month, Regular/
+   Student pricing) instead of the free-floating pill shape .chip uses
+   for the Activity view's multi-select filter row. */
+.segmented-toggle {
   display: flex;
   background: var(--bg-glass);
   border: 1px solid var(--border-glass-strong);
   border-radius: var(--radius-md);
   padding: 4px;
 }
-#leaderboard-period-chips .chip {
+.segmented-toggle .chip {
   flex: 1;
   height: auto;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
 }
-#leaderboard-period-chips .chip.active {
+.segmented-toggle .chip.active {
   background: var(--text-primary);
   color: var(--bg-primary);
   border-color: transparent;

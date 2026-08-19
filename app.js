@@ -212,6 +212,10 @@ const TRANSLATIONS = {
     labelSubtext: "Subtext (Optional)",
     labelPrice: "Price",
     labelBonusStamps: "Bonus Stamps",
+    labelStudentPrice: "Student Price (Optional)",
+    menuItemDiscountPreview: "That's {n}% off the regular price",
+    menuViewRegular: "Regular",
+    menuViewStudent: "Student",
     btnDelete: "Delete",
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
@@ -429,6 +433,10 @@ const TRANSLATIONS = {
     labelSubtext: "Поднаслов (опционално)",
     labelPrice: "Цена",
     labelBonusStamps: "Бонус печати",
+    labelStudentPrice: "Студентска цена (опционално)",
+    menuItemDiscountPreview: "Тоа е {n}% попуст од редовната цена",
+    menuViewRegular: "Редовно",
+    menuViewStudent: "Студентско",
     btnDelete: "Избриши",
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
@@ -646,6 +654,10 @@ const TRANSLATIONS = {
     labelSubtext: "Nëntitulli (Opsional)",
     labelPrice: "Çmimi",
     labelBonusStamps: "Vula Bonus",
+    labelStudentPrice: "Çmimi për Studentë (Opsionale)",
+    menuItemDiscountPreview: "Kjo është {n}% zbritje nga çmimi i rregullt",
+    menuViewRegular: "I Rregullt",
+    menuViewStudent: "Student",
     btnDelete: "Fshi",
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
@@ -807,6 +819,8 @@ const state = {
   pinLockoutUntil: 0,
   activityFilter: 'all', // 'all' | 'redemption' | 'stamp'
   customerSort: 'recent', // 'recent' | 'regulars'
+  menuPriceView: 'regular', // 'regular' | 'student' — defaults to 'student' on entry for verified students
+  menuPriceViewInitialized: false,
   editingCustomerId: null,
   campaign: null, // { active, multiplier, label } once fetched
   stats: {
@@ -1450,7 +1464,7 @@ const cloud = {
         4000
       );
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 }));
+      return res.data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0, studentPrice: d.student_price || '' }));
     } catch (e) {
       return null;
     }
@@ -1467,13 +1481,14 @@ const cloud = {
           p_sub: item.sub || '',
           p_price: item.price,
           p_category: item.category,
-          p_stamps: item.stamps || 0
+          p_stamps: item.stamps || 0,
+          p_student_price: item.studentPrice || null
         }),
         4000
       );
       if (res.error || !res.data || !res.data.length) return { error: 'unknown' };
       const d = res.data[0];
-      return { item: { id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0 } };
+      return { item: { id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0, studentPrice: d.student_price || '' } };
     } catch (e) {
       return { error: 'offline' };
     }
@@ -1993,6 +2008,7 @@ const DOM = {
   leaderboardContainer: document.getElementById('leaderboard-container'),
   leaderboardSubtitle: document.getElementById('leaderboard-subtitle'),
   leaderboardPeriodChips: document.querySelectorAll('#leaderboard-period-chips .chip'),
+  menuPriceViewChips: document.querySelectorAll('#menu-price-view-chips .chip'),
 
   // Campaign Banner (Customer View)
   campaignBanner: document.getElementById('campaign-banner'),
@@ -2012,6 +2028,8 @@ const DOM = {
   menuItemSub: document.getElementById('menu-item-sub'),
   menuItemPrice: document.getElementById('menu-item-price'),
   menuItemStamps: document.getElementById('menu-item-stamps'),
+  menuItemStudentPrice: document.getElementById('menu-item-student-price'),
+  menuItemDiscountPreview: document.getElementById('menu-item-discount-preview'),
   btnSaveMenuItem: document.getElementById('btn-save-menu-item'),
   btnCancelMenuItem: document.getElementById('btn-cancel-menu-item'),
   btnDeleteMenuItem: document.getElementById('btn-delete-menu-item')
@@ -2083,6 +2101,35 @@ async function initApp() {
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
     });
+
+    // Signup screen's globe-icon language switcher: click to open/close the
+    // popover, click a language to pick it (applyLanguage above already
+    // fires for these buttons since they're plain .lang-btn elements too).
+    const langGlobeBtn = document.getElementById('lang-globe-btn-signup');
+    const langGlobeMenu = document.getElementById('lang-globe-menu-signup');
+    if (langGlobeBtn && langGlobeMenu) {
+      langGlobeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const willOpen = langGlobeMenu.classList.contains('hidden');
+        langGlobeMenu.classList.toggle('hidden', !willOpen);
+        langGlobeBtn.classList.toggle('active', willOpen);
+        langGlobeBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+      langGlobeMenu.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          langGlobeMenu.classList.add('hidden');
+          langGlobeBtn.classList.remove('active');
+          langGlobeBtn.setAttribute('aria-expanded', 'false');
+        });
+      });
+      document.addEventListener('click', (e) => {
+        if (!langGlobeMenu.classList.contains('hidden') && !langGlobeMenu.contains(e.target) && e.target !== langGlobeBtn) {
+          langGlobeMenu.classList.add('hidden');
+          langGlobeBtn.classList.remove('active');
+          langGlobeBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
 
     await db.init().catch(() => {});
     cloud.init();
@@ -2667,6 +2714,16 @@ function setupEventListeners() {
         chip.classList.add('active');
         state.leaderboardPeriod = chip.dataset.period || 'all';
         renderLeaderboard();
+      });
+    });
+  }
+
+  // Menu Price View Chips (Regular / Student)
+  if (DOM.menuPriceViewChips) {
+    DOM.menuPriceViewChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.classList.contains('active')) return;
+        setMenuPriceView(chip.dataset.priceView || 'regular');
       });
     });
   }
@@ -3528,7 +3585,12 @@ function switchView(viewId) {
     if (DOM.nav) DOM.nav.classList.remove('hidden');
   }
 
-  if (viewId === 'view-settings') updateSettingsStats();
+  if (viewId === 'view-settings') {
+    updateSettingsStats();
+    if (!state.isAdmin && state.selectedCustomerId) {
+      db.getCustomer(state.selectedCustomerId).then(c => refreshStudentPromoVisibility(c));
+    }
+  }
   if (viewId === 'view-activity') renderActivityList();
   if (viewId === 'view-leaderboard') renderLeaderboard();
   // Prices must be current the moment someone is actually looking at the
@@ -3536,6 +3598,12 @@ function switchView(viewId) {
   // boot (a backgrounded app, a dropped websocket, etc. shouldn't be able
   // to leave a stale price on screen at the moment it matters most).
   if (viewId === 'view-menu' || viewId === 'view-admin-menu') syncMenuFromCloud();
+  if (viewId === 'view-menu' && !state.isAdmin && !state.menuPriceViewInitialized && state.selectedCustomerId) {
+    state.menuPriceViewInitialized = true;
+    db.getCustomer(state.selectedCustomerId).then(c => {
+      if (c && c.isStudent) setMenuPriceView('student');
+    });
+  }
 
   const fabActions = document.getElementById('customers-fab-actions');
   if (fabActions) {
@@ -3748,6 +3816,25 @@ function netavilleStoreUrl() {
   return NETAVILLE_ANDROID_URL || NETAVILLE_IOS_URL || '';
 }
 
+// Student discount promo — only for customers who aren't verified yet,
+// and only once real store links are configured (never point somewhere
+// broken in the meantime). Called from updateCardUI() AND separately
+// from updateSettingsStats(), since navigating straight to Settings
+// doesn't go through updateCardUI() and was leaving this on stale data
+// (e.g. still showing the promo right after staff verify someone, until
+// they happened to revisit the Card tab).
+function refreshStudentPromoVisibility(customer) {
+  if (!DOM.studentPromoBanner || !DOM.btnStudentPromoDownload) return;
+  const storeUrl = netavilleStoreUrl();
+  const showPromo = !state.isAdmin && !!customer && !customer.isStudent && !!storeUrl;
+  DOM.btnStudentPromoDownload.href = storeUrl || '#';
+  DOM.studentPromoBanner.classList.toggle('hidden', !showPromo);
+  if (DOM.settingsStudentSection && DOM.settingsStudentLink) {
+    DOM.settingsStudentLink.href = storeUrl || '#';
+    DOM.settingsStudentSection.classList.toggle('hidden', !showPromo);
+  }
+}
+
 async function updateCardUI() {
   if (!state.selectedCustomerId) {
     DOM.homeGreeting.textContent = t('homeGreetingGuest');
@@ -3868,19 +3955,7 @@ async function updateCardUI() {
 
   if (!state.isAdmin) refreshCustomerCampaignBanner();
 
-  // Student discount promo — only for customers who aren't verified yet,
-  // and only once real store links are configured (never point somewhere
-  // broken in the meantime).
-  if (DOM.studentPromoBanner && DOM.btnStudentPromoDownload) {
-    const storeUrl = netavilleStoreUrl();
-    const showPromo = !state.isAdmin && !customer.isStudent && !!storeUrl;
-    DOM.btnStudentPromoDownload.href = storeUrl || '#';
-    DOM.studentPromoBanner.classList.toggle('hidden', !showPromo);
-    if (DOM.settingsStudentSection && DOM.settingsStudentLink) {
-      DOM.settingsStudentLink.href = storeUrl || '#';
-      DOM.settingsStudentSection.classList.toggle('hidden', !showPromo);
-    }
-  }
+  refreshStudentPromoVisibility(customer);
 
   if (state.isAdmin) {
     DOM.btnAddStamp.disabled = stamps >= MAX_STAMPS;
@@ -4352,9 +4427,70 @@ function translateCategoryName(catName) {
   return key ? t(key) : catName;
 }
 
+function setMenuPriceView(view) {
+  state.menuPriceView = view === 'student' ? 'student' : 'regular';
+  if (DOM.menuPriceViewChips) {
+    DOM.menuPriceViewChips.forEach(c => {
+      c.classList.toggle('active', (c.dataset.priceView || 'regular') === state.menuPriceView);
+    });
+  }
+  renderCustomerMenu();
+}
+
 function renderCustomerMenu() {
   if (!DOM.customerMenuContainer) return;
   DOM.customerMenuContainer.innerHTML = '';
+
+  const showStudentPrices = state.menuPriceView === 'student';
+
+  const categories = {};
+  state.menuItems.forEach(item => {
+    if (!categories[item.category]) categories[item.category] = [];
+    categories[item.category].push(item);
+  });
+
+  for (const [catName, items] of Object.entries(categories)) {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'menu-category';
+
+    const catTitle = document.createElement('div');
+    catTitle.className = 'menu-category-title';
+    catTitle.textContent = translateCategoryName(catName);
+    catDiv.appendChild(catTitle);
+
+    items.forEach(item => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'menu-item' + (item.stamps > 0 ? ' stamp-bonus' : '');
+
+      const regularVal = parseFloat(item.price);
+      const studentVal = parseFloat(item.studentPrice);
+      const hasDiscount = showStudentPrices && item.studentPrice && studentVal > 0 && studentVal < regularVal;
+
+      let priceHtml;
+      if (hasDiscount) {
+        const pct = Math.round((1 - studentVal / regularVal) * 100);
+        priceHtml = `<span class="menu-item-price-original">${regularVal} MKD</span>
+                     <span class="menu-item-price">${studentVal} MKD</span>
+                     <span class="menu-discount-badge">-${pct}%</span>`;
+      } else {
+        priceHtml = `<span class="menu-item-price">${regularVal} MKD</span>`;
+      }
+
+      let html = `<span class="menu-item-name">${item.name}</span>
+                  <span class="menu-item-sub">${item.sub || ''}</span>
+                  <span class="menu-item-price-group">${priceHtml}`;
+
+      if (item.stamps > 0) {
+        html += ` <span class="menu-bonus-chip">+${item.stamps} stamps</span>`;
+      }
+      html += `</span>`;
+
+      itemDiv.innerHTML = html;
+      catDiv.appendChild(itemDiv);
+    });
+
+    DOM.customerMenuContainer.appendChild(catDiv);
+  }
 
   const note = document.createElement('div');
   note.className = 'menu-stamp-note';
@@ -4371,43 +4507,6 @@ function renderCustomerMenu() {
     </div>
   `;
   DOM.customerMenuContainer.appendChild(note);
-
-  const categories = {};
-  state.menuItems.forEach(item => {
-    if (!categories[item.category]) categories[item.category] = [];
-    categories[item.category].push(item);
-  });
-
-  for (const [catName, items] of Object.entries(categories)) {
-    const catDiv = document.createElement('div');
-    catDiv.className = 'menu-category';
-    
-    const catTitle = document.createElement('div');
-    catTitle.className = 'menu-category-title';
-    catTitle.textContent = translateCategoryName(catName);
-    catDiv.appendChild(catTitle);
-
-    items.forEach(item => {
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'menu-item' + (item.stamps > 0 ? ' stamp-bonus' : '');
-      
-      const priceVal = parseFloat(item.price).toString();
-      
-      let html = `<span class="menu-item-name">${item.name}</span>
-                  <span class="menu-item-sub">${item.sub || ''}</span>
-                  <span class="menu-item-price">${priceVal} MKD`;
-                  
-      if (item.stamps > 0) {
-        html += ` <span class="menu-bonus-chip">+${item.stamps} stamps</span>`;
-      }
-      html += `</span>`;
-      
-      itemDiv.innerHTML = html;
-      catDiv.appendChild(itemDiv);
-    });
-    
-    DOM.customerMenuContainer.appendChild(catDiv);
-  }
 }
 
 // SAFE DOM CONSTRUCTION FOR STORED XSS PREVENTION
@@ -4584,6 +4683,7 @@ function openMenuModal(item = null) {
     DOM.menuItemSub.value = item.sub || '';
     DOM.menuItemPrice.value = item.price;
     DOM.menuItemStamps.value = item.stamps || 0;
+    if (DOM.menuItemStudentPrice) DOM.menuItemStudentPrice.value = item.studentPrice || '';
     DOM.btnDeleteMenuItem.style.display = 'block';
   } else {
     DOM.menuModalTitle.textContent = t('menuModalAddItem');
@@ -4593,14 +4693,33 @@ function openMenuModal(item = null) {
     DOM.menuItemSub.value = '';
     DOM.menuItemPrice.value = '';
     DOM.menuItemStamps.value = 0;
+    if (DOM.menuItemStudentPrice) DOM.menuItemStudentPrice.value = '';
     DOM.btnDeleteMenuItem.style.display = 'none';
   }
+  updateMenuItemDiscountPreview();
   openModal(DOM.modalEditMenuItem);
+}
+
+// Live "-X%" preview under the Student Price field as the admin types,
+// computed from the two prices rather than asking them to work out a
+// percentage themselves.
+function updateMenuItemDiscountPreview() {
+  if (!DOM.menuItemDiscountPreview) return;
+  const price = parseFloat(DOM.menuItemPrice.value);
+  const studentPrice = parseFloat(DOM.menuItemStudentPrice.value);
+  if (!price || !studentPrice || studentPrice >= price) {
+    DOM.menuItemDiscountPreview.textContent = '';
+    return;
+  }
+  const pct = Math.round((1 - studentPrice / price) * 100);
+  DOM.menuItemDiscountPreview.textContent = t('menuItemDiscountPreview', { n: pct });
 }
 
 if (DOM.btnAddMenuItem) DOM.btnAddMenuItem.addEventListener('click', () => openMenuModal());
 if (DOM.btnCancelMenuItem) DOM.btnCancelMenuItem.addEventListener('click', () => closeModal(DOM.modalEditMenuItem));
 if (DOM.overlayEditMenuItem) DOM.overlayEditMenuItem.addEventListener('click', () => closeModal(DOM.modalEditMenuItem));
+if (DOM.menuItemPrice) DOM.menuItemPrice.addEventListener('input', updateMenuItemDiscountPreview);
+if (DOM.menuItemStudentPrice) DOM.menuItemStudentPrice.addEventListener('input', updateMenuItemDiscountPreview);
 
 if (DOM.btnSaveMenuItem) {
   DOM.btnSaveMenuItem.addEventListener('click', async () => {
@@ -4614,13 +4733,15 @@ if (DOM.btnSaveMenuItem) {
       return;
     }
 
+    const studentPriceRaw = DOM.menuItemStudentPrice ? DOM.menuItemStudentPrice.value.trim() : '';
     const newItem = {
       id,
       name,
       category,
       sub: DOM.menuItemSub.value.trim(),
       price: parseFloat(price).toFixed(2),
-      stamps: parseInt(DOM.menuItemStamps.value) || 0
+      stamps: parseInt(DOM.menuItemStamps.value) || 0,
+      studentPrice: studentPriceRaw ? parseFloat(studentPriceRaw).toFixed(2) : ''
     };
 
     DOM.btnSaveMenuItem.disabled = true;
