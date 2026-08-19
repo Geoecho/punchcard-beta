@@ -666,6 +666,18 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="settings-item" id="btn-open-friends">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div>
+              <div class="settings-item-label" data-i18n="settingsFriends">Friends</div>
+              <div class="settings-item-sublabel" data-i18n="settingsFriendsSub">Gift a free coffee to someone</div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
         <div class="settings-item" id="btn-logout-user">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -903,6 +915,46 @@
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn-secondary" id="btn-set-displayname-skip" data-i18n="btnCancel">Cancel</button>
           <button class="btn-primary" id="btn-set-displayname-save" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Friends & Gift a Reward Modal -->
+    <div class="modal" id="modal-friends">
+      <div class="modal-overlay" id="overlay-friends"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="friendsModalTitle">Friends</h3>
+        <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Add a friend by their username, then gift them a free coffee from your wallet.</p>
+
+        <div class="form-group friends-add-row">
+          <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's username" autocomplete="off" enterkeyhint="done" data-i18n-placeholder="phFriendUsername">
+          <button class="btn-primary btn-small" id="btn-add-friend" data-i18n="btnAddFriend">Add</button>
+        </div>
+        <p class="pin-error" id="add-friend-error"></p>
+
+        <div class="friends-list" id="friends-list">
+          <div class="empty-state" style="padding: 24px 0;">
+            <p class="empty-text" data-i18n="friendsEmpty">No friends added yet.</p>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary btn-block" id="btn-close-friends" data-i18n="btnClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Gift Reward Modal -->
+    <div class="modal" id="modal-confirm-gift">
+      <div class="modal-overlay" id="overlay-confirm-gift"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="confirmGiftTitle">Gift This Reward?</h3>
+        <p class="modal-subtitle" id="confirm-gift-text">Send your free coffee to this friend? This can't be undone.</p>
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-cancel-gift" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-confirm-gift" data-i18n="btnConfirmGift">Send Gift</button>
         </div>
       </div>
     </div>

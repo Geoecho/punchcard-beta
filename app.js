@@ -244,6 +244,23 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Notifications turned off",
     errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
     errNotificationsIOSInstall: "On iPhone/iPad, add this app to your Home Screen first — Share, then \"Add to Home Screen\" — notifications only work from the installed app, not a browser tab",
+    settingsFriends: "Friends",
+    settingsFriendsSub: "Gift a free coffee to someone",
+    friendsModalTitle: "Friends",
+    friendsModalSubtitle: "Add a friend by their username, then gift them a free coffee from your wallet.",
+    phFriendUsername: "Friend's username",
+    btnAddFriend: "Add",
+    friendsEmpty: "No friends added yet.",
+    errFriendNotFound: "No account found with that username",
+    errCannotAddSelf: "You can't add yourself",
+    toastFriendAdded: "Added {name} as a friend!",
+    btnGiftReward: "Gift a free coffee",
+    errNoRewardToGift: "You don't have a free coffee to gift right now",
+    confirmGiftTitle: "Gift This Reward?",
+    confirmGiftText: "Send your free coffee to {name}? This can't be undone.",
+    btnConfirmGift: "Send Gift",
+    toastGiftSent: "Gift sent! 🎁",
+    loadingText: "Loading…",
     errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
     setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
@@ -486,6 +503,23 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Известувањата се исклучени",
     errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
     errNotificationsIOSInstall: 'На iPhone/iPad, прво додајте ја апликацијата на почетниот екран — Share, па „Add to Home Screen" — известувањата работат само од инсталираната апликација, не од прелистувач',
+    settingsFriends: "Пријатели",
+    settingsFriendsSub: "Подарете бесплатно кафе некому",
+    friendsModalTitle: "Пријатели",
+    friendsModalSubtitle: "Додадете пријател по корисничко име, па подарете му бесплатно кафе од вашиот паричник.",
+    phFriendUsername: "Корисничко име на пријателот",
+    btnAddFriend: "Додај",
+    friendsEmpty: "Сè уште немате додадено пријатели.",
+    errFriendNotFound: "Не е пронајдена сметка со тоа корисничко име",
+    errCannotAddSelf: "Не можете да се додадете себеси",
+    toastFriendAdded: "{name} е додаден како пријател!",
+    btnGiftReward: "Подари бесплатно кафе",
+    errNoRewardToGift: "Немате бесплатно кафе за подарување во моментов",
+    confirmGiftTitle: "Да го подарите ова?",
+    confirmGiftText: "Испратете го вашето бесплатно кафе до {name}? Ова не може да се врати.",
+    btnConfirmGift: "Испрати подарок",
+    toastGiftSent: "Подарокот е испратен! 🎁",
+    loadingText: "Се вчитува…",
     errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
     setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
@@ -728,6 +762,23 @@ const TRANSLATIONS = {
     toastNotificationsDisabled: "Njoftimet u çaktivizuan",
     errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
     errNotificationsIOSInstall: "Në iPhone/iPad, shto këtë aplikacion në Home Screen fillimisht — Share, pastaj \"Add to Home Screen\" — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
+    settingsFriends: "Miqtë",
+    settingsFriendsSub: "Dhuro një kafe falas dikujt",
+    friendsModalTitle: "Miqtë",
+    friendsModalSubtitle: "Shto një mik me emrin e tij të përdoruesit, pastaj dhuroji një kafe falas nga portofoli yt.",
+    phFriendUsername: "Emri i përdoruesit të mikut",
+    btnAddFriend: "Shto",
+    friendsEmpty: "Ende nuk ke shtuar miq.",
+    errFriendNotFound: "Nuk u gjet asnjë llogari me atë emër përdoruesi",
+    errCannotAddSelf: "Nuk mund ta shtosh veten",
+    toastFriendAdded: "{name} u shtua si mik!",
+    btnGiftReward: "Dhuro një kafe falas",
+    errNoRewardToGift: "Nuk ke një kafe falas për të dhuruar tani",
+    confirmGiftTitle: "Ta Dhurosh Këtë Shpërblim?",
+    confirmGiftText: "Dërgo kafenë tënde falas te {name}? Kjo nuk mund të kthehet.",
+    btnConfirmGift: "Dërgo Dhuratën",
+    toastGiftSent: "Dhurata u dërgua! 🎁",
+    loadingText: "Duke u ngarkuar…",
     errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
     setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
@@ -1291,6 +1342,76 @@ const cloud = {
       return await res.json();
     } catch (e) {
       return { sent: 0 };
+    }
+  },
+
+  // ---- Friends & gifting ----
+  async addFriend(token, username) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_add_friend', { p_token: token || null, p_friend_username: username }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('friend_not_found')) return { error: 'not_found' };
+        if (msg.includes('cannot_add_self')) return { error: 'self' };
+        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      const d = res.data[0];
+      return { friend: { id: d.friend_id, name: d.friend_name, avatar: d.friend_avatar || 'person' } };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  async removeFriend(token, friendId) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_remove_friend', { p_token: token || null, p_friend_id: friendId }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async listFriends(token) {
+    if (!supabaseClient) return [];
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_list_friends', { p_token: token || null }),
+        4000
+      );
+      if (res.error || !res.data) return [];
+      return res.data.map(d => ({ id: d.friend_id, name: d.friend_name, avatar: d.friend_avatar || 'person' }));
+    } catch (e) {
+      return [];
+    }
+  },
+
+  async giftReward(token, friendId) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_gift_reward', { p_token: token || null, p_friend_id: friendId }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('no_reward_available')) return { error: 'no_reward' };
+        if (msg.includes('friend_not_found')) return { error: 'not_found' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
     }
   },
 
@@ -2161,6 +2282,19 @@ const DOM = {
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
   notificationsToggleRow: document.getElementById('notifications-toggle-row'),
   notificationsToggle: document.getElementById('notifications-toggle'),
+  btnOpenFriends: document.getElementById('btn-open-friends'),
+  modalFriends: document.getElementById('modal-friends'),
+  overlayFriends: document.getElementById('overlay-friends'),
+  btnCloseFriends: document.getElementById('btn-close-friends'),
+  addFriendInput: document.getElementById('add-friend-input'),
+  btnAddFriend: document.getElementById('btn-add-friend'),
+  addFriendError: document.getElementById('add-friend-error'),
+  friendsList: document.getElementById('friends-list'),
+  modalConfirmGift: document.getElementById('modal-confirm-gift'),
+  overlayConfirmGift: document.getElementById('overlay-confirm-gift'),
+  confirmGiftText: document.getElementById('confirm-gift-text'),
+  btnCancelGift: document.getElementById('btn-cancel-gift'),
+  btnConfirmGift: document.getElementById('btn-confirm-gift'),
   statStampsToday: document.getElementById('stat-stamps-today'),
   statRewardsGiven: document.getElementById('stat-rewards-given'),
   statActiveCards: document.getElementById('stat-active-cards'),
@@ -3766,6 +3900,94 @@ function setupEventListeners() {
     });
   }
 
+  // Friends & Gifting (Settings > Account > Friends)
+  if (DOM.btnOpenFriends) {
+    DOM.btnOpenFriends.addEventListener('click', async () => {
+      if (!state.myCustomerId) return;
+      DOM.addFriendInput.value = '';
+      DOM.addFriendError.textContent = '';
+      openModal(DOM.modalFriends);
+      await loadAndRenderFriends();
+    });
+  }
+  if (DOM.btnCloseFriends) DOM.btnCloseFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
+  if (DOM.overlayFriends) DOM.overlayFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
+
+  if (DOM.btnAddFriend) {
+    DOM.btnAddFriend.addEventListener('click', async () => {
+      const username = (DOM.addFriendInput.value || '').trim();
+      if (!username) {
+        DOM.addFriendError.textContent = t('errChooseUsername');
+        return;
+      }
+      DOM.btnAddFriend.disabled = true;
+      const result = await cloud.addFriend(state.myToken, username);
+      DOM.btnAddFriend.disabled = false;
+
+      if (result.error === 'not_found') {
+        DOM.addFriendError.textContent = t('errFriendNotFound');
+        return;
+      }
+      if (result.error === 'self') {
+        DOM.addFriendError.textContent = t('errCannotAddSelf');
+        return;
+      }
+      if (result.error) {
+        DOM.addFriendError.textContent = t('errServerConnection');
+        return;
+      }
+
+      DOM.addFriendError.textContent = '';
+      DOM.addFriendInput.value = '';
+      showToast(t('toastFriendAdded', { name: result.friend.name }), 'success');
+      await loadAndRenderFriends();
+    });
+  }
+
+  // Gift/remove buttons live inside dynamically-rendered rows — one
+  // delegated listener on the list container instead of re-binding on
+  // every render.
+  if (DOM.friendsList) {
+    DOM.friendsList.addEventListener('click', (e) => {
+      const giftBtn = e.target.closest('.friend-row-gift-btn');
+      if (giftBtn && !giftBtn.disabled) {
+        openGiftConfirm(giftBtn.dataset.friendId, giftBtn.dataset.friendName);
+        return;
+      }
+      const removeBtn = e.target.closest('.friend-row-remove-btn');
+      if (removeBtn) {
+        removeFriendAndRerender(removeBtn.dataset.friendId);
+      }
+    });
+  }
+
+  if (DOM.btnCancelGift) DOM.btnCancelGift.addEventListener('click', () => closeModal(DOM.modalConfirmGift));
+  if (DOM.overlayConfirmGift) DOM.overlayConfirmGift.addEventListener('click', () => closeModal(DOM.modalConfirmGift));
+  if (DOM.btnConfirmGift) {
+    DOM.btnConfirmGift.addEventListener('click', async () => {
+      const friendId = DOM.btnConfirmGift.dataset.friendId;
+      if (!friendId) return;
+      DOM.btnConfirmGift.disabled = true;
+      const result = await cloud.giftReward(state.myToken, friendId);
+      DOM.btnConfirmGift.disabled = false;
+      closeModal(DOM.modalConfirmGift);
+
+      if (result.error === 'no_reward') {
+        showToast(t('errNoRewardToGift'), 'error');
+        return;
+      }
+      if (result.error) {
+        showToast(t('errServerConnection'), 'error');
+        return;
+      }
+
+      await db.saveCustomer(result.customer);
+      state.customers = await db.getAllCustomers();
+      await updateCardUI();
+      showToast(t('toastGiftSent'), 'success');
+    });
+  }
+
   // Stamp Campaign Toggle (e.g. "Double Stamps This Week")
   if (DOM.campaignToggle) {
     DOM.campaignToggle.addEventListener('change', async () => {
@@ -4514,6 +4736,85 @@ async function updateCardUI() {
 function canVoidRedemption(customer) {
   const last = customer && Array.isArray(customer.history) ? customer.history[0] : null;
   return !!(last && last.type === 'redemption' && !last.voided);
+}
+
+// ==========================================
+// FRIENDS & GIFTING
+// ==========================================
+async function loadAndRenderFriends() {
+  if (!DOM.friendsList) return;
+  DOM.friendsList.innerHTML = `<div class="empty-state" style="padding: 24px 0;"><p class="empty-text">${t('loadingText')}</p></div>`;
+  const friends = await cloud.listFriends(state.myToken);
+  renderFriendsList(friends);
+}
+
+async function renderFriendsList(friends) {
+  if (!DOM.friendsList) return;
+  DOM.friendsList.innerHTML = '';
+
+  if (!friends.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.style.padding = '24px 0';
+    const p = document.createElement('p');
+    p.className = 'empty-text';
+    p.textContent = t('friendsEmpty');
+    empty.appendChild(p);
+    DOM.friendsList.appendChild(empty);
+    return;
+  }
+
+  const me = state.myCustomerId ? await db.getCustomer(state.myCustomerId) : null;
+  const canGift = !!me && (me.rewardsEarned || 0) > 0;
+
+  friends.forEach(friend => {
+    const row = document.createElement('div');
+    row.className = 'friend-row';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'friend-row-avatar';
+    const img = document.createElement('img');
+    img.src = avatarUrl(friend.avatar);
+    img.alt = '';
+    img.loading = 'lazy';
+    avatar.appendChild(img);
+    row.appendChild(avatar);
+
+    const name = document.createElement('div');
+    name.className = 'friend-row-name';
+    name.textContent = friend.name;
+    row.appendChild(name);
+
+    const giftBtn = document.createElement('button');
+    giftBtn.className = 'friend-row-gift-btn';
+    giftBtn.dataset.friendId = friend.id;
+    giftBtn.dataset.friendName = friend.name;
+    giftBtn.disabled = !canGift;
+    giftBtn.title = canGift ? t('btnGiftReward') : t('errNoRewardToGift');
+    giftBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>';
+    row.appendChild(giftBtn);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'friend-row-remove-btn';
+    removeBtn.dataset.friendId = friend.id;
+    removeBtn.setAttribute('aria-label', 'Remove friend');
+    removeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    row.appendChild(removeBtn);
+
+    DOM.friendsList.appendChild(row);
+  });
+}
+
+function openGiftConfirm(friendId, friendName) {
+  if (!DOM.modalConfirmGift || !DOM.btnConfirmGift) return;
+  DOM.btnConfirmGift.dataset.friendId = friendId;
+  if (DOM.confirmGiftText) DOM.confirmGiftText.textContent = t('confirmGiftText', { name: friendName });
+  openModal(DOM.modalConfirmGift);
+}
+
+async function removeFriendAndRerender(friendId) {
+  await cloud.removeFriend(state.myToken, friendId);
+  await loadAndRenderFriends();
 }
 
 function updateSettingsStats() {
