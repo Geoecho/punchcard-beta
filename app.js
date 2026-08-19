@@ -243,6 +243,7 @@ const TRANSLATIONS = {
     toastNotificationsEnabled: "Notifications enabled!",
     toastNotificationsDisabled: "Notifications turned off",
     errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
+    errNotificationsIOSInstall: "On iPhone/iPad, add this app to your Home Screen first — Share, then \"Add to Home Screen\" — notifications only work from the installed app, not a browser tab",
     errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
     setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
@@ -484,6 +485,7 @@ const TRANSLATIONS = {
     toastNotificationsEnabled: "Известувањата се овозможени!",
     toastNotificationsDisabled: "Известувањата се исклучени",
     errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
+    errNotificationsIOSInstall: 'На iPhone/iPad, прво додајте ја апликацијата на почетниот екран — Share, па „Add to Home Screen" — известувањата работат само од инсталираната апликација, не од прелистувач',
     errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
     setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
@@ -725,6 +727,7 @@ const TRANSLATIONS = {
     toastNotificationsEnabled: "Njoftimet u aktivizuan!",
     toastNotificationsDisabled: "Njoftimet u çaktivizuan",
     errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
+    errNotificationsIOSInstall: "Në iPhone/iPad, shto këtë aplikacion në Home Screen fillimisht — Share, pastaj \"Add to Home Screen\" — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
     errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
     setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
@@ -2611,19 +2614,60 @@ function pushNotificationsSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+// iPadOS 13+ reports as "MacIntel" in a plain desktop-Safari-style user
+// agent — touch-point count is the standard way to tell it apart from
+// an actual Mac.
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+// iOS Safari only supports the Push API for a site that's been added to
+// the Home Screen (iOS 16.4+) — it's entirely unavailable in a normal
+// browser tab, permission prompt included. Attempting it there doesn't
+// throw a distinguishable error, it just behaves as if blocked, which
+// reads as a mysterious failure rather than the fixable "install the
+// app first" it actually is.
+function pushRequiresIOSInstall() {
+  return isIOSDevice() && !isStandaloneMode();
+}
+
 // Reflects actual current state (permission + an active subscription),
 // not just what the customer last clicked — so the toggle is honest
 // after e.g. the OS-level permission gets revoked outside the app.
 async function refreshNotificationsToggleState() {
   if (!DOM.notificationsToggle) return;
-  if (!pushNotificationsSupported()) {
+  if (!pushNotificationsSupported() || pushRequiresIOSInstall()) {
     DOM.notificationsToggle.checked = false;
     if (DOM.notificationsToggleRow) DOM.notificationsToggleRow.style.opacity = '0.5';
     return;
   }
   try {
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
+    let sub = await reg.pushManager.getSubscription();
+
+    // A subscription is supposed to survive reloads and service worker
+    // updates on its own — if permission is already granted but there's
+    // no active subscription anyway, something knocked it loose. Since
+    // the browser already trusts this origin, re-subscribing doesn't
+    // need a fresh permission prompt — do it quietly and repair the
+    // toggle instead of just reporting it as off.
+    if (!sub && Notification.permission === 'granted') {
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        await cloud.savePushSubscription(state.myToken, sub);
+      } catch (e) {
+        sub = null;
+      }
+    }
+
     DOM.notificationsToggle.checked = !!sub && Notification.permission === 'granted';
   } catch (e) {
     DOM.notificationsToggle.checked = false;
@@ -2632,6 +2676,7 @@ async function refreshNotificationsToggleState() {
 
 async function enablePushNotifications() {
   if (!pushNotificationsSupported()) return { error: 'unsupported' };
+  if (pushRequiresIOSInstall()) return { error: 'ios_install_required' };
 
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return { error: 'blocked' };
@@ -3705,6 +3750,7 @@ function setupEventListeners() {
         if (result.error) {
           DOM.notificationsToggle.checked = false;
           const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
+            : result.error === 'ios_install_required' ? t('errNotificationsIOSInstall')
             : result.error === 'blocked' ? t('errNotificationsBlocked')
             : t('errServerConnection');
           showToast(msg, 'error');

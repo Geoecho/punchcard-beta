@@ -125,31 +125,30 @@ input { font: inherit; color: inherit; }
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(6px);
-  transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out), visibility 0s 0.22s;
+  transition: opacity 0.22s var(--ease-out), visibility 0s 0.22s;
   z-index: 1;
   padding-top: var(--sat);
   padding-bottom: calc(72px + var(--sab));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  /* iOS Safari has a long-documented bug where an overflow:auto element
-     that also carries its own `transform` (used here for the view's
-     slide-in animation) fails to respond to touch-scroll gestures at
-     all unless explicitly pushed onto its own scrolling layer — this is
-     that hint. Content taller than the screen (e.g. the home view with
-     the wallet card + student discount promo both showing) was
-     unreachable on iOS as a result, even though the CSS overflow itself
-     was already correct. */
-  -webkit-overflow-scrolling: touch;
+  /* iOS Safari has a long-documented bug where an element that is both
+     overflow:auto AND carries its own `transform` stops responding to
+     touch-scroll gestures entirely — no amount of -webkit-overflow-
+     scrolling or compositing hints reliably works around it (tried and
+     confirmed insufficient). The view previously used `transform:
+     translateY(6px→0)` for its slide-in — a minor decorative detail —
+     dropped entirely rather than chasing another iOS workaround for a
+     bug class with no consistent fix. Content taller than the screen
+     (the home view with the wallet card + student discount promo both
+     showing) was completely unreachable on iOS as a result. */
 }
 .view::-webkit-scrollbar { display: none; }
 .view.active {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateY(0);
-  transition: opacity 0.3s var(--ease-in-out), transform 0.3s var(--ease-in-out), visibility 0s 0s;
+  transition: opacity 0.3s var(--ease-in-out), visibility 0s 0s;
   z-index: 2;
 }
 
