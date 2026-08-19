@@ -122,7 +122,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
     studentPromoSubtitle: "Sign up in Netaville with your student email, then ask staff to verify you",
-    studentPromoBtn: "Get Netaville App",
+    studentPromoBtn: "Netaville App",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
     navCard: "Card",
@@ -352,7 +352,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Студентски попуст",
     studentPromoTitle: "Добијте студентски попуст",
     studentPromoSubtitle: "регистрирајте се на Netaville апликацијата со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди.",
-    studentPromoBtn: "Преземи ја Netaville апликацијата",
+    studentPromoBtn: "Netaville Апликација",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
     navCard: "Картичка",
@@ -582,7 +582,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Zbritje për Studentë",
     studentPromoTitle: "Merr Zbritjen për Studentë",
     studentPromoSubtitle: "Regjistrohu në Netaville me email-in tënd të studentit, pastaj kërko stafit të të verifikojë",
-    studentPromoBtn: "Merr Aplikacionin Netaville",
+    studentPromoBtn: "Aplikacioni Netaville",
     staffModeTitle: "Modaliteti i Stafit Aktiv",
     staffModeText: "Zgjidh një klient nga lista për ta parë dhe vulosur kartën.",
     navCard: "Karta",
@@ -1997,7 +1997,6 @@ const DOM = {
   adminEmptyState: document.getElementById('admin-empty-state'),
   homeGreeting: document.getElementById('home-greeting'),
   homeSubtitle: document.getElementById('home-subtitle'),
-  homeCardId: document.getElementById('home-card-id'),
   cardNumber: document.getElementById('card-number'),
   stampBadge: document.getElementById('stamp-badge'),
   stampBadgeLabel: document.getElementById('stamp-badge-label'),
@@ -4053,7 +4052,6 @@ async function updateCardUI() {
     DOM.homeGreeting.textContent = t('homeGreetingGuest');
     DOM.homeSubtitle.textContent = t('homeSubtitleGuest');
     DOM.cardNumber.textContent = "CARD #---";
-    if (DOM.homeCardId) DOM.homeCardId.textContent = '';
     for (let i = 0; i < MAX_STAMPS; i++) {
       const cup = document.getElementById(`stamp-${i}`);
       if (cup) cup.classList.remove('earned', 'earning');
@@ -4079,7 +4077,6 @@ async function updateCardUI() {
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
-  if (DOM.homeCardId) DOM.homeCardId.textContent = `CARD #${customer.id.substring(0, 6)}`;
   updateGreetingMarquee();
 
   // Render Customer 2D Monochrome Avatar

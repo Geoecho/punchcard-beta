@@ -580,18 +580,6 @@ input { font: inherit; color: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.home-card-id {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.home-card-id:empty { display: none; }
 
 .btn-logout-header {
   display: flex;
@@ -950,15 +938,28 @@ input { font: inherit; color: inherit; }
    left it flush-left with only one visible child). */
 .card-footer-meta {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
   margin-top: 14px;
 }
+/* A small labeled pill rather than plain trailing text — paired against
+   the card ID's own small-caps label on the left, so the row reads as
+   two matched meta labels instead of one tag next to a loose sentence. */
 .progress-message {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-align: right;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass-strong);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
   margin-left: auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Home Actions ─────────────────────────────────────────── */
@@ -1648,10 +1649,11 @@ input { font: inherit; color: inherit; }
   box-shadow: var(--shadow-md);
   transition: all 0.25s var(--ease-out);
 }
-.wallet-left { display: flex; align-items: center; gap: 14px; }
+.wallet-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
 .wallet-icon {
   width: 44px;
   height: 44px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: var(--text-primary);
   color: var(--bg-primary);
@@ -1661,6 +1663,8 @@ input { font: inherit; color: inherit; }
   justify-content: center;
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
 }
+.wallet-info { min-width: 0; }
+.wallet-title, .wallet-subtitle, .wallet-expiry { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wallet-title { font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: var(--text-primary); }
 .wallet-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 .wallet-expiry { font-size: 10px; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -1756,6 +1760,9 @@ input { font: inherit; color: inherit; }
   font-weight: 700;
   text-align: center;
   border-radius: var(--radius-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .student-promo-btn:active { transform: scale(0.98); }
 
