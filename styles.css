@@ -297,7 +297,7 @@ input { font: inherit; color: inherit; }
   justify-content: center;
   background: var(--bg-glass);
   border: 1px solid var(--border-glass-strong);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
@@ -336,8 +336,10 @@ input { font: inherit; color: inherit; }
   align-items: flex-start;
   /* Extra top clearance (plus a real safe-area inset for notches/status
      bars some Android browsers don't otherwise account for) — the logo
-     was getting clipped under the top bar on some Samsung browsers. */
-  padding: calc(56px + env(safe-area-inset-top, 0px)) 28px 36px !important;
+     was getting clipped under the top bar on some Samsung browsers, and
+     needs enough room below the globe language button that they don't
+     read as crowded together. */
+  padding: calc(88px + env(safe-area-inset-top, 0px)) 28px 36px !important;
   text-align: left;
 }
 
@@ -1062,11 +1064,48 @@ input { font: inherit; color: inherit; }
 .settings-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
 .settings-item-left { display: flex; align-items: center; gap: 12px; }
-.settings-item-icon { width: 32px; height: 32px; background: var(--bg-secondary); border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.settings-item-icon-netaville { object-fit: contain; padding: 6px; box-sizing: border-box; }
+.settings-item-icon { width: 32px; height: 32px; background: var(--bg-secondary); border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .settings-item-label { font-size: 14px; font-weight: 500; }
 .settings-item-sublabel { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .settings-item-sublabel:empty { display: none; }
+
+/* Promo-style settings item (Student Discount) — same row shape as a
+   plain nav item, but visually lifted so it reads as an offer rather
+   than a boring settings link, matching the icon treatment used
+   everywhere else the Netaville mark appears (white circle, inverted). */
+.settings-item-promo {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05), var(--bg-glass));
+  border-color: var(--border-glass-strong);
+  transition: transform 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.settings-item-promo:active { transform: scale(0.98); }
+.settings-item-promo .settings-item-chevron { transition: transform 0.15s var(--ease-out); }
+.settings-item-promo:active .settings-item-chevron { transform: translateX(2px); }
+.settings-item-icon-netaville {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  animation: promoIconPulse 2.6s ease-in-out infinite;
+}
+.settings-item-icon-netaville img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Source mark is a white silhouette; this icon sits on a white circle,
+     so flip it dark to stay visible (same trick as .student-badge-mark). */
+  filter: invert(1);
+}
+@keyframes promoIconPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.16); }
+  50% { box-shadow: 0 0 0 5px rgba(255,255,255,0); }
+}
 .app-info { text-align: center; padding: 32px 24px; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
 
 /* ── Activity Filter Chips ────────────────────────────────── */
@@ -1512,6 +1551,16 @@ input { font: inherit; color: inherit; }
   margin: 16px 20px 0;
   box-shadow: var(--shadow-md);
 }
+/* Toggling .hidden re-creates this box in the render tree each time it
+   appears, so a plain (non-looping) entrance animation replays every
+   time the banner becomes visible without any extra JS. */
+.student-promo-banner:not(.hidden) {
+  animation: promoBannerIn 0.35s var(--ease-out);
+}
+@keyframes promoBannerIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .student-promo-header { display: flex; align-items: center; gap: 10px; }
 .student-promo-icon {
   width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
@@ -1520,6 +1569,7 @@ input { font: inherit; color: inherit; }
   /* Source mark is a white silhouette; this icon sits on a white circle,
      so flip it dark to stay visible (same trick as .student-badge-mark). */
   filter: invert(1);
+  animation: promoIconPulse 2.6s ease-in-out infinite;
 }
 .student-promo-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 .student-promo-subtitle {
