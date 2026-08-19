@@ -133,6 +133,15 @@ input { font: inherit; color: inherit; }
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
+  /* iOS Safari has a long-documented bug where an overflow:auto element
+     that also carries its own `transform` (used here for the view's
+     slide-in animation) fails to respond to touch-scroll gestures at
+     all unless explicitly pushed onto its own scrolling layer — this is
+     that hint. Content taller than the screen (e.g. the home view with
+     the wallet card + student discount promo both showing) was
+     unreachable on iOS as a result, even though the CSS overflow itself
+     was already correct. */
+  -webkit-overflow-scrolling: touch;
 }
 .view::-webkit-scrollbar { display: none; }
 .view.active {
@@ -688,6 +697,19 @@ input { font: inherit; color: inherit; }
   -webkit-backface-visibility: hidden;
 }
 .card-face-back { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
+/* backface-visibility is a notoriously unreliable property on iOS Safari
+   across versions — the vendor-prefixed transform/perspective additions
+   above still weren't enough to stop the front face's stamps from
+   showing through behind the back face on some devices. This is a
+   second, independent guarantee that doesn't depend on backface-
+   visibility working at all: explicitly hide whichever face isn't the
+   active one via `visibility`, a property with no known cross-browser
+   quirks. It only switches at rest (tied to the same .flipped class the
+   3D transform uses), so the mid-flip animation is untouched — this
+   just makes sure the wrong face can never be visible once the flip
+   settles, on any browser, regardless of how backface-visibility behaves. */
+.card-flip-inner:not(.flipped) .card-face-back { visibility: hidden; }
+.card-flip-inner.flipped .card-face-front { visibility: hidden; }
 .card-flip-btn {
   width: 26px;
   height: 26px;
