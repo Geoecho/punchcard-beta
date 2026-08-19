@@ -651,15 +651,23 @@ input { font: inherit; color: inherit; }
 .card-flip-scene {
   margin: 20px 20px 0;
   perspective: 1400px;
+  -webkit-perspective: 1400px;
 }
 .card-flip-inner {
   position: relative;
   width: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
 }
-.card-flip-inner.flipped { transform: rotateY(180deg); }
+/* iOS Safari has historically needed the -webkit-transform set
+   explicitly alongside the unprefixed one, or backface-visibility:hidden
+   on the faces below can silently fail to hide the away-facing side —
+   the front (with the stamps) then shows through behind the back face
+   instead of being hidden, while Android/Chrome renders it correctly
+   either way. */
+.card-flip-inner.flipped { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
 /* Compound selector (not just .card-face) so this reliably beats
    .card-container's own `position: relative` at equal specificity —
    without it, source order decided the winner and the faces fell back
@@ -679,7 +687,7 @@ input { font: inherit; color: inherit; }
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
-.card-face-back { transform: rotateY(180deg); }
+.card-face-back { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
 .card-flip-btn {
   width: 26px;
   height: 26px;
@@ -1637,10 +1645,14 @@ input { font: inherit; color: inherit; }
 }
 
 /* ── Rewards Wallet Card ─────────────────────────────────── */
+/* Stacked (icon+text row, then a full-width action button below) rather
+   than side-by-side — squeezing the button into the same row as the
+   text forced the title/subtitle/expiry into a narrow, often-truncated
+   sliver next to it. */
 .rewards-wallet-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 14px;
   background: var(--bg-card);
   border: 1px solid var(--border-glass-strong);
   border-radius: var(--radius-lg);
@@ -1649,7 +1661,8 @@ input { font: inherit; color: inherit; }
   box-shadow: var(--shadow-md);
   transition: all 0.25s var(--ease-out);
 }
-.wallet-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+.rewards-wallet-card #btn-redeem-banked { width: 100%; }
+.wallet-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .wallet-icon {
   width: 44px;
   height: 44px;
