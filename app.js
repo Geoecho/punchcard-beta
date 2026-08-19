@@ -1355,13 +1355,13 @@ const cloud = {
   // a customer (reward earned) or everyone (campaign blast). Never blocks
   // the action it's attached to — a slow or failed push send shouldn't
   // stop a stamp from registering.
-  async sendPush({ staffToken, customerId, broadcast, title, body, url }) {
+  async sendPush({ staffToken, customerId, broadcast, title, body, url, customerToken, targetCustomerId, context }) {
     try {
       const res = await withTimeout(
         fetch('/api/send-push', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ staffToken, customerId, broadcast, title, body, url })
+          body: JSON.stringify({ staffToken, customerId, broadcast, title, body, url, customerToken, targetCustomerId, context })
         }),
         6000
       );
@@ -3221,6 +3221,11 @@ function setupEventListeners() {
   // tap never fires the toggle twice).
   if (DOM.cardFlipInner) {
     DOM.cardFlipInner.addEventListener('click', () => {
+      // A real tap means the customer found the flip themselves — don't
+      // let the queued intro-reveal timers fight that later by flipping
+      // it again out from under them.
+      clearTimeout(cardIntroFlipTimer);
+      clearTimeout(cardIntroFlipBackTimer);
       setCardFlipped(!DOM.cardFlipInner.classList.contains('flipped'));
     });
   }
@@ -3998,14 +4003,36 @@ function setupEventListeners() {
       DOM.addFriendError.textContent = '';
       DOM.addFriendInput.value = '';
 
+      const me = state.myCustomerId ? await db.getCustomer(state.myCustomerId) : null;
+      const myName = (me && me.name) || 'Someone';
+
       if (result.status === 'already_friends') {
         showToast(t('errAlreadyFriends', { name: result.friend.name }), 'error');
       } else if (result.status === 'already_pending') {
         showToast(t('errAlreadyPending', { name: result.friend.name }), 'error');
       } else if (result.status === 'accepted') {
+        // Auto-accept path: the other person had already requested us,
+        // so THEY are the one who should hear their request just got
+        // accepted, not the reverse.
         showToast(t('toastFriendAdded', { name: result.friend.name }), 'success');
+        cloud.sendPush({
+          customerToken: state.myToken,
+          targetCustomerId: result.friend.id,
+          context: 'friend_accepted',
+          title: '🎉 Friend request accepted',
+          body: `${myName} accepted your friend request!`,
+          url: './index.html#settings'
+        });
       } else {
         showToast(t('toastFriendRequestSent', { name: result.friend.name }), 'success');
+        cloud.sendPush({
+          customerToken: state.myToken,
+          targetCustomerId: result.friend.id,
+          context: 'friend_request',
+          title: '👋 New friend request',
+          body: `${myName} wants to add you as a friend`,
+          url: './index.html#settings'
+        });
       }
       await loadAndRenderFriends();
     });
@@ -4021,7 +4048,19 @@ function setupEventListeners() {
       if (!btn || btn.disabled) return;
       btn.disabled = true;
       const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
-      if (ok && acceptBtn) showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName }), 'success');
+      if (ok && acceptBtn) {
+        showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName }), 'success');
+        const me = state.myCustomerId ? await db.getCustomer(state.myCustomerId) : null;
+        const myName = (me && me.name) || 'Someone';
+        cloud.sendPush({
+          customerToken: state.myToken,
+          targetCustomerId: btn.dataset.requesterId,
+          context: 'friend_accepted',
+          title: '🎉 Friend request accepted',
+          body: `${myName} accepted your friend request!`,
+          url: './index.html#settings'
+        });
+      }
       await loadAndRenderFriends();
     });
   }
@@ -4582,6 +4621,8 @@ let cardBackRankCache = {};
 // removed from the render tree entirely, so there's no compositor
 // state left over for iOS to get wrong.
 let cardFlipDisplayTimer = null;
+let cardIntroFlipTimer = null;
+let cardIntroFlipBackTimer = null;
 function setCardFlipped(flipped) {
   if (!DOM.cardFlipInner) return;
   const alreadyFlipped = DOM.cardFlipInner.classList.contains('flipped');
@@ -4596,6 +4637,22 @@ function setCardFlipped(flipped) {
     // it needs an explicit 'block' when showing, unlike the front face.
     if (DOM.cardFaceBack) DOM.cardFaceBack.style.display = flipped ? 'block' : 'none';
   }, 300);
+}
+
+// One-time "peek at the back" reveal — flips to the stats side shortly
+// after the card first appears, holds long enough to read it, then
+// flips itself back. Timed off setCardFlipped's own 600ms transition so
+// it never fights a tap the customer makes mid-animation (flipped state
+// still toggles instantly; only the delayed intro calls are skipped).
+function playCardIntroFlip() {
+  if (!DOM.cardFlipInner) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  clearTimeout(cardIntroFlipTimer);
+  clearTimeout(cardIntroFlipBackTimer);
+  cardIntroFlipTimer = setTimeout(() => {
+    setCardFlipped(true);
+    cardIntroFlipBackTimer = setTimeout(() => setCardFlipped(false), 2200);
+  }, 700);
 }
 
 function bumpStampCount() {
@@ -4691,6 +4748,12 @@ async function updateCardUI() {
   if (lastCardCustomerId !== customer.id) {
     lastCardCustomerId = customer.id;
     setCardFlipped(false);
+    // First time this customer's own card appears this session — give it
+    // a quick flip-and-back so the stats on the back (lifetime stamps,
+    // redemptions, rank) actually get noticed at least once, instead of
+    // sitting undiscovered behind a tap gesture nobody knows to try.
+    // Admin/staff scanning through customers should never see this.
+    if (!state.isAdmin) playCardIntroFlip();
   }
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
@@ -4873,6 +4936,7 @@ function renderFriendRequests(requests) {
     acceptBtn.className = 'friend-request-accept-btn';
     acceptBtn.dataset.requestId = req.requestId;
     acceptBtn.dataset.requestName = req.name;
+    acceptBtn.dataset.requesterId = req.id;
     acceptBtn.title = t('btnAcceptRequest');
     acceptBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
     row.appendChild(acceptBtn);

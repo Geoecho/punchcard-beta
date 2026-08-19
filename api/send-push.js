@@ -64,28 +64,45 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { staffToken, customerId, broadcast, title, body, url } = req.body || {};
+  const { staffToken, customerId, broadcast, title, body, url, customerToken, targetCustomerId, context } = req.body || {};
 
-  if (!staffToken || !title || !body || (!customerId && !broadcast)) {
+  const isStaffMode = !!staffToken;
+  const isCustomerMode = !isStaffMode && !!customerToken && !!targetCustomerId && !!context;
+
+  if (!title || !body || !(isStaffMode ? (customerId || broadcast) : isCustomerMode)) {
     res.status(400).json({ error: 'invalid_input' });
     return;
   }
 
-  const rpcResult = broadcast
-    ? await callRpc('staff_get_all_push_subscriptions', { p_token: staffToken })
-    : await callRpc('staff_get_push_subscriptions', { p_token: staffToken, p_customer_id: customerId });
+  const rpcResult = isStaffMode
+    ? (broadcast
+        ? await callRpc('staff_get_all_push_subscriptions', { p_token: staffToken })
+        : await callRpc('staff_get_push_subscriptions', { p_token: staffToken, p_customer_id: customerId }))
+    : await callRpc('customer_get_friend_notify_subscriptions', { p_token: customerToken, p_target_id: targetCustomerId, p_context: context });
 
   if (!rpcResult.ok) {
-    // staff_from_token() raises 'unauthorized' as a Postgres exception,
-    // which PostgREST surfaces as 400 — map that specifically to 401 so
-    // the client can tell "bad/expired session" apart from other errors.
-    const isAuthError = rpcResult.status === 400 && /unauthorized/i.test(rpcResult.raw || '');
+    // staff_from_token()/customer_id_from_caller() raise as a Postgres
+    // exception, which PostgREST surfaces as 400 — map auth/authorization
+    // failures specifically to 401 so the client can tell "bad/expired
+    // session" apart from other errors. Logged so a real delivery
+    // failure (as opposed to an expected auth rejection) is diagnosable
+    // via `vercel logs` instead of vanishing silently.
+    const isAuthError = rpcResult.status === 400 && /unauthorized|not_authorized/i.test(rpcResult.raw || '');
+    if (!isAuthError) {
+      console.error('[send-push] RPC failure', { status: rpcResult.status, raw: rpcResult.raw });
+    }
     res.status(isAuthError ? 401 : 502).json({ error: isAuthError ? 'unauthorized' : 'upstream_error' });
     return;
   }
 
   const subs = Array.isArray(rpcResult.data) ? rpcResult.data : [];
   if (!subs.length) {
+    // A common real-world cause of "notifications never arrive": the
+    // target simply has zero rows in push_subscriptions (client-side
+    // subscribe/save never actually completed), which looks identical
+    // to a silent delivery failure from the customer's side. Logged so
+    // that's distinguishable from an actual webpush send failure below.
+    console.error('[send-push] no subscriptions found', { mode: isStaffMode ? 'staff' : 'customer', targetCustomerId: isStaffMode ? customerId : targetCustomerId, broadcast: !!broadcast, context: context || null });
     res.status(200).json({ sent: 0, total: 0 });
     return;
   }
@@ -109,6 +126,21 @@ module.exports = async (req, res) => {
       // the customer revoked/uninstalled) — prune it so future sends
       // don't keep paying for a doomed request.
       staleEndpoints.push(subs[i].endpoint);
+    } else {
+      // Any other failure (bad VAPID auth, malformed key, push service
+      // outage, quota, etc.) previously vanished without a trace. Log
+      // enough to diagnose without leaking subscription secrets — the
+      // endpoint host identifies which push service rejected it (fcm.
+      // googleapis.com for Android/Chrome, web.push.apple.com for iOS).
+      let endpointHost = 'unknown';
+      try { endpointHost = new URL(subs[i].endpoint).host; } catch (e) {}
+      const reason = r.reason || {};
+      console.error('[send-push] delivery failed', {
+        endpointHost,
+        statusCode: reason.statusCode,
+        body: reason.body,
+        message: reason.message
+      });
     }
   });
 

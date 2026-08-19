@@ -246,3 +246,44 @@ begin
 end;
 $$;
 grant execute on function public.customer_gift_reward(text, text) to anon, authenticated;
+
+-- Lets a customer trigger a push notification to another customer for a
+-- friend request they just sent or accepted — the only case where one
+-- customer needs to read another's push subscriptions. Gated on an
+-- actual just-verified relationship between the two (same pattern as
+-- customer_gift_reward's accepted-friendship check), so a customer can
+-- never look up an arbitrary stranger's subscription data.
+create or replace function public.customer_get_friend_notify_subscriptions(p_token text, p_target_id text, p_context text)
+returns table(endpoint text, p256dh text, auth text)
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_caller_id text := public.customer_id_from_caller(p_token);
+  v_ok boolean;
+begin
+  if p_context = 'friend_request' then
+    select exists(
+      select 1 from public.customer_friend_requests r
+      where r.requester_id = v_caller_id and r.recipient_id = p_target_id and r.status = 'pending'
+    ) into v_ok;
+  elsif p_context = 'friend_accepted' then
+    select exists(
+      select 1 from public.customer_friend_requests r
+      where ((r.requester_id = v_caller_id and r.recipient_id = p_target_id)
+          or (r.requester_id = p_target_id and r.recipient_id = v_caller_id))
+        and r.status = 'accepted'
+    ) into v_ok;
+  else
+    raise exception 'invalid_context';
+  end if;
+
+  if not v_ok then
+    raise exception 'not_authorized';
+  end if;
+
+  return query select s.endpoint, s.p256dh, s.auth from public.push_subscriptions s where s.customer_id = p_target_id;
+end;
+$$;
+grant execute on function public.customer_get_friend_notify_subscriptions(text, text, text) to anon, authenticated;
