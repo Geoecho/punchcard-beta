@@ -696,20 +696,22 @@ input { font: inherit; color: inherit; }
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
-.card-face-back { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-/* backface-visibility is a notoriously unreliable property on iOS Safari
-   across versions — the vendor-prefixed transform/perspective additions
-   above still weren't enough to stop the front face's stamps from
-   showing through behind the back face on some devices. This is a
-   second, independent guarantee that doesn't depend on backface-
-   visibility working at all: explicitly hide whichever face isn't the
-   active one via `visibility`, a property with no known cross-browser
-   quirks. It only switches at rest (tied to the same .flipped class the
-   3D transform uses), so the mid-flip animation is untouched — this
-   just makes sure the wrong face can never be visible once the flip
-   settles, on any browser, regardless of how backface-visibility behaves. */
-.card-flip-inner:not(.flipped) .card-face-back { visibility: hidden; }
-.card-flip-inner.flipped .card-face-front { visibility: hidden; }
+/* Both backface-visibility and a visibility:hidden fallback proved
+   unreliable on iOS Safari for actually suppressing the inactive face —
+   both are 3D-compositing-adjacent properties, and iOS's handling of
+   composited layers under preserve-3d has long-standing, inconsistently
+   fixed bugs. display:none is the one mechanism with no such history:
+   a display:none element is removed from the render tree entirely, not
+   just hidden, so there's nothing for any compositor to get wrong. JS
+   (setCardFlipped) now toggles it directly, timed to the transform's
+   midpoint where the card is edge-on and imperceptible either way. This
+   default (back hidden, front implicitly shown) only covers the very
+   first paint before that JS has run even once. */
+.card-face-back {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  display: none;
+}
 .card-flip-btn {
   width: 26px;
   height: 26px;

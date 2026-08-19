@@ -2984,7 +2984,7 @@ function setupEventListeners() {
   // tap never fires the toggle twice).
   if (DOM.cardFlipInner) {
     DOM.cardFlipInner.addEventListener('click', () => {
-      DOM.cardFlipInner.classList.toggle('flipped');
+      setCardFlipped(!DOM.cardFlipInner.classList.contains('flipped'));
     });
   }
   window.addEventListener('resize', () => syncCardFlipHeight());
@@ -4216,8 +4216,31 @@ function refreshStudentPromoVisibility(customer) {
 let lastCardCustomerId = null;
 let cardBackRankCache = {};
 
+// The 3D rotation (.flipped, in styles.css) is purely decorative — iOS
+// Safari has proven unreliable at actually suppressing the away-facing
+// side via either backface-visibility or a visibility:hidden fallback,
+// both bitten by the same underlying iOS compositing bugs. This is what
+// actually controls which face can be seen: display:none, toggled with
+// a delay timed to the transform's midpoint (90deg — edge-on, so the
+// instant swap is imperceptible regardless of which browser is
+// rendering the rotation itself correctly). A display:none element is
+// removed from the render tree entirely, so there's no compositor
+// state left over for iOS to get wrong.
+let cardFlipDisplayTimer = null;
 function setCardFlipped(flipped) {
-  if (DOM.cardFlipInner) DOM.cardFlipInner.classList.toggle('flipped', flipped);
+  if (!DOM.cardFlipInner) return;
+  const alreadyFlipped = DOM.cardFlipInner.classList.contains('flipped');
+  DOM.cardFlipInner.classList.toggle('flipped', flipped);
+  if (alreadyFlipped === flipped) return;
+
+  clearTimeout(cardFlipDisplayTimer);
+  cardFlipDisplayTimer = setTimeout(() => {
+    if (DOM.cardFaceFront) DOM.cardFaceFront.style.display = flipped ? 'none' : '';
+    // .card-face-back's CSS default is display:none (styles.css), so
+    // clearing its inline override falls back to hidden, not visible —
+    // it needs an explicit 'block' when showing, unlike the front face.
+    if (DOM.cardFaceBack) DOM.cardFaceBack.style.display = flipped ? 'block' : 'none';
+  }, 300);
 }
 
 function bumpStampCount() {
@@ -4232,9 +4255,19 @@ function bumpStampCount() {
 // flip), which takes them out of normal flow — .card-flip-inner needs an
 // explicit height or it collapses to 0. Re-measure whenever either face's
 // content could have changed size (stamp count, language, viewport width).
+// Whichever face is currently display:none reports scrollHeight 0, which
+// would undersize the card whenever that face is naturally the taller of
+// the two — briefly force both visible for the measurement itself, then
+// restore whatever display state they actually had.
 function syncCardFlipHeight() {
   if (!DOM.cardFlipInner || !DOM.cardFaceFront || !DOM.cardFaceBack) return;
+  const frontPrevDisplay = DOM.cardFaceFront.style.display;
+  const backPrevDisplay = DOM.cardFaceBack.style.display;
+  DOM.cardFaceFront.style.display = 'block';
+  DOM.cardFaceBack.style.display = 'block';
   const h = Math.max(DOM.cardFaceFront.scrollHeight, DOM.cardFaceBack.scrollHeight);
+  DOM.cardFaceFront.style.display = frontPrevDisplay;
+  DOM.cardFaceBack.style.display = backPrevDisplay;
   if (h > 0) DOM.cardFlipInner.style.height = h + 'px';
 }
 
