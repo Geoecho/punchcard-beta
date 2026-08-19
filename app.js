@@ -238,6 +238,12 @@ const TRANSLATIONS = {
     btnDelete: "Delete",
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
+    settingsUsername: "Username",
+    settingsUsernameNotSet: "Not set",
+    setUsernameTitle: "Choose a Username",
+    setUsernameSubtitle: "So friends can find and add you. This is different from your display name.",
+    btnSkipForNow: "Later",
+    toastUsernameSaved: "Username saved!",
     settingsNotifications: "Notifications",
     settingsNotificationsSub: "Know the moment a reward's ready",
     toastNotificationsEnabled: "Notifications enabled!",
@@ -506,6 +512,12 @@ const TRANSLATIONS = {
     btnDelete: "Избриши",
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
+    settingsUsername: "Корисничко име",
+    settingsUsernameNotSet: "Не е поставено",
+    setUsernameTitle: "Изберете корисничко име",
+    setUsernameSubtitle: "За да можат пријателите да ве најдат и додадат. Ова е различно од вашето име за прикажување.",
+    btnSkipForNow: "Подоцна",
+    toastUsernameSaved: "Корисничкото име е зачувано!",
     settingsNotifications: "Известувања",
     settingsNotificationsSub: "Дознајте веднаш штом наградата е достапна",
     toastNotificationsEnabled: "Известувањата се овозможени!",
@@ -774,6 +786,12 @@ const TRANSLATIONS = {
     btnDelete: "Fshi",
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
+    settingsUsername: "Emri i përdoruesit",
+    settingsUsernameNotSet: "Nuk është caktuar",
+    setUsernameTitle: "Zgjidh një Emër Përdoruesi",
+    setUsernameSubtitle: "Që miqtë të mund të të gjejnë e të shtojnë. Ky është ndryshe nga emri yt i shfaqur.",
+    btnSkipForNow: "Më vonë",
+    toastUsernameSaved: "Emri i përdoruesit u ruajt!",
     settingsNotifications: "Njoftimet",
     settingsNotificationsSub: "Merr vesh sapo shpërblimi është gati",
     toastNotificationsEnabled: "Njoftimet u aktivizuan!",
@@ -1308,6 +1326,32 @@ const cloud = {
           const nextChangeAt = msg.split(':').slice(1).join(':').split('"')[0] || null;
           return { error: 'rate_limited', nextChangeAt };
         }
+        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        return { error: 'unknown' };
+      }
+      if (!res.data || !res.data.length) return { error: 'unknown' };
+      return { customer: mapDbRowToCustomer(res.data[0]) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  // Login username (customers.phone) — Google sign-ins start with this
+  // blank, since Google auth needs no password/username of its own.
+  // Setting one is what makes a Google-signed-in customer findable by
+  // the friends username search (and gives them a password-login
+  // fallback), matching the same identity resolution as every other
+  // customer-self RPC.
+  async setUsername(token, username) {
+    if (!supabaseClient) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_set_username', { p_token: token || null, p_username: username }),
+        4000
+      );
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('username_taken')) return { error: 'username_taken' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         return { error: 'unknown' };
       }
@@ -2329,12 +2373,20 @@ const DOM = {
   campaignToggle: document.getElementById('campaign-toggle'),
   campaignStatusText: document.getElementById('campaign-status-text'),
   btnChangeDisplayName: document.getElementById('btn-change-displayname'),
+  btnChangeUsername: document.getElementById('btn-change-username'),
+  settingsUsernameValue: document.getElementById('settings-username-value'),
   modalSetDisplayName: document.getElementById('modal-set-displayname'),
   overlaySetDisplayName: document.getElementById('overlay-set-displayname'),
   setDisplayNameInput: document.getElementById('set-displayname-input'),
   setDisplayNameError: document.getElementById('set-displayname-error'),
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
+  modalSetUsername: document.getElementById('modal-set-username'),
+  overlaySetUsername: document.getElementById('overlay-set-username'),
+  setUsernameInput: document.getElementById('set-username-input'),
+  setUsernameError: document.getElementById('set-username-error'),
+  btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
+  btnSetUsernameSave: document.getElementById('btn-set-username-save'),
   notificationsToggleRow: document.getElementById('notifications-toggle-row'),
   notificationsToggle: document.getElementById('notifications-toggle'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
@@ -2490,6 +2542,7 @@ window.addEventListener('popstate', handleHashRoute);
 
 async function initApp() {
   let splashDismissed = false;
+  let needsUsernamePrompt = false;
   const dismissSplash = (targetView = 'view-signup') => {
     if (splashDismissed) return;
     splashDismissed = true;
@@ -2616,6 +2669,11 @@ async function initApp() {
             if (googleResult) {
               await db.saveCustomer(googleResult.customer);
               saveUserSession(googleResult.customer);
+              // Google sign-in has no username/password of its own, so
+              // customers.phone (which doubles as the friends-search
+              // username) starts blank — prompt for one so this account
+              // isn't permanently unfindable by friends.
+              if (!googleResult.customer.phone) needsUsernamePrompt = true;
             } else {
               await supabaseClient.auth.signOut().catch(() => {});
             }
@@ -2721,6 +2779,7 @@ async function initApp() {
     }
 
     setTimeout(() => dismissSplash(targetView), 400);
+    if (needsUsernamePrompt) setTimeout(() => promptSetUsername(), 1400);
 
     // NOTE: the full customer list is only fetched once staff unlock admin
     // mode with the PIN (see toggleAdminMode(true) call sites) — it used to
@@ -3029,6 +3088,7 @@ function setupEventListeners() {
   wireEnterKeyChain(document.getElementById('modal-edit-menu-item'), DOM.btnSaveMenuItem);
   wireEnterKeyChain(document.getElementById('modal-edit-customer'), DOM.btnSaveEditCustomer);
   wireEnterKeyChain(DOM.modalSetDisplayName, DOM.btnSetDisplayNameSave);
+  wireEnterKeyChain(DOM.modalSetUsername, DOM.btnSetUsernameSave);
 
   // Navigation
   DOM.navItems.forEach(item => {
@@ -3117,6 +3177,17 @@ function setupEventListeners() {
       if (DOM.setDisplayNameInput) DOM.setDisplayNameInput.value = (customer && customer.name) || '';
       if (DOM.setDisplayNameError) DOM.setDisplayNameError.textContent = '';
       openModal(DOM.modalSetDisplayName);
+    });
+  }
+
+  if (DOM.btnChangeUsername) {
+    DOM.btnChangeUsername.addEventListener('click', async () => {
+      const activeId = state.myCustomerId;
+      if (!activeId) return;
+      const customer = await db.getCustomer(activeId);
+      if (DOM.setUsernameInput) DOM.setUsernameInput.value = (customer && customer.phone) || '';
+      if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
+      openModal(DOM.modalSetUsername);
     });
   }
 
@@ -3933,6 +4004,48 @@ function setupEventListeners() {
     });
   }
 
+  // Choose-a-username prompt (shown once after a Google sign-in that has
+  // no username yet) — always skippable, unlike the mandatory display
+  // name prompt, since a username here is only needed for the friends
+  // feature and password-login fallback, not for the app to work at all.
+  if (DOM.btnSetUsernameSkip) {
+    DOM.btnSetUsernameSkip.addEventListener('click', () => closeModal(DOM.modalSetUsername));
+  }
+  if (DOM.overlaySetUsername) {
+    DOM.overlaySetUsername.addEventListener('click', () => closeModal(DOM.modalSetUsername));
+  }
+  if (DOM.btnSetUsernameSave) {
+    DOM.btnSetUsernameSave.addEventListener('click', async () => {
+      const username = (DOM.setUsernameInput ? DOM.setUsernameInput.value : '').trim();
+      if (!username) {
+        DOM.setUsernameError.textContent = t('errChooseUsername');
+        return;
+      }
+      if (!state.myCustomerId) {
+        closeModal(DOM.modalSetUsername);
+        return;
+      }
+
+      DOM.btnSetUsernameSave.disabled = true;
+      const result = await cloud.setUsername(state.myToken, username);
+      DOM.btnSetUsernameSave.disabled = false;
+
+      if (result.error === 'username_taken') {
+        DOM.setUsernameError.textContent = t('errUsernameTaken');
+        return;
+      }
+      if (result.error) {
+        DOM.setUsernameError.textContent = t('errServerConnection');
+        return;
+      }
+
+      await db.saveCustomer(result.customer);
+      state.customers = await db.getAllCustomers();
+      closeModal(DOM.modalSetUsername);
+      showToast(t('toastUsernameSaved'), 'success');
+    });
+  }
+
   // Notifications toggle (Settings > Account) — always reflects a
   // deliberate tap, never an auto-prompt on load. Reverts itself on any
   // failure so it never shows "on" when the subscription didn't actually
@@ -4507,6 +4620,18 @@ function promptMandatoryDisplayName() {
   openModal(DOM.modalSetDisplayName);
 }
 
+// Shown once, shortly after a Google sign-in whose account has no
+// username yet (customers.phone starts blank for Google — there's no
+// password step to collect one during). Always skippable: a username
+// only matters for the friends feature and the password-login
+// fallback, not for the app to work at all.
+function promptSetUsername() {
+  if (!DOM.modalSetUsername || !state.myCustomerId) return;
+  if (DOM.setUsernameInput) DOM.setUsernameInput.value = '';
+  if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
+  openModal(DOM.modalSetUsername);
+}
+
 function initStampGrid() {
   DOM.stampGrid.innerHTML = '';
   for (let i = 0; i < MAX_STAMPS; i++) {
@@ -4759,6 +4884,10 @@ async function updateCardUI() {
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
   updateGreetingMarquee();
+
+  if (DOM.settingsUsernameValue) {
+    DOM.settingsUsernameValue.textContent = customer.phone ? customer.phone : t('settingsUsernameNotSet');
+  }
 
   // Render Customer 2D Monochrome Avatar
   if (DOM.userAvatarDisplay) {

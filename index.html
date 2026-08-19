@@ -660,6 +660,18 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
+        <div class="settings-item" id="btn-change-username">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div>
+              <div class="settings-item-label" data-i18n="settingsUsername">Username</div>
+              <div class="settings-item-sublabel" id="settings-username-value">—</div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
         <div class="settings-item" id="notifications-toggle-row">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -924,6 +936,25 @@
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn-secondary" id="btn-set-displayname-skip" data-i18n="btnCancel">Cancel</button>
           <button class="btn-primary" id="btn-set-displayname-save" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-set-username">
+      <div class="modal-overlay" id="overlay-set-username"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" data-i18n="setUsernameTitle">Choose a Username</h3>
+        <p class="modal-subtitle" data-i18n="setUsernameSubtitle">So friends can find and add you. This is different from your display name.</p>
+
+        <div class="form-group">
+          <input type="text" id="set-username-input" class="form-input" placeholder="Username" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phUsername">
+        </div>
+        <p class="pin-error" id="set-username-error"></p>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary" id="btn-set-username-skip" data-i18n="btnSkipForNow">Later</button>
+          <button class="btn-primary" id="btn-set-username-save" data-i18n="btnSave">Save</button>
         </div>
       </div>
     </div>
