@@ -125,8 +125,8 @@ input { font: inherit; color: inherit; }
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(8px);
-  transition: opacity 0.3s var(--ease-in-out), transform 0.3s var(--ease-in-out), visibility 0s 0.3s;
+  transform: translateY(6px);
+  transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out), visibility 0s 0.22s;
   z-index: 1;
   padding-top: var(--sat);
   padding-bottom: calc(72px + var(--sab));
@@ -230,15 +230,15 @@ input { font: inherit; color: inherit; }
   justify-content: center;
   gap: 20px;
 }
-/* Only the logo animates in on the splash screen — the tagline and
-   loader dots appear immediately, unanimated. */
-#view-splash .brand-logo-large {
-  animation: logo-entrance 0.9s var(--ease-out) forwards;
+/* Splash content fades and settles in as one calm unit — no bounce or
+   overshoot, just a quiet rise into place. Loader dots start a beat
+   later so the eye lands on the logo first. */
+.splash-content {
+  animation: splash-settle 0.6s var(--ease-out) forwards;
 }
-@keyframes logo-entrance {
-  0% { opacity: 0; transform: scale(0.7) translateY(8px); }
-  60% { opacity: 1; transform: scale(1.06) translateY(0); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes splash-settle {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 .splash-tagline {
   font-family: var(--font-body);
@@ -252,36 +252,39 @@ input { font: inherit; color: inherit; }
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  opacity: 0;
+  animation: splash-loader-in 0.5s var(--ease-out) 0.4s forwards;
 }
 .splash-loader .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-primary);
-  animation: dot-bounce 1.4s infinite ease-in-out both;
+  animation: dot-pulse 1.4s infinite ease-in-out both;
 }
 .splash-loader .dot:nth-child(1) { animation-delay: -0.32s; }
 .splash-loader .dot:nth-child(2) { animation-delay: -0.16s; }
 
-@keyframes dot-bounce {
-  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-  40% { transform: scale(1); opacity: 1; }
+@keyframes splash-loader-in {
+  to { opacity: 1; }
+}
+@keyframes dot-pulse {
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
 }
 
 #view-splash.fade-out {
   opacity: 0;
-  transform: scale(1.05);
-  transition: opacity 0.4s var(--ease-in-out), transform 0.4s var(--ease-in-out);
+  transition: opacity 0.35s var(--ease-in-out);
 }
 
-/* Floats in the screen's top-right corner instead of sitting in the
-   content flow above the logo — .view is already position:absolute,
-   so it's a valid positioning context without extra markup. */
-.lang-switcher-corner {
-  position: absolute;
-  top: calc(20px + var(--sat));
-  right: 20px;
-  z-index: 5;
+/* Sits at the bottom of the signup screen, below both forms, centered —
+   deliberately far from the logo so it never visually competes with it
+   (previous attempts placed it centered above the logo, then floating in
+   the top-right corner, and neither read well next to the brand mark). */
+.lang-switcher-footer {
+  align-self: center;
+  margin: 24px 0 4px;
 }
 
 /* ── Sign Up / Login View (Left-Aligned) ──────────────────── */
@@ -293,11 +296,9 @@ input { font: inherit; color: inherit; }
   justify-content: center;
   align-items: flex-start;
   /* Extra top clearance (plus a real safe-area inset for notches/status
-     bars some Android browsers don't otherwise account for) — the
-     language picker now floats in the corner above this content (see
-     .lang-switcher-corner), so this keeps the logo clear of it instead
-     of the two nearly touching. */
-  padding: calc(84px + env(safe-area-inset-top, 0px)) 28px 36px !important;
+     bars some Android browsers don't otherwise account for) — the logo
+     was getting clipped under the top bar on some Samsung browsers. */
+  padding: calc(56px + env(safe-area-inset-top, 0px)) 28px 36px !important;
   text-align: left;
 }
 
@@ -1449,41 +1450,50 @@ input { font: inherit; color: inherit; }
 .install-prompt-close:active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
 
 /* ── Student Discount Promo Banner (Home View) ────────────── */
+/* Vertical layout on purpose — the explanation text is a full sentence
+   (sign up with a student email, then ask staff to verify), so it needs
+   room to wrap across two lines instead of being squeezed into one row
+   next to an icon and a button and truncated with an ellipsis. */
 .student-promo-banner {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   background: var(--bg-card);
   border: 1px solid var(--border-glass-strong);
   border-radius: var(--radius-lg);
-  padding: 12px 14px;
+  padding: 16px;
   margin: 16px 20px 0;
   box-shadow: var(--shadow-md);
 }
-.student-promo-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.student-promo-header { display: flex; align-items: center; gap: 10px; }
 .student-promo-icon {
-  width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
-  background: var(--text-primary); padding: 8px; box-sizing: border-box;
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+  background: var(--text-primary); padding: 7px; box-sizing: border-box;
   object-fit: contain;
   /* Source mark is a white silhouette; this icon sits on a white circle,
      so flip it dark to stay visible (same trick as .student-badge-mark). */
   filter: invert(1);
 }
-.student-promo-info { min-width: 0; }
-.student-promo-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.student-promo-subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.student-promo-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.student-promo-subtitle {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
 .student-promo-btn {
-  flex-shrink: 0;
-  padding: 9px 14px;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
   background: var(--text-primary);
   color: var(--bg-primary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  border-radius: var(--radius-full);
-  white-space: nowrap;
+  text-align: center;
+  border-radius: var(--radius-md);
 }
-.student-promo-btn:active { transform: scale(0.96); }
+.student-promo-btn:active { transform: scale(0.98); }
 
 /* ── Double Stamps Campaign Banner (Home View) ────────────── */
 .campaign-banner {

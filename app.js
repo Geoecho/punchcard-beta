@@ -2410,7 +2410,35 @@ function initAvatarPickerModal() {
   });
 }
 
+// Pressing Enter — which is what a mobile keyboard's "Next"/"Go" key
+// actually sends — otherwise does nothing useful in a multi-field form
+// (browsers only auto-advance/submit for single-input forms). This moves
+// focus to the next input in the given container, or clicks the submit
+// button from the last one.
+function wireEnterKeyChain(container, submitBtn) {
+  if (!container) return;
+  const inputs = Array.from(container.querySelectorAll('input')).filter(
+    el => el.type !== 'checkbox' && el.type !== 'hidden'
+  );
+  inputs.forEach((input, i) => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const next = inputs[i + 1];
+      if (next) next.focus();
+      else if (submitBtn) submitBtn.click();
+    });
+  });
+}
+
 function setupEventListeners() {
+  wireEnterKeyChain(DOM.formNewCard, DOM.btnSignupSubmit);
+  wireEnterKeyChain(DOM.formFindCard, DOM.btnLoginSubmit);
+  wireEnterKeyChain(document.getElementById('view-admin-login'), DOM.btnStaffLoginSubmit);
+  wireEnterKeyChain(document.getElementById('modal-edit-menu-item'), DOM.btnSaveMenuItem);
+  wireEnterKeyChain(document.getElementById('modal-edit-customer'), DOM.btnSaveEditCustomer);
+  wireEnterKeyChain(DOM.modalSetDisplayName, DOM.btnSetDisplayNameSave);
+
   // Navigation
   DOM.navItems.forEach(item => {
     item.addEventListener('click', () => switchView(item.dataset.target));

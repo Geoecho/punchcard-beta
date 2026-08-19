@@ -84,12 +84,6 @@
          ========================================== -->
     <div class="view" id="view-signup">
       <div class="signup-container">
-        <div class="lang-switcher lang-switcher-corner" id="lang-switcher-signup">
-          <button class="lang-btn active" data-lang="en">EN</button>
-          <button class="lang-btn" data-lang="mk">МК</button>
-          <button class="lang-btn" data-lang="sq">SQ</button>
-        </div>
-
         <div class="signup-header">
           <div class="brand-lockup brand-lockup-large" id="secret-admin-logo">
             <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo-large">
@@ -118,10 +112,10 @@
              so this stays the fastest possible path to a working card. -->
         <div class="signup-form" id="form-new-card">
           <div class="form-group">
-            <input type="text" id="signup-username" class="form-input" placeholder="Username (Used to log in)" autocomplete="username" data-i18n-placeholder="phUsername">
+            <input type="text" id="signup-username" class="form-input" placeholder="Username (Used to log in)" autocomplete="username" enterkeyhint="next" data-i18n-placeholder="phUsername">
           </div>
           <div class="form-group form-group-password">
-            <input type="password" id="signup-password" class="form-input" placeholder="Password (8+ chars)" autocomplete="new-password" data-i18n-placeholder="phPassword">
+            <input type="password" id="signup-password" class="form-input" placeholder="Password (8+ chars)" autocomplete="new-password" enterkeyhint="next" data-i18n-placeholder="phPassword">
             <button type="button" class="toggle-password-btn" data-target="signup-password" aria-label="Toggle password visibility">
               <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
@@ -134,7 +128,7 @@
             <span class="pw-req" data-rule="number" data-i18n="pwReqNumber">Number</span>
           </div>
           <div class="form-group form-group-password">
-            <input type="password" id="signup-password-confirm" class="form-input" placeholder="Confirm Password" autocomplete="new-password" data-i18n-placeholder="phPasswordConfirm">
+            <input type="password" id="signup-password-confirm" class="form-input" placeholder="Confirm Password" autocomplete="new-password" enterkeyhint="done" data-i18n-placeholder="phPasswordConfirm">
             <button type="button" class="toggle-password-btn" data-target="signup-password-confirm" aria-label="Toggle password visibility">
               <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
@@ -152,16 +146,22 @@
         <!-- Form: Find Card -->
         <div class="signup-form hidden" id="form-find-card">
           <div class="form-group">
-            <input type="text" id="login-username" class="form-input" placeholder="Enter your Username" autocomplete="username" data-i18n-placeholder="phEnterUsername">
+            <input type="text" id="login-username" class="form-input" placeholder="Enter your Username" autocomplete="username" enterkeyhint="next" data-i18n-placeholder="phEnterUsername">
           </div>
           <div class="form-group form-group-password">
-            <input type="password" id="login-password" class="form-input" placeholder="Password" autocomplete="current-password" data-i18n-placeholder="phPasswordPlain">
+            <input type="password" id="login-password" class="form-input" placeholder="Password" autocomplete="current-password" enterkeyhint="done" data-i18n-placeholder="phPasswordPlain">
             <button type="button" class="toggle-password-btn" data-target="login-password" aria-label="Toggle password visibility">
               <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               <svg class="icon-eye-off hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
             </button>
           </div>
           <button class="btn-primary btn-block" id="btn-login-submit" data-i18n="btnLogin">Log In to My Card</button>
+        </div>
+
+        <div class="lang-switcher lang-switcher-footer" id="lang-switcher-signup">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="mk">МК</button>
+          <button class="lang-btn" data-lang="sq">SQ</button>
         </div>
       </div>
     </div>
@@ -179,10 +179,10 @@
 
         <div class="signup-form">
           <div class="form-group">
-            <input type="email" id="staff-login-email" class="form-input" placeholder="Staff Email" autocomplete="username" data-i18n-placeholder="phStaffEmail">
+            <input type="email" id="staff-login-email" class="form-input" placeholder="Staff Email" autocomplete="username" enterkeyhint="next" data-i18n-placeholder="phStaffEmail">
           </div>
           <div class="form-group">
-            <input type="password" id="staff-login-password" class="form-input" placeholder="Password" autocomplete="current-password" data-i18n-placeholder="phPasswordPlain">
+            <input type="password" id="staff-login-password" class="form-input" placeholder="Password" autocomplete="current-password" enterkeyhint="done" data-i18n-placeholder="phPasswordPlain">
           </div>
           <p class="pin-error" id="staff-login-error"></p>
           <button class="btn-primary btn-block" id="btn-staff-login-submit" data-i18n="btnStaffLogin">Log In</button>
@@ -304,13 +304,11 @@
 
       <!-- Student Discount Promo (Customer, not-yet-verified only) -->
       <div class="student-promo-banner hidden" id="student-promo-banner">
-        <div class="student-promo-left">
+        <div class="student-promo-header">
           <img src="icons/netaville-mark.png" alt="" class="student-promo-icon">
-          <div class="student-promo-info">
-            <div class="student-promo-title" data-i18n="studentPromoTitle">Get the Student Discount</div>
-            <div class="student-promo-subtitle" data-i18n="studentPromoSubtitle">Verify with Netaville, then ask staff to confirm</div>
-          </div>
+          <div class="student-promo-title" data-i18n="studentPromoTitle">Get the Student Discount</div>
         </div>
+        <p class="student-promo-subtitle" data-i18n="studentPromoSubtitle">Sign up in Netaville with your student email, then ask staff to verify you</p>
         <a href="#" id="btn-student-promo-download" class="student-promo-btn" target="_blank" rel="noopener" data-i18n="studentPromoBtn">Get Netaville</a>
       </div>
 
@@ -755,24 +753,24 @@
         <input type="hidden" id="menu-item-id">
         <div class="form-group">
           <label class="form-label" for="menu-item-name" data-i18n="labelName">Name</label>
-          <input type="text" id="menu-item-name" class="form-input" placeholder="e.g. Espresso">
+          <input type="text" id="menu-item-name" class="form-input" placeholder="e.g. Espresso" enterkeyhint="next">
         </div>
         <div class="form-group">
           <label class="form-label" for="menu-item-category" data-i18n="labelCategory">Category</label>
-          <input type="text" id="menu-item-category" class="form-input" placeholder="e.g. Espresso Based">
+          <input type="text" id="menu-item-category" class="form-input" placeholder="e.g. Espresso Based" enterkeyhint="next">
         </div>
         <div class="form-group">
           <label class="form-label" for="menu-item-sub" data-i18n="labelSubtext">Subtext (Optional)</label>
-          <input type="text" id="menu-item-sub" class="form-input" placeholder="e.g. Hot / Iced">
+          <input type="text" id="menu-item-sub" class="form-input" placeholder="e.g. Hot / Iced" enterkeyhint="next">
         </div>
         <div class="form-group" style="display: flex; gap: 12px;">
           <div style="flex: 1;">
             <label class="form-label" for="menu-item-price" data-i18n="labelPrice">Price</label>
-            <input type="number" id="menu-item-price" class="form-input" placeholder="1.00" step="0.10">
+            <input type="number" id="menu-item-price" class="form-input" placeholder="1.00" step="0.10" enterkeyhint="next">
           </div>
           <div style="flex: 1;">
             <label class="form-label" for="menu-item-stamps" data-i18n="labelBonusStamps">Bonus Stamps</label>
-            <input type="number" id="menu-item-stamps" class="form-input" placeholder="0">
+            <input type="number" id="menu-item-stamps" class="form-input" placeholder="0" enterkeyhint="done">
           </div>
         </div>
 
@@ -794,7 +792,7 @@
         <p class="modal-subtitle" data-i18n="setDisplayNameSubtitle">The name shown on your card. Changeable once every 14 days.</p>
 
         <div class="form-group">
-          <input type="text" id="set-displayname-input" class="form-input" placeholder="Display Name" autocomplete="name" data-i18n-placeholder="phDisplayName">
+          <input type="text" id="set-displayname-input" class="form-input" placeholder="Display Name" autocomplete="name" enterkeyhint="done" data-i18n-placeholder="phDisplayName">
         </div>
         <p class="pin-error" id="set-displayname-error"></p>
 
@@ -917,17 +915,17 @@
 
         <div class="form-group">
           <label class="form-label" for="edit-customer-name" data-i18n="labelDisplayName">Display Name</label>
-          <input type="text" id="edit-customer-name" class="form-input" placeholder="Customer Name">
+          <input type="text" id="edit-customer-name" class="form-input" placeholder="Customer Name" enterkeyhint="next">
         </div>
 
         <div class="form-group">
           <label class="form-label" for="edit-customer-phone" data-i18n="labelPhoneUsername">Phone / Username</label>
-          <input type="text" id="edit-customer-phone" class="form-input" placeholder="Phone or Username">
+          <input type="text" id="edit-customer-phone" class="form-input" placeholder="Phone or Username" enterkeyhint="next">
         </div>
 
         <div class="form-group form-group-password">
           <label class="form-label" for="edit-customer-new-password" data-i18n="labelResetPassword">Reset Password (leave blank to skip)</label>
-          <input type="password" id="edit-customer-new-password" class="form-input" placeholder="New Password (8+ chars)" autocomplete="new-password">
+          <input type="password" id="edit-customer-new-password" class="form-input" placeholder="New Password (8+ chars)" autocomplete="new-password" enterkeyhint="done">
         </div>
         <div class="password-requirements" id="edit-customer-password-requirements">
           <span class="pw-req" data-rule="length" data-i18n="pwReqLength">8+ characters</span>
