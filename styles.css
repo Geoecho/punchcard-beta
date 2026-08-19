@@ -742,6 +742,16 @@ input { font: inherit; color: inherit; }
   align-items: center;
   margin-bottom: 24px;
 }
+/* Groups the badge stack and the flip button as one right-aligned unit
+   so .card-header stays a clean two-item space-between row (logo | this
+   group) — the flip button used to live inside .card-header-right's own
+   column, stacking as a 4th row underneath the badges instead of
+   sitting beside them. */
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .card-header-right {
   display: flex;
   flex-direction: column;
@@ -753,7 +763,7 @@ input { font: inherit; color: inherit; }
   align-items: center;
   gap: 4px;
   padding: 3px 9px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-glass-strong);
   background: var(--bg-glass);
   color: var(--accent-main);
@@ -771,7 +781,7 @@ input { font: inherit; color: inherit; }
      color, so invisible against the fill) — otherwise this chip sits
      2px shorter than the rank chip despite matching padding/font-size. */
   border: 1px solid var(--text-primary);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   background: var(--text-primary);
   color: var(--bg-primary);
   font-size: 10px;
@@ -1098,6 +1108,12 @@ input { font: inherit; color: inherit; }
   border-radius: 50%;
   display: block;
   object-fit: cover;
+  /* DiceBear's croodles-neutral set is full color by default, which
+     clashes with the app's black/white brand language everywhere it
+     sits next to type (card greeting, customer rows, leaderboard) —
+     desaturate so every avatar reads as part of the same monochrome
+     system as the rest of the UI. */
+  filter: grayscale(1) contrast(1.1);
 }
 .customer-info { flex: 1; min-width: 0; }
 .customer-name { font-weight: 600; font-size: 15px; }
@@ -1921,6 +1937,46 @@ input { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--border-glass);
   margin-bottom: 4px;
 }
+/* Admin only — same divider look as .menu-category-title above, moved
+   onto the row itself so the reorder/delete controls share it instead
+   of the title alone owning the full-width border. */
+.menu-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-glass);
+  margin-bottom: 4px;
+}
+.menu-category-header .menu-category-title {
+  padding-bottom: 0;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.menu-category-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.menu-section-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out);
+}
+.menu-section-btn:active { transform: scale(0.9); }
+.menu-section-btn:disabled { opacity: 0.3; cursor: default; }
+.menu-section-btn:disabled:active { transform: none; }
+.menu-section-btn-danger:hover, .menu-section-btn-danger:active { color: var(--error); border-color: var(--error); }
 .menu-item {
   display: flex;
   align-items: center;

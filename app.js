@@ -220,6 +220,11 @@ const TRANSLATIONS = {
     menuItemDiscountPreview: "That's {n}% off the regular price",
     menuViewRegular: "Regular",
     menuViewStudent: "Student",
+    menuNewSectionOption: "+ Add New Section…",
+    phNewSectionName: "New section name",
+    menuSectionEmpty: "empty",
+    menuSectionDeleted: "Section deleted",
+    errSectionNameRequired: "Enter a name for the new section",
     btnDelete: "Delete",
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
@@ -445,6 +450,11 @@ const TRANSLATIONS = {
     menuItemDiscountPreview: "Тоа е {n}% попуст од редовната цена",
     menuViewRegular: "Редовно",
     menuViewStudent: "Студентско",
+    menuNewSectionOption: "+ Додади нова секција…",
+    phNewSectionName: "Име на новата секција",
+    menuSectionEmpty: "празна",
+    menuSectionDeleted: "Секцијата е избришана",
+    errSectionNameRequired: "Внесете име за новата секција",
     btnDelete: "Избриши",
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
@@ -670,6 +680,11 @@ const TRANSLATIONS = {
     menuItemDiscountPreview: "Kjo është {n}% zbritje nga çmimi i rregullt",
     menuViewRegular: "I Rregullt",
     menuViewStudent: "Student",
+    menuNewSectionOption: "+ Shto Seksion të Ri…",
+    phNewSectionName: "Emri i seksionit të ri",
+    menuSectionEmpty: "bosh",
+    menuSectionDeleted: "Seksioni u fshi",
+    errSectionNameRequired: "Shkruaj një emër për seksionin e ri",
     btnDelete: "Fshi",
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
@@ -840,7 +855,8 @@ const state = {
     rewardsGiven: 0,
     activeCards: 0
   },
-  menuItems: []
+  menuItems: [],
+  menuCategories: [] // [{ name, sortOrder }], defines section order everywhere the menu renders
 };
 
 const defaultMenu = [
@@ -886,12 +902,40 @@ function loadMenu() {
 // so every device converges on the same menu within a moment of a staff
 // edit — no reload required.
 async function syncMenuFromCloud() {
-  const cloudMenu = await cloud.getMenu();
-  if (!cloudMenu) return;
-  state.menuItems = cloudMenu.length ? cloudMenu : defaultMenu;
-  saveMenu();
+  const [cloudMenu, cloudCategories] = await Promise.all([cloud.getMenu(), cloud.getCategories()]);
+  if (cloudMenu) {
+    state.menuItems = cloudMenu.length ? cloudMenu : defaultMenu;
+    saveMenu();
+  }
+  if (cloudCategories) {
+    state.menuCategories = cloudCategories;
+    saveCategoriesCache();
+  }
   renderCustomerMenu();
   renderAdminMenu();
+}
+
+function saveCategoriesCache() {
+  localStorage.setItem('86_menu_categories', JSON.stringify(state.menuCategories));
+}
+
+// Instant-boot local cache, same reasoning as loadMenu() above — falls
+// back to deriving an order from whatever categories are already on the
+// cached menu items if this is the very first load before the table
+// backing this exists locally yet.
+function loadCategories() {
+  const saved = localStorage.getItem('86_menu_categories');
+  if (saved) {
+    try {
+      state.menuCategories = JSON.parse(saved);
+      return;
+    } catch (e) {}
+  }
+  const seen = [];
+  (state.menuItems || []).forEach(item => {
+    if (item.category && !seen.includes(item.category)) seen.push(item.category);
+  });
+  state.menuCategories = seen.map((name, i) => ({ name, sortOrder: i }));
 }
 
 function saveMenu() {
@@ -1519,6 +1563,68 @@ const cloud = {
     }
   },
 
+  async getCategories() {
+    if (!supabaseClient) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.from('menu_categories').select('*').order('sort_order', { ascending: true }),
+        4000
+      );
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ name: d.name, sortOrder: d.sort_order }));
+    } catch (e) {
+      return null;
+    }
+  },
+
+  // p_old_name null/empty creates a new section; set it to rename one
+  // (the rename cascades onto every item filed under the old name).
+  async staffUpsertCategory(token, oldName, newName, sortOrder) {
+    if (!supabaseClient || !token) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_upsert_category', {
+          p_token: token,
+          p_old_name: oldName || null,
+          p_new_name: newName,
+          p_sort_order: (sortOrder === undefined || sortOrder === null) ? null : sortOrder
+        }),
+        4000
+      );
+      if (res.error) return { error: 'unknown' };
+      return { categories: (res.data || []).map(d => ({ name: d.name, sortOrder: d.sort_order })) };
+    } catch (e) {
+      return { error: 'offline' };
+    }
+  },
+
+  async staffDeleteCategory(token, name) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_delete_category', { p_token: token, p_name: name }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // names is the full section list in the order it should display.
+  async staffReorderCategories(token, names) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_reorder_categories', { p_token: token, p_names: names }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
   // Realtime menu sync — any staff edit, on any device, pushes to every
   // open app within moments. Global (not tied to a customer/staff id),
   // so this subscribes once at startup rather than on login.
@@ -1527,6 +1633,9 @@ const cloud = {
     supabaseClient
       .channel('menu-items-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => {
+        syncMenuFromCloud();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_categories' }, () => {
         syncMenuFromCloud();
       })
       .subscribe();
@@ -2046,6 +2155,7 @@ const DOM = {
   menuItemId: document.getElementById('menu-item-id'),
   menuItemName: document.getElementById('menu-item-name'),
   menuItemCategory: document.getElementById('menu-item-category'),
+  menuItemCategoryNew: document.getElementById('menu-item-category-new'),
   menuItemSub: document.getElementById('menu-item-sub'),
   menuItemPrice: document.getElementById('menu-item-price'),
   menuItemStamps: document.getElementById('menu-item-stamps'),
@@ -2164,6 +2274,7 @@ async function initApp() {
     initStampGrid();
 
     loadMenu();
+    loadCategories();
     renderCustomerMenu();
     renderAdminMenu();
     syncMenuFromCloud();
@@ -4523,6 +4634,43 @@ function translateCategoryName(catName) {
   return key ? t(key) : catName;
 }
 
+// Groups items by category in the admin-defined section order
+// (state.menuCategories), instead of "whichever order their first item
+// happened to be created in" — that's what made section order
+// uncontrollable before. Any item whose category isn't in the known
+// list (e.g. a stale/renamed section) still shows, just appended at the
+// end sorted alphabetically, so nothing silently disappears. Empty
+// sections are dropped — customers should never see a header with
+// nothing under it.
+function groupMenuItemsByCategory(items) {
+  const byName = {};
+  items.forEach(item => {
+    const cat = item.category || '';
+    if (!byName[cat]) byName[cat] = [];
+    byName[cat].push(item);
+  });
+
+  const known = (state.menuCategories || []).map(c => c.name).filter(name => byName[name]);
+  const rest = Object.keys(byName).filter(name => !known.includes(name)).sort();
+  return [...known, ...rest].map(name => [name, byName[name]]);
+}
+
+// Same idea for the admin editor, except empty sections stay visible
+// (as an empty header with reorder/delete controls) — staff need to see
+// and manage a section before it has any items in it.
+function groupAdminMenuByCategory(items) {
+  const byName = {};
+  items.forEach(item => {
+    const cat = item.category || '';
+    if (!byName[cat]) byName[cat] = [];
+    byName[cat].push(item);
+  });
+
+  const known = (state.menuCategories || []).map(c => c.name);
+  const rest = Object.keys(byName).filter(name => !known.includes(name)).sort();
+  return [...known, ...rest].map(name => [name, byName[name] || []]);
+}
+
 function setMenuPriceView(view) {
   state.menuPriceView = view === 'student' ? 'student' : 'regular';
   if (DOM.menuPriceViewChips) {
@@ -4539,13 +4687,7 @@ function renderCustomerMenu() {
 
   const showStudentPrices = state.menuPriceView === 'student';
 
-  const categories = {};
-  state.menuItems.forEach(item => {
-    if (!categories[item.category]) categories[item.category] = [];
-    categories[item.category].push(item);
-  });
-
-  for (const [catName, items] of Object.entries(categories)) {
+  for (const [catName, items] of groupMenuItemsByCategory(state.menuItems)) {
     const catDiv = document.createElement('div');
     catDiv.className = 'menu-category';
 
@@ -4732,42 +4874,108 @@ async function renderLeaderboard() {
   DOM.leaderboardContainer.appendChild(listEl);
 }
 
+const ICON_CHEVRON_UP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+const ICON_CHEVRON_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+const ICON_TRASH_SM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+
 function renderAdminMenu() {
   if (!DOM.adminMenuContainer) return;
   DOM.adminMenuContainer.innerHTML = '';
-  
-  const categories = {};
-  state.menuItems.forEach(item => {
-    if (!categories[item.category]) categories[item.category] = [];
-    categories[item.category].push(item);
-  });
 
-  for (const [catName, items] of Object.entries(categories)) {
+  const grouped = groupAdminMenuByCategory(state.menuItems);
+  const orderedNames = grouped.map(([name]) => name);
+
+  grouped.forEach(([catName, items], index) => {
     const catDiv = document.createElement('div');
     catDiv.className = 'menu-category';
-    
+
+    const header = document.createElement('div');
+    header.className = 'menu-category-header';
+
     const catTitle = document.createElement('div');
     catTitle.className = 'menu-category-title';
-    catTitle.textContent = catName;
-    catDiv.appendChild(catTitle);
+    catTitle.textContent = catName + (items.length === 0 ? ` (${t('menuSectionEmpty')})` : '');
+    header.appendChild(catTitle);
+
+    const controls = document.createElement('div');
+    controls.className = 'menu-category-controls';
+
+    const btnUp = document.createElement('button');
+    btnUp.className = 'menu-section-btn';
+    btnUp.type = 'button';
+    btnUp.setAttribute('aria-label', 'Move section up');
+    btnUp.innerHTML = ICON_CHEVRON_UP;
+    btnUp.disabled = index === 0;
+    btnUp.addEventListener('click', () => reorderMenuCategory(orderedNames, catName, -1));
+    controls.appendChild(btnUp);
+
+    const btnDown = document.createElement('button');
+    btnDown.className = 'menu-section-btn';
+    btnDown.type = 'button';
+    btnDown.setAttribute('aria-label', 'Move section down');
+    btnDown.innerHTML = ICON_CHEVRON_DOWN;
+    btnDown.disabled = index === grouped.length - 1;
+    btnDown.addEventListener('click', () => reorderMenuCategory(orderedNames, catName, 1));
+    controls.appendChild(btnDown);
+
+    if (items.length === 0) {
+      const btnDelete = document.createElement('button');
+      btnDelete.className = 'menu-section-btn menu-section-btn-danger';
+      btnDelete.type = 'button';
+      btnDelete.setAttribute('aria-label', 'Delete section');
+      btnDelete.innerHTML = ICON_TRASH_SM;
+      btnDelete.addEventListener('click', () => deleteMenuCategory(catName));
+      controls.appendChild(btnDelete);
+    }
+
+    header.appendChild(controls);
+    catDiv.appendChild(header);
 
     items.forEach(item => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'menu-item';
       itemDiv.style.cursor = 'pointer';
-      
+
       const priceVal = parseFloat(item.price).toString();
-      
+
       let html = `<span class="menu-item-name">${item.name} <span style="font-size: 10px; color: var(--text-muted);">✎ Edit</span></span>
                   <span class="menu-item-price">${priceVal} MKD</span>`;
-      
+
       itemDiv.innerHTML = html;
       itemDiv.addEventListener('click', () => openMenuModal(item));
       catDiv.appendChild(itemDiv);
     });
-    
+
     DOM.adminMenuContainer.appendChild(catDiv);
+  });
+}
+
+// Optimistically reorders locally so the UI responds instantly, then
+// persists the full new order — realtime will also echo it back to
+// every other open device momentarily.
+async function reorderMenuCategory(orderedNames, name, direction) {
+  const i = orderedNames.indexOf(name);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= orderedNames.length) return;
+  const newOrder = orderedNames.slice();
+  [newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]];
+
+  state.menuCategories = newOrder.map((n, idx) => ({ name: n, sortOrder: idx }));
+  renderAdminMenu();
+  renderCustomerMenu();
+
+  const ok = await cloud.staffReorderCategories(state.staffToken, newOrder);
+  if (!ok) showToast(t('errServerConnection'), 'error');
+}
+
+async function deleteMenuCategory(name) {
+  const ok = await cloud.staffDeleteCategory(state.staffToken, name);
+  if (!ok) {
+    showToast(t('errServerConnection'), 'error');
+    return;
   }
+  await syncMenuFromCloud();
+  showToast(t('menuSectionDeleted'), 'success');
 }
 
 function openMenuModal(item = null) {
@@ -4775,7 +4983,7 @@ function openMenuModal(item = null) {
     DOM.menuModalTitle.textContent = t('menuModalEditItem');
     DOM.menuItemId.value = item.id;
     DOM.menuItemName.value = item.name;
-    DOM.menuItemCategory.value = item.category;
+    populateMenuCategorySelect(item.category);
     DOM.menuItemSub.value = item.sub || '';
     DOM.menuItemPrice.value = item.price;
     DOM.menuItemStamps.value = item.stamps || 0;
@@ -4785,7 +4993,7 @@ function openMenuModal(item = null) {
     DOM.menuModalTitle.textContent = t('menuModalAddItem');
     DOM.menuItemId.value = '';
     DOM.menuItemName.value = '';
-    DOM.menuItemCategory.value = '';
+    populateMenuCategorySelect(null);
     DOM.menuItemSub.value = '';
     DOM.menuItemPrice.value = '';
     DOM.menuItemStamps.value = 0;
@@ -4794,6 +5002,27 @@ function openMenuModal(item = null) {
   }
   updateMenuItemDiscountPreview();
   openModal(DOM.modalEditMenuItem);
+}
+
+// Populates the Category <select> from the admin-managed section list,
+// plus a trailing "+ Add New Section" option that reveals a text input
+// right in the item editor — so a brand new section can be created in
+// the same flow as adding an item, not as a separate detour.
+function populateMenuCategorySelect(selectedName) {
+  if (!DOM.menuItemCategory) return;
+  const names = (state.menuCategories || []).map(c => c.name);
+  if (selectedName && !names.includes(selectedName)) names.push(selectedName);
+
+  DOM.menuItemCategory.innerHTML = names
+    .map(name => `<option value="${name}">${name}</option>`)
+    .join('') + `<option value="__new__">${t('menuNewSectionOption')}</option>`;
+
+  DOM.menuItemCategory.value = (selectedName && names.includes(selectedName)) ? selectedName : (names[0] || '__new__');
+
+  if (DOM.menuItemCategoryNew) {
+    DOM.menuItemCategoryNew.classList.add('hidden');
+    DOM.menuItemCategoryNew.value = '';
+  }
 }
 
 // Live "-X%" preview under the Student Price field as the admin types,
@@ -4816,16 +5045,26 @@ if (DOM.btnCancelMenuItem) DOM.btnCancelMenuItem.addEventListener('click', () =>
 if (DOM.overlayEditMenuItem) DOM.overlayEditMenuItem.addEventListener('click', () => closeModal(DOM.modalEditMenuItem));
 if (DOM.menuItemPrice) DOM.menuItemPrice.addEventListener('input', updateMenuItemDiscountPreview);
 if (DOM.menuItemStudentPrice) DOM.menuItemStudentPrice.addEventListener('input', updateMenuItemDiscountPreview);
+if (DOM.menuItemCategory && DOM.menuItemCategoryNew) {
+  DOM.menuItemCategory.addEventListener('change', () => {
+    const isNew = DOM.menuItemCategory.value === '__new__';
+    DOM.menuItemCategoryNew.classList.toggle('hidden', !isNew);
+    if (isNew) DOM.menuItemCategoryNew.focus();
+  });
+}
 
 if (DOM.btnSaveMenuItem) {
   DOM.btnSaveMenuItem.addEventListener('click', async () => {
     const id = DOM.menuItemId.value || 'm' + Date.now();
     const name = DOM.menuItemName.value.trim();
-    const category = DOM.menuItemCategory.value.trim();
     const price = DOM.menuItemPrice.value.trim();
 
+    const creatingNewSection = DOM.menuItemCategory.value === '__new__';
+    const newSectionName = creatingNewSection && DOM.menuItemCategoryNew ? DOM.menuItemCategoryNew.value.trim() : '';
+    const category = creatingNewSection ? newSectionName : DOM.menuItemCategory.value.trim();
+
     if (!name || !category || !price) {
-      showToast('Name, Category, and Price are required', 'error');
+      showToast(creatingNewSection ? t('errSectionNameRequired') : 'Name, Category, and Price are required', 'error');
       return;
     }
 
@@ -4841,6 +5080,16 @@ if (DOM.btnSaveMenuItem) {
     };
 
     DOM.btnSaveMenuItem.disabled = true;
+
+    if (creatingNewSection) {
+      const catResult = await cloud.staffUpsertCategory(state.staffToken, null, newSectionName, null);
+      if (catResult.error) {
+        DOM.btnSaveMenuItem.disabled = false;
+        showToast(t('errServerConnection'), 'error');
+        return;
+      }
+    }
+
     const result = await cloud.staffUpsertMenuItem(state.staffToken, newItem);
     DOM.btnSaveMenuItem.disabled = false;
 

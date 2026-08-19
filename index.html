@@ -244,15 +244,17 @@
           <div class="card-container card-face card-face-front" id="card-face-front">
             <div class="card-header">
               <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo">
-              <div class="card-header-right">
-                <div class="card-number admin-only" id="card-number">CARD #---</div>
-                <div class="student-badge hidden" id="student-badge" title="Eightysix° × Netaville">
-                  <img src="icons/netaville-mark.png" alt="" class="student-badge-mark">
-                  <span data-i18n="studentBadgeLabel">Student</span>
-                </div>
-                <div class="stamp-badge hidden" id="stamp-badge">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span id="stamp-badge-label">Bronze</span>
+              <div class="card-header-actions">
+                <div class="card-header-right">
+                  <div class="card-number admin-only" id="card-number">CARD #---</div>
+                  <div class="student-badge hidden" id="student-badge" title="Eightysix° × Netaville">
+                    <img src="icons/netaville-mark.png" alt="" class="student-badge-mark">
+                    <span data-i18n="studentBadgeLabel">Student</span>
+                  </div>
+                  <div class="stamp-badge hidden" id="stamp-badge">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <span id="stamp-badge-label">Bronze</span>
+                  </div>
                 </div>
                 <button class="card-flip-btn" id="btn-card-flip" type="button" aria-label="Flip card">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"></path><path d="M3 12.7V12a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3"></path><path d="M7 21.9l-4-4 4-4"></path><path d="M21 11.3V12a9 9 0 0 1-9 9 9 9 0 0 1-6-2.3"></path></svg>
@@ -803,7 +805,10 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="menu-item-category" data-i18n="labelCategory">Category</label>
-          <input type="text" id="menu-item-category" class="form-input" placeholder="e.g. Espresso Based" enterkeyhint="next">
+          <select id="menu-item-category" class="form-input">
+            <!-- populated by JS from state.menuCategories, plus "+ Add New Section" -->
+          </select>
+          <input type="text" id="menu-item-category-new" class="form-input hidden" style="margin-top: 8px;" enterkeyhint="next" data-i18n-placeholder="phNewSectionName" placeholder="New section name">
         </div>
         <div class="form-group">
           <label class="form-label" for="menu-item-sub" data-i18n="labelSubtext">Subtext (Optional)</label>
