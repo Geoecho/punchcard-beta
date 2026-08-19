@@ -253,6 +253,13 @@ const TRANSLATIONS = {
     notifPromoTitle: "Never Miss a Free Coffee",
     notifPromoSubtitle: "Turn on notifications to know the moment your card's full, or a friend adds you.",
     notifPromoBtn: "Turn On Notifications",
+    notifPanelTitle: "Notifications",
+    notifPanelEmpty: "You're all caught up — no notifications yet.",
+    btnClearAll: "Clear All",
+    timeJustNow: "Just now",
+    timeMinutesAgo: "{n}m ago",
+    timeHoursAgo: "{n}h ago",
+    timeDaysAgo: "{n}d ago",
     settingsFriends: "Friends",
     settingsFriendsSub: "Gift a free coffee to someone",
     friendsModalTitle: "Friends",
@@ -533,6 +540,13 @@ const TRANSLATIONS = {
     notifPromoTitle: "Не пропуштајте бесплатно кафе",
     notifPromoSubtitle: "Вклучете известувања за да дознаете веднаш кога картичката е полна, или кога некој ве додава како пријател.",
     notifPromoBtn: "Вклучи известувања",
+    notifPanelTitle: "Известувања",
+    notifPanelEmpty: "Сè е ажурирано — сè уште нема известувања.",
+    btnClearAll: "Избриши сè",
+    timeJustNow: "Сега",
+    timeMinutesAgo: "пред {n}м",
+    timeHoursAgo: "пред {n}ч",
+    timeDaysAgo: "пред {n}д",
     settingsFriends: "Пријатели",
     settingsFriendsSub: "Подарете бесплатно кафе некому",
     friendsModalTitle: "Пријатели",
@@ -813,6 +827,13 @@ const TRANSLATIONS = {
     notifPromoTitle: "Mos e Humb Asnjë Kafe Falas",
     notifPromoSubtitle: "Aktivizo njoftimet për të ditur menjëherë kur karta jote është plot, ose kur një mik të shton.",
     notifPromoBtn: "Aktivizo Njoftimet",
+    notifPanelTitle: "Njoftimet",
+    notifPanelEmpty: "Je i përditësuar — ende s'ka njoftime.",
+    btnClearAll: "Pastro të gjitha",
+    timeJustNow: "Tani",
+    timeMinutesAgo: "{n}m më parë",
+    timeHoursAgo: "{n}o më parë",
+    timeDaysAgo: "{n}d më parë",
     settingsFriends: "Miqtë",
     settingsFriendsSub: "Dhuro një kafe falas dikujt",
     friendsModalTitle: "Miqtë",
@@ -1407,6 +1428,63 @@ const cloud = {
         supabaseClient.rpc('customer_remove_push_subscription', { p_token: token || null, p_endpoint: endpoint }),
         4000
       );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // ---- In-app notification inbox ----
+  // Separate from Web Push: this is the persistent record a customer
+  // sees inside the app regardless of push permission state, written
+  // server-side by the same trusted functions that already gate the
+  // real underlying event (friend request, gift, reward banked).
+  async listNotifications(token) {
+    if (!supabaseClient) return [];
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_list_notifications', { p_token: token || null }), 4000);
+      if (res.error || !res.data) return [];
+      return res.data.map(d => ({ id: d.id, type: d.type, title: d.title, body: d.body, data: d.data || {}, read: d.read, createdAt: d.created_at }));
+    } catch (e) {
+      return [];
+    }
+  },
+
+  async unreadNotificationCount(token) {
+    if (!supabaseClient) return 0;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_unread_notification_count', { p_token: token || null }), 4000);
+      if (res.error || typeof res.data !== 'number') return 0;
+      return res.data;
+    } catch (e) {
+      return 0;
+    }
+  },
+
+  async markAllNotificationsRead(token) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_mark_all_notifications_read', { p_token: token || null }), 4000);
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async deleteNotification(token, notificationId) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_delete_notification', { p_token: token || null, p_notification_id: notificationId }), 4000);
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async clearAllNotifications(token) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('customer_clear_all_notifications', { p_token: token || null }), 4000);
       return !res.error;
     } catch (e) {
       return false;
@@ -2412,6 +2490,13 @@ const DOM = {
   notificationsToggle: document.getElementById('notifications-toggle'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
   btnOpenFriendsHome: document.getElementById('btn-open-friends-home'),
+  btnOpenNotifications: document.getElementById('btn-open-notifications'),
+  notifBellBadge: document.getElementById('notif-bell-badge'),
+  modalNotifications: document.getElementById('modal-notifications'),
+  overlayNotifications: document.getElementById('overlay-notifications'),
+  btnCloseNotifications: document.getElementById('btn-close-notifications'),
+  notificationsList: document.getElementById('notifications-list'),
+  btnClearAllNotifications: document.getElementById('btn-clear-all-notifications'),
   modalFriends: document.getElementById('modal-friends'),
   overlayFriends: document.getElementById('overlay-friends'),
   btnCloseFriends: document.getElementById('btn-close-friends'),
@@ -2657,6 +2742,11 @@ async function initApp() {
     // reconnect — this bounds how stale a displayed price can ever get
     // to well under a minute even if that happens.
     setInterval(syncMenuFromCloud, 45000);
+
+    // Keeps the notification bell badge current while a customer just
+    // sits on the home screen — a friend request or gift can land at any
+    // time, not just when they happen to reopen the app.
+    setInterval(() => { if (state.myCustomerId && !state.isAdmin) refreshNotifBadge(); }, 45000);
 
     // Load saved user session
     const savedUserJson = localStorage.getItem('86_user_session');
@@ -4135,6 +4225,60 @@ function setupEventListeners() {
     });
   }
 
+  // Notifications Panel (Home header bell)
+  if (DOM.btnOpenNotifications) {
+    DOM.btnOpenNotifications.addEventListener('click', async () => {
+      if (!state.myCustomerId) return;
+      openModal(DOM.modalNotifications);
+      await loadAndRenderNotifications();
+    });
+  }
+  if (DOM.btnCloseNotifications) DOM.btnCloseNotifications.addEventListener('click', () => closeModal(DOM.modalNotifications));
+  if (DOM.overlayNotifications) DOM.overlayNotifications.addEventListener('click', () => closeModal(DOM.modalNotifications));
+
+  if (DOM.btnClearAllNotifications) {
+    DOM.btnClearAllNotifications.addEventListener('click', async () => {
+      DOM.btnClearAllNotifications.disabled = true;
+      await cloud.clearAllNotifications(state.myToken);
+      DOM.btnClearAllNotifications.disabled = false;
+      renderNotificationsList([]);
+      refreshNotifBadge();
+    });
+  }
+
+  // Delete / accept / decline buttons live inside dynamically-rendered
+  // rows — one delegated listener instead of re-binding on every render.
+  if (DOM.notificationsList) {
+    DOM.notificationsList.addEventListener('click', async (e) => {
+      const deleteBtn = e.target.closest('.notif-row-delete');
+      if (deleteBtn) {
+        const row = deleteBtn.closest('.notif-row');
+        await cloud.deleteNotification(state.myToken, deleteBtn.dataset.id);
+        if (row) row.remove();
+        if (DOM.notificationsList && !DOM.notificationsList.querySelector('.notif-row')) {
+          renderNotificationsList([]);
+        }
+        return;
+      }
+
+      const acceptBtn = e.target.closest('.notif-accept-btn');
+      const declineBtn = e.target.closest('.notif-decline-btn');
+      const btn = acceptBtn || declineBtn;
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
+      if (ok && acceptBtn) {
+        hapticPulse([20, 30, 20]);
+        showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName || '' }), 'success');
+      }
+      const row = btn.closest('.notif-row');
+      if (row) row.remove();
+      if (DOM.notificationsList && !DOM.notificationsList.querySelector('.notif-row')) {
+        renderNotificationsList([]);
+      }
+    });
+  }
+
   // Friends & Gifting (Settings > Account > Friends, and Home quick-access)
   const openFriendsModal = async () => {
     if (!state.myCustomerId) return;
@@ -4954,6 +5098,7 @@ async function updateCardUI() {
     DOM.stampCountText.textContent = 0;
     if (DOM.rewardsWalletCard) DOM.rewardsWalletCard.classList.add('hidden');
     if (DOM.btnLogoutHeader) DOM.btnLogoutHeader.classList.add('hidden');
+    if (DOM.btnOpenNotifications) DOM.btnOpenNotifications.classList.add('hidden');
     if (DOM.userAvatarDisplay) DOM.userAvatarDisplay.innerHTML = MONOCHROME_AVATARS.person;
     updateGreetingMarquee();
     setCardFlipped(false);
@@ -5074,6 +5219,15 @@ async function updateCardUI() {
     }
   }
 
+  if (DOM.btnOpenNotifications) {
+    if (state.myCustomerId && !state.isAdmin) {
+      DOM.btnOpenNotifications.classList.remove('hidden');
+      refreshNotifBadge();
+    } else {
+      DOM.btnOpenNotifications.classList.add('hidden');
+    }
+  }
+
   if (!state.isAdmin) refreshCustomerCampaignBanner();
 
   refreshStudentPromoVisibility(customer);
@@ -5110,6 +5264,140 @@ async function updateCardUI() {
 function canVoidRedemption(customer) {
   const last = customer && Array.isArray(customer.history) ? customer.history[0] : null;
   return !!(last && last.type === 'redemption' && !last.voided);
+}
+
+// ==========================================
+// NOTIFICATIONS PANEL
+// ==========================================
+const NOTIF_TYPE_ICON = {
+  friend_request: '👋',
+  friend_accepted: '🎉',
+  gift_received: '🎁',
+  reward_banked: '☕'
+};
+
+function formatNotifTime(iso) {
+  const then = new Date(iso).getTime();
+  if (!then || isNaN(then)) return '';
+  const diffMs = Date.now() - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return t('timeJustNow');
+  if (mins < 60) return t('timeMinutesAgo', { n: mins });
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return t('timeHoursAgo', { n: hours });
+  const days = Math.floor(hours / 24);
+  return t('timeDaysAgo', { n: days });
+}
+
+// Badge-only refresh — cheap enough to call often (app init, returning to
+// the home view, after opening/closing the panel) without pulling the
+// full notification list each time.
+async function refreshNotifBadge() {
+  if (!DOM.notifBellBadge || !state.myCustomerId || state.isAdmin) return;
+  const count = await cloud.unreadNotificationCount(state.myToken);
+  if (count > 0) {
+    DOM.notifBellBadge.textContent = count > 99 ? '99+' : String(count);
+    DOM.notifBellBadge.classList.remove('hidden');
+  } else {
+    DOM.notifBellBadge.classList.add('hidden');
+  }
+}
+
+async function loadAndRenderNotifications() {
+  if (!DOM.notificationsList) return;
+  DOM.notificationsList.innerHTML = `<div class="empty-state" style="padding: 24px 0;"><p class="empty-text">${t('loadingText')}</p></div>`;
+  const notifications = await cloud.listNotifications(state.myToken);
+  renderNotificationsList(notifications);
+
+  // Flash the unread state on open (so what's new is still visible this
+  // one time), then clear it server-side so the badge is gone by the
+  // next time the panel — or the app — opens.
+  if (notifications.some(n => !n.read)) {
+    cloud.markAllNotificationsRead(state.myToken).then(() => refreshNotifBadge());
+  }
+}
+
+function renderNotificationsList(notifications) {
+  if (!DOM.notificationsList) return;
+  DOM.notificationsList.innerHTML = '';
+
+  if (DOM.btnClearAllNotifications) {
+    DOM.btnClearAllNotifications.classList.toggle('hidden', !notifications.length);
+  }
+
+  if (!notifications.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.style.padding = '24px 0';
+    const p = document.createElement('p');
+    p.className = 'empty-text';
+    p.textContent = t('notifPanelEmpty');
+    empty.appendChild(p);
+    DOM.notificationsList.appendChild(empty);
+    return;
+  }
+
+  notifications.forEach(n => {
+    const row = document.createElement('div');
+    row.className = 'notif-row' + (n.read ? '' : ' unread');
+    row.dataset.id = n.id;
+
+    const icon = document.createElement('div');
+    icon.className = 'notif-row-icon';
+    icon.textContent = NOTIF_TYPE_ICON[n.type] || '🔔';
+    row.appendChild(icon);
+
+    const content = document.createElement('div');
+    content.className = 'notif-row-content';
+
+    const title = document.createElement('div');
+    title.className = 'notif-row-title';
+    title.textContent = n.title;
+    content.appendChild(title);
+
+    const body = document.createElement('div');
+    body.className = 'notif-row-body';
+    body.textContent = n.body;
+    content.appendChild(body);
+
+    const time = document.createElement('div');
+    time.className = 'notif-row-time';
+    time.textContent = formatNotifTime(n.createdAt);
+    content.appendChild(time);
+
+    // Friend requests are still actionable from right here — no need to
+    // dig into the Friends modal separately to respond to one.
+    if (n.type === 'friend_request' && n.data && n.data.request_id) {
+      const actions = document.createElement('div');
+      actions.className = 'notif-row-actions';
+
+      const declineBtn = document.createElement('button');
+      declineBtn.className = 'btn-secondary notif-decline-btn';
+      declineBtn.dataset.requestId = n.data.request_id;
+      declineBtn.textContent = t('btnDeclineRequest');
+      actions.appendChild(declineBtn);
+
+      const acceptBtn = document.createElement('button');
+      acceptBtn.className = 'btn-primary notif-accept-btn';
+      acceptBtn.dataset.requestId = n.data.request_id;
+      acceptBtn.dataset.requestName = (n.data && n.data.requester_name) || '';
+      acceptBtn.textContent = t('btnAcceptRequest');
+      actions.appendChild(acceptBtn);
+
+      content.appendChild(actions);
+    }
+
+    row.appendChild(content);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'notif-row-delete';
+    deleteBtn.dataset.id = n.id;
+    deleteBtn.setAttribute('aria-label', t('btnClose'));
+    deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    row.appendChild(deleteBtn);
+
+    DOM.notificationsList.appendChild(row);
+  });
 }
 
 // ==========================================

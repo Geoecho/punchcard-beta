@@ -208,6 +208,12 @@
             <p class="home-subtitle" id="home-subtitle">Here is your card</p>
           </div>
         </div>
+        <div class="header-right">
+          <button class="btn-notif-bell hidden" id="btn-open-notifications" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="notif-bell-badge hidden" id="notif-bell-badge">0</span>
+          </button>
+        </div>
       </header>
 
       <div class="install-prompt-banner hidden" id="install-banner">
@@ -970,6 +976,26 @@
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn-secondary" id="btn-set-username-skip" data-i18n="btnSkipForNow">Later</button>
           <button class="btn-primary" id="btn-set-username-save" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div class="modal" id="modal-notifications">
+      <div class="modal-overlay" id="overlay-notifications"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="notif-panel-header">
+          <h3 class="modal-title" data-i18n="notifPanelTitle" style="margin: 0;">Notifications</h3>
+          <button class="notif-panel-clear-all hidden" id="btn-clear-all-notifications" data-i18n="btnClearAll">Clear All</button>
+        </div>
+        <div class="friends-list" id="notifications-list" style="max-height: 55vh;">
+          <div class="empty-state" style="padding: 24px 0;">
+            <p class="empty-text" data-i18n="notifPanelEmpty">You're all caught up — no notifications yet.</p>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-secondary btn-block" id="btn-close-notifications" data-i18n="btnClose">Close</button>
         </div>
       </div>
     </div>
