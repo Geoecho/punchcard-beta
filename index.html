@@ -246,7 +246,6 @@
               <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo">
               <div class="card-header-actions">
                 <div class="card-header-right">
-                  <div class="card-number admin-only" id="card-number">CARD #---</div>
                   <div class="student-badge hidden" id="student-badge" title="Eightysix° × Netaville">
                     <img src="icons/netaville-mark.png" alt="" class="student-badge-mark">
                     <span data-i18n="studentBadgeLabel">Student</span>
@@ -271,9 +270,12 @@
                 <div class="progress-bar">
                   <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
                 </div>
-                <div class="stamp-count"><span id="stamp-count-text">0</span>/10</div>
+                <div class="stamp-count" id="stamp-count"><span id="stamp-count-text">0</span>/10</div>
               </div>
-              <div class="progress-message" id="progress-msg">10 more to your free coffee!</div>
+              <div class="card-footer-meta">
+                <div class="card-number admin-only" id="card-number">CARD #---</div>
+                <div class="progress-message" id="progress-msg">10 more to your free coffee!</div>
+              </div>
             </div>
           </div>
 
@@ -284,22 +286,34 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"></path><path d="M3 12.7V12a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3"></path><path d="M7 21.9l-4-4 4-4"></path><path d="M21 11.3V12a9 9 0 0 1-9 9 9 9 0 0 1-6-2.3"></path></svg>
               </button>
             </div>
-            <div class="card-back-stats">
-              <div class="stat-card card-back-stat">
-                <div class="stat-value" id="card-back-stat-lifetime">0</div>
-                <div class="stat-label" data-i18n="cardBackLifetimeStamps">Lifetime Stamps</div>
+            <div class="card-back-stats-list">
+              <div class="card-back-row">
+                <div class="card-back-row-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>
+                </div>
+                <div class="card-back-row-label" data-i18n="cardBackLifetimeStamps">Lifetime Stamps</div>
+                <div class="card-back-row-value" id="card-back-stat-lifetime">0</div>
               </div>
-              <div class="stat-card card-back-stat">
-                <div class="stat-value" id="card-back-stat-redeemed">0</div>
-                <div class="stat-label" data-i18n="cardBackRedeemed">Coffees Redeemed</div>
+              <div class="card-back-row">
+                <div class="card-back-row-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                </div>
+                <div class="card-back-row-label" data-i18n="cardBackRedeemed">Coffees Redeemed</div>
+                <div class="card-back-row-value" id="card-back-stat-redeemed">0</div>
               </div>
-              <div class="stat-card card-back-stat">
-                <div class="stat-value" id="card-back-stat-rank">—</div>
-                <div class="stat-label" data-i18n="cardBackRank">Leaderboard Rank</div>
+              <div class="card-back-row">
+                <div class="card-back-row-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path><path d="M17 5h2a2 2 0 0 1 0 4h-1"></path><path d="M7 5H5a2 2 0 0 0 0 4h1"></path></svg>
+                </div>
+                <div class="card-back-row-label" data-i18n="cardBackRank">Leaderboard Rank</div>
+                <div class="card-back-row-value" id="card-back-stat-rank">—</div>
               </div>
-              <div class="stat-card card-back-stat">
-                <div class="stat-value" id="card-back-stat-since">—</div>
-                <div class="stat-label" data-i18n="cardBackMemberSince">Member Since</div>
+              <div class="card-back-row">
+                <div class="card-back-row-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="card-back-row-label" data-i18n="cardBackMemberSince">Member Since</div>
+                <div class="card-back-row-value" id="card-back-stat-since">—</div>
               </div>
             </div>
           </div>

@@ -122,7 +122,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
     studentPromoSubtitle: "Sign up in Netaville with your student email, then ask staff to verify you",
-    studentPromoBtn: "Get Netaville",
+    studentPromoBtn: "Get Netaville App",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
     navCard: "Card",
@@ -351,8 +351,8 @@ const TRANSLATIONS = {
     cardBackMemberSince: "Член од",
     settingsStudentDiscount: "Студентски попуст",
     studentPromoTitle: "Добијте студентски попуст",
-    studentPromoSubtitle: "Регистрирајте се во Netaville со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди",
-    studentPromoBtn: "Преземи Netaville",
+    studentPromoSubtitle: "регистрирајте се на Netaville апликацијата со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди.",
+    studentPromoBtn: "Преземи ја Netaville апликацијата",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
     navCard: "Картичка",
@@ -582,7 +582,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Zbritje për Studentë",
     studentPromoTitle: "Merr Zbritjen për Studentë",
     studentPromoSubtitle: "Regjistrohu në Netaville me email-in tënd të studentit, pastaj kërko stafit të të verifikojë",
-    studentPromoBtn: "Merr Netaville",
+    studentPromoBtn: "Merr Aplikacionin Netaville",
     staffModeTitle: "Modaliteti i Stafit Aktiv",
     staffModeText: "Zgjidh një klient nga lista për ta parë dhe vulosur kartën.",
     navCard: "Karta",
@@ -1682,6 +1682,7 @@ const cloud = {
               cup.classList.add('earning');
               setTimeout(() => cup.classList.remove('earning'), 600);
             }
+            bumpStampCount();
             // New stamp entries are prepended, so [0] is the one that
             // just landed — its staffName tells the customer who rang
             // them up, since "New Stamp Received!" alone didn't.
@@ -1979,6 +1980,7 @@ const DOM = {
   stampGrid: document.getElementById('stamp-grid'),
   progressFill: document.getElementById('progress-fill'),
   stampCountText: document.getElementById('stamp-count-text'),
+  stampCount: document.getElementById('stamp-count'),
   progressMsg: document.getElementById('progress-msg'),
   adminActions: document.getElementById('admin-actions'),
   btnAddStamp: document.getElementById('btn-add-stamp'),
@@ -3282,11 +3284,15 @@ function setupEventListeners() {
       } else {
         playStampSound();
         hapticPulse(25);
+        bumpStampCount();
         for (let i = oldStamps; i < updated.stamps; i++) {
           const cup = document.getElementById(`stamp-${i}`);
           if (cup) {
+            // Stagger multi-stamp gains (double-dose items) so each cup
+            // pops in sequence instead of all at once.
+            cup.style.animationDelay = ((i - oldStamps) * 90) + 'ms';
             cup.classList.add('earning');
-            setTimeout(() => cup.classList.remove('earning'), 600);
+            setTimeout(() => { cup.classList.remove('earning'); cup.style.animationDelay = ''; }, 600 + (i - oldStamps) * 90);
           }
         }
         const gained = updated.totalStampsEarned - (oldCustomer ? (oldCustomer.totalStampsEarned || 0) : 0);
@@ -3983,6 +3989,14 @@ let cardBackRankCache = {};
 
 function setCardFlipped(flipped) {
   if (DOM.cardFlipInner) DOM.cardFlipInner.classList.toggle('flipped', flipped);
+}
+
+function bumpStampCount() {
+  if (!DOM.stampCount) return;
+  DOM.stampCount.classList.remove('bump');
+  void DOM.stampCount.offsetWidth; // restart the animation on rapid repeats
+  DOM.stampCount.classList.add('bump');
+  setTimeout(() => DOM.stampCount && DOM.stampCount.classList.remove('bump'), 400);
 }
 
 // Both faces are absolutely positioned (so they can overlap during the 3D

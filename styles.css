@@ -714,13 +714,45 @@ input { font: inherit; color: inherit; }
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.card-back-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/* A quiet row list (icon / label / value) rather than the boxy admin
+   .stat-card grid — that grid reads as a dashboard widget, which felt
+   out of place on a customer-facing card meant to feel like a single
+   physical object with the front. */
+.card-back-stats-list {
+  display: flex;
+  flex-direction: column;
 }
-.stat-card.card-back-stat { padding: 14px 10px; }
-.card-back-stat .stat-value { font-size: 22px; }
+.card-back-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-glass);
+}
+.card-back-row:last-child { border-bottom: none; }
+.card-back-row-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+}
+.card-back-row-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.card-back-row-value {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
 
 .card-container {
   padding: 24px;
@@ -752,11 +784,14 @@ input { font: inherit; color: inherit; }
   align-items: center;
   gap: 10px;
 }
+/* Side-by-side, not stacked — with the card ID moved down into the
+   footer, this only ever holds the two small badges, and a vertical
+   stack of two pills read as heavier/less tidy than a single row. */
 .card-header-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
 }
 .stamp-badge {
   display: inline-flex;
@@ -803,6 +838,8 @@ input { font: inherit; color: inherit; }
   color: var(--text-secondary);
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ── Stamp Grid ───────────────────────────────────────────── */
@@ -863,8 +900,21 @@ input { font: inherit; color: inherit; }
 }
 .stamp-cup.earned .cup-icon { opacity: 0; }
 .stamp-cup.earned .stamp-check { opacity: 1; transform: scale(1); }
-.stamp-cup.earning { animation: stamp-earn 0.5s var(--ease-bounce) forwards; }
+.stamp-cup.earning { animation: stamp-earn 0.6s var(--ease-bounce) forwards; }
 .stamp-cup.earning .stamp-check { animation: check-pop 0.4s var(--ease-bounce) 0.1s forwards; }
+/* Ring burst radiating out from the cup the instant it's earned —
+   pure CSS (no extra JS/canvas), just a pseudo-element that expands
+   and fades once, triggered the same way check-pop is (::after only
+   exists while .earning is present, so it replays every time). */
+.stamp-cup.earning::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--accent-main);
+  animation: stamp-ring 0.6s var(--ease-out) forwards;
+  pointer-events: none;
+}
 
 /* ── Progress Bar ─────────────────────────────────────────── */
 .progress-section {
@@ -892,11 +942,23 @@ input { font: inherit; color: inherit; }
   min-width: 44px;
   text-align: right;
 }
+.stamp-count.bump { animation: stamp-count-bump 0.4s var(--ease-bounce); }
+@keyframes stamp-count-bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); color: var(--accent-main); } 100% { transform: scale(1); } }
+/* Card ID (staff-only) sits bottom-left, the remaining-stamps message
+   bottom-right — margin-left: auto keeps the message pinned right even
+   when the ID is hidden for customers (space-between alone would have
+   left it flush-left with only one visible child). */
+.card-footer-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 14px;
+}
 .progress-message {
   font-size: 12px;
   color: var(--text-muted);
-  text-align: center;
-  margin-top: 12px;
+  text-align: right;
+  margin-left: auto;
 }
 
 /* ── Home Actions ─────────────────────────────────────────── */
@@ -1182,7 +1244,7 @@ input { font: inherit; color: inherit; }
 .settings-item-icon-netaville {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   background: var(--text-primary);
   display: flex;
   align-items: center;
@@ -1661,18 +1723,18 @@ input { font: inherit; color: inherit; }
 }
 .student-promo-header { display: flex; align-items: center; gap: 10px; }
 .student-promo-icon {
-  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm);
   background: var(--text-primary); padding: 7px; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   animation: promoIconPulse 2.6s ease-in-out infinite;
 }
 .student-promo-icon img {
   width: 100%; height: 100%; object-fit: contain;
-  /* Source mark is a white silhouette; this icon sits on a white circle,
+  /* Source mark is a white silhouette; this icon sits on a white square,
      so flip it dark to stay visible (same trick as .student-badge-mark).
-     Must be on the img itself, not the circle's own element — filter
+     Must be on the img itself, not the square's own element — filter
      applies to the whole rendered box including background-color, so
-     putting it there inverted the white circle to black too and the
+     putting it there inverted the white fill to black too and the
      mark vanished into it. */
   filter: invert(1);
 }
@@ -1772,7 +1834,8 @@ input { font: inherit; color: inherit; }
 
 /* ── Animations ───────────────────────────────────────────── */
 @keyframes splash-enter { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes stamp-earn { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes stamp-earn { 0% { transform: scale(1) rotate(0deg); } 35% { transform: scale(1.28) rotate(-5deg); } 60% { transform: scale(0.94) rotate(3deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes stamp-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.7); opacity: 0; } }
 @keyframes check-pop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
