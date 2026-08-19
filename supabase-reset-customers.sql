@@ -10,6 +10,11 @@
 -- WHAT THIS DELETES:
 --   - Every customer account: stamps, rewards, activity history,
 --     usernames/passwords, and any Google-linked accounts.
+--   - Everything that references a customer row via ON DELETE CASCADE:
+--     login sessions (customer_sessions), push notification
+--     subscriptions (push_subscriptions), and friend requests/
+--     friendships (customer_friend_requests) — nothing extra to run,
+--     Postgres clears these automatically as part of the same delete.
 --
 -- WHAT THIS DOES NOT TOUCH:
 --   - Staff accounts (Stacy/Kiko/Iva) and their sessions — you'll
