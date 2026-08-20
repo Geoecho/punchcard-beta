@@ -4394,6 +4394,18 @@ function switchView(viewId) {
     }
   });
 
+  // The view being switched to was very likely laid out (content
+  // populated, syncCardFlipHeight etc.) while it was still
+  // visibility:hidden/inactive — e.g. view-home fills in via
+  // updateCardUI() during app boot, well before dismissSplash() ever
+  // calls switchView('view-home'). iOS Safari can fail to properly wire
+  // up touch-scroll for an overflow:auto region that was never visible
+  // during its own layout pass, and merely toggling visibility later
+  // doesn't retroactively fix that — the same forced-reflow nudge
+  // updateCardUI() uses for live content changes is needed here too, for
+  // the "becoming visible for the first time" case specifically.
+  nudgeActiveViewScroll();
+
   if (viewId === 'view-poster') {
     if (DOM.nav) DOM.nav.classList.add('hidden');
     renderPosterQr();
