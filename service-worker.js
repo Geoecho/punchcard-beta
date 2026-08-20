@@ -1,7 +1,7 @@
 // 86° Punchcard — Service Worker
 // Network-first for API, Stale-While-Revalidate for app shell
 
-const CACHE_NAME = '86-punchcard-v73';
+const CACHE_NAME = '86-punchcard-v74';
 const APP_SHELL = [
   './',
   './index.html',
@@ -43,7 +43,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch strategy: Network-first for API, Stale-While-Revalidate for app shell
+// Fetch strategy: Network-first for API and app-shell code, Stale-While-
+// Revalidate for static assets that rarely change.
+//
+// The app shell (HTML/JS/CSS) used to be Stale-While-Revalidate too, which
+// meant every deploy landed invisibly: the very next launch after a fix
+// shipped, users still got the OLD cached app.js/index.html immediately
+// (the fresh copy only replaced it in the background, for the launch
+// *after* that one). On a loyalty-card PWA that's often opened once, left
+// running, and reopened from the home screen days later, that lag reads
+// as "the fix didn't work." Network-first means a fix is live the moment
+// someone opens the app with any connectivity at all; the cache is now
+// purely an offline fallback, not the default answer.
+const APP_SHELL_PATHS = ['/', '/index.html', '/app.js', '/styles.css', '/menu.html', '/leaderboard.html', '/poster.html'];
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
@@ -63,7 +76,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For app shell files: Stale-While-Revalidate
+  const path = new URL(url).pathname;
+  const isAppShell = event.request.mode === 'navigate' || APP_SHELL_PATHS.includes(path);
+
+  if (isAppShell) {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone)).catch(() => {});
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Everything else (icons, third-party libs): Stale-While-Revalidate —
+  // these change rarely, so serving the cached copy instantly and
+  // refreshing it in the background is the right tradeoff.
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       const fetchPromise = fetch(event.request)
@@ -76,12 +109,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          return null;
-        });
+        .catch(() => null);
 
       return cachedResponse || fetchPromise;
     })

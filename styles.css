@@ -1753,7 +1753,10 @@ input { font: inherit; color: inherit; }
 /* ── Forms ─────────────────────────────────────────────────── */
 .form-group { margin-bottom: 16px; text-align: left; }
 .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.form-input { width: 100%; padding: 14px 16px; background: var(--bg-glass); border: 1px solid var(--border-glass-strong); border-radius: var(--radius-md); color: var(--text-primary); font-size: 15px; outline: none; transition: all 0.2s var(--ease-out); }
+/* font-size must stay >= 16px: iOS Safari auto-zooms the whole page on
+   focus for any input under 16px, which on a fixed-viewport PWA reads as
+   the layout glitching rather than a normal zoom. */
+.form-input { width: 100%; padding: 14px 16px; background: var(--bg-glass); border: 1px solid var(--border-glass-strong); border-radius: var(--radius-md); color: var(--text-primary); font-size: 16px; outline: none; transition: all 0.2s var(--ease-out); }
 .form-input:focus { border-color: var(--accent-main); background: rgba(255,255,255,0.08); }
 .menu-item-discount-preview { font-size: 12px; font-weight: 600; color: var(--accent-main); margin-top: 6px; min-height: 15px; }
 .form-group-password { position: relative; }

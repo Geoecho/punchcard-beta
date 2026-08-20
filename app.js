@@ -1138,6 +1138,7 @@ const cloud = {
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1153,6 +1154,7 @@ const cloud = {
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1170,6 +1172,7 @@ const cloud = {
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1188,11 +1191,13 @@ const cloud = {
         const msg = res.error.message || '';
         if (msg.includes('reward_expired')) return { error: 'reward_expired' };
         if (msg.includes('no_reward_available') || msg.includes('not_enough_stamps')) return { error: 'not_ready' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1207,11 +1212,13 @@ const cloud = {
       if (res.error) {
         const msg = res.error.message || '';
         if (msg.includes('no_reward_available') || msg.includes('not_enough_stamps')) return { error: 'not_ready' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1229,6 +1236,7 @@ const cloud = {
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1244,6 +1252,7 @@ const cloud = {
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1290,12 +1299,14 @@ const cloud = {
         if (msg.includes('username_taken')) return { error: 'username_taken' };
         if (msg.includes('weak_password')) return { error: 'weak_password' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       const d = res.data[0];
       return { customer: mapDbRowToCustomer(d), isNew: d.is_new, token: d.token };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1311,6 +1322,7 @@ const cloud = {
       const d = res.data[0];
       return { customer: mapDbRowToCustomer(d), token: d.token };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1325,6 +1337,7 @@ const cloud = {
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1354,6 +1367,7 @@ const cloud = {
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1462,6 +1476,7 @@ const cloud = {
       const d = res.data[0];
       return { status: d.status, friend: { id: d.friend_id, name: d.friend_name, avatar: d.friend_avatar || 'person' } };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1532,11 +1547,13 @@ const cloud = {
         if (msg.includes('no_reward_available')) return { error: 'no_reward' };
         if (msg.includes('friend_not_found')) return { error: 'not_found' };
         if (msg.includes('not_friends')) return { error: 'not_friends' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1567,6 +1584,7 @@ const cloud = {
       const d = res.data[0];
       return { token: d.token, staffId: d.staff_id, name: d.name, email: d.email };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1585,6 +1603,7 @@ const cloud = {
       const d = res.data[0];
       return { token: d.token, staffId: d.staff_id, name: d.name, email: d.email };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1604,6 +1623,7 @@ const cloud = {
       const d = res.data[0];
       return { staffId: d.staff_id, name: d.name, email: d.email, avatar: d.avatar || 'person' };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1616,6 +1636,7 @@ const cloud = {
       const d = res.data[0];
       return { staffId: d.staff_id, name: d.name, email: d.email, avatar: d.avatar || 'person' };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1641,6 +1662,7 @@ const cloud = {
       if (error) return { error: 'offline' };
       return { ok: true };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1658,6 +1680,7 @@ const cloud = {
       const d = res.data[0];
       return { customer: mapDbRowToCustomer(d), isNew: d.is_new };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1721,11 +1744,13 @@ const cloud = {
       if (res.error) {
         const msg = res.error.message || '';
         if (msg.includes('no_stamps_to_remove')) return { error: 'no_stamps' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1740,11 +1765,13 @@ const cloud = {
       if (res.error) {
         const msg = res.error.message || '';
         if (msg.includes('no_redemption_to_void')) return { error: 'no_redemption' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1759,6 +1786,7 @@ const cloud = {
       if (res.error || !res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1777,10 +1805,12 @@ const cloud = {
         const msg = res.error.message || '';
         if (msg.includes('weak_password')) return { error: 'weak_password' };
         if (msg.includes('customer_not_found')) return { error: 'not_found' };
+        console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
       return { ok: true };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1827,6 +1857,7 @@ const cloud = {
       const d = res.data[0];
       return { rank: d.my_rank, totalStampsEarned: (isMonthly ? d.monthly_stamps : d.total_stamps_earned) || 0 };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1839,6 +1870,7 @@ const cloud = {
       const d = res.data[0];
       return { active: d.active, multiplier: d.multiplier, label: d.label };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1854,6 +1886,7 @@ const cloud = {
       const d = res.data[0];
       return { active: d.active, multiplier: d.multiplier, label: d.label };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1869,6 +1902,7 @@ const cloud = {
       if (res.error || !res.data) return null;
       return res.data.map(d => ({ id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0, studentPrice: d.student_price || '' }));
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1893,6 +1927,7 @@ const cloud = {
       const d = res.data[0];
       return { item: { id: d.id, name: d.name, sub: d.sub || '', price: d.price, category: d.category, stamps: d.stamps || 0, studentPrice: d.student_price || '' } };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -1920,6 +1955,7 @@ const cloud = {
       if (res.error || !res.data) return null;
       return res.data.map(d => ({ name: d.name, sortOrder: d.sort_order }));
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return null;
     }
   },
@@ -1941,6 +1977,7 @@ const cloud = {
       if (res.error) return { error: 'unknown' };
       return { categories: (res.data || []).map(d => ({ name: d.name, sortOrder: d.sort_order })) };
     } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
     }
   },
