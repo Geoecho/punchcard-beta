@@ -126,13 +126,25 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 input { font: inherit; color: inherit; }
 
 /* ── App Shell ────────────────────────────────────────────── */
+/* fixed + explicit top/bottom (not height: 100dvh) — found via actual
+   browser testing (forcing #app taller than the real visible window
+   reproduced, exactly, the "QR/Friends button overlaps the bottom nav
+   even though .view reports 0px overflow" bug): dvh asks the browser to
+   CALCULATE a height, and on at least some real iOS versions that
+   calculation doesn't match the true visible viewport. Every descendant
+   sizing decision cascades from that one number — .view's own
+   scrollHeight/clientHeight (and therefore whether it thinks there's
+   anything left to scroll to) is entirely at its mercy. top:0; bottom:0
+   needs no such calculation: the browser maps both edges directly to
+   the real viewport, the same fix already proven for .bottom-nav. */
 #app {
-  position: relative;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: var(--app-max-w);
-  margin: 0 auto;
-  height: 100vh;
-  height: 100dvh;
   overflow: hidden;
   background: var(--bg-primary);
 }
