@@ -186,17 +186,21 @@ input { font: inherit; color: inherit; }
      (the home view with the wallet card + student discount promo both
      showing) was completely unreachable on iOS as a result.
      -webkit-overflow-scrolling: touch was dropped for a stretch too,
-     over a suspected conflict with the .home-header position: sticky
-     that used to live on this view's only header — that header is gone
-     now (see .home-header in the Home View section), so this is back:
-     an installed iOS PWA runs its content in a standalone WKWebView, a
-     meaningfully different host than a plain Safari tab, and this legacy
-     property still measurably affects whether that host reliably starts
-     a touch-scroll gesture on a NESTED overflow:auto div — especially
-     when the overflow amount is small (e.g. no reward banner adding
-     extra height), which is exactly the "some tabs scroll, this one
-     sometimes doesn't" pattern reported. overscroll-behavior-y: contain
-     alongside it stops any residual scroll from chaining up into #app. */
+     over a suspected conflict with .home-header's position: sticky — at
+     the time, #app's height:100dvh bug (see #app above) was the actual
+     cause of the scroll breakage, and sticky just happened to be present
+     when it was diagnosed. .home-header is sticky again now that #app
+     uses fixed top:0/bottom:0 instead of dvh; this property stays too,
+     since an installed iOS PWA runs its content in a standalone
+     WKWebView, a meaningfully different host than a plain Safari tab,
+     and this legacy property still measurably affects whether that host
+     reliably starts a touch-scroll gesture on a NESTED overflow:auto div
+     — especially when the overflow amount is small (e.g. no reward
+     banner adding extra height), which is exactly the "some tabs scroll,
+     this one sometimes doesn't" pattern reported. overscroll-behavior-y:
+     contain alongside it stops any residual scroll from chaining up into
+     #app. If scroll breaks again on real iOS, .home-header's sticky is
+     the first thing to revert — it's the one variable changing back. */
 }
 .view::-webkit-scrollbar { display: none; }
 .view.active {
@@ -596,13 +600,19 @@ input { font: inherit; color: inherit; }
 }
 
 /* ── Home View ────────────────────────────────────────────── */
-/* position: sticky dropped — it's a well-documented iOS Safari
-   touch-scroll troublemaker on an overflow:auto ancestor, and this is
-   the only header among the app's views that had it (every other tab
-   scrolls fine). The "pinned header" look was a nice-to-have; a header
-   that scrolls away with the rest of the content isn't worth trading
-   for a broken scroll container on the one tab customers open the most. */
+/* position: sticky was tried here before and pulled — at the time #app
+   used height:100dvh, which over-measures the real iOS viewport (see
+   #app above), and a sticky header on top of that broken height math is
+   what actually killed touch-scroll on this view, not sticky itself.
+   #app now uses fixed top:0/bottom:0 instead, so this is back on the
+   theory that the height bug — not the sticky header — was the real
+   cause. Needs confirming on a real iPhone, not just here: if scroll
+   breaks again, revert this rule to `position: static` first before
+   reaching for anything else. */
 .home-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   /* Matches .customers-header/.settings-header's padding (24px 24px
      16px) — this one had drifted to a shorter 20px/12px, the only
      header among the app's views not on the shared rhythm. */
