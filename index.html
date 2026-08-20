@@ -211,7 +211,7 @@
         <div class="header-right">
           <button class="btn-notif-bell hidden" id="btn-open-notifications" aria-label="Notifications">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            <span class="notif-bell-badge hidden" id="notif-bell-badge">0</span>
+            <span class="notif-bell-badge hidden" id="notif-bell-badge"></span>
           </button>
         </div>
       </header>
@@ -242,6 +242,21 @@
           <div class="campaign-banner-title" id="campaign-banner-title" data-i18n="campaignBannerTitle">Double Stamps Today!</div>
           <div class="campaign-banner-subtitle" id="campaign-banner-subtitle" data-i18n="campaignBannerSubtitle">Every order earns 2x stamps right now</div>
         </div>
+      </div>
+
+      <!-- Student Discount Promo (Customer, not-yet-verified only) — placed
+           above the card, alongside the other home-view banners, so it's
+           seen without scrolling instead of buried below the wallet card
+           and Friends button. -->
+      <div class="student-promo-banner hidden" id="student-promo-banner">
+        <div class="student-promo-header">
+          <div class="student-promo-icon">
+            <img src="icons/netaville-mark.png" alt="">
+          </div>
+          <div class="student-promo-title" data-i18n="studentPromoTitle">Get the Student Discount</div>
+        </div>
+        <p class="student-promo-subtitle" data-i18n="studentPromoSubtitle">Sign up in Netaville with your student email, then ask staff to verify you</p>
+        <a href="#" id="btn-student-promo-download" class="student-promo-btn" target="_blank" rel="noopener" data-i18n="studentPromoBtn">Get Netaville</a>
       </div>
 
       <div class="card-flip-scene" id="punchcard">
@@ -367,18 +382,6 @@
           </svg>
           <span data-i18n="settingsFriends">Friends</span>
         </button>
-      </div>
-
-      <!-- Student Discount Promo (Customer, not-yet-verified only) -->
-      <div class="student-promo-banner hidden" id="student-promo-banner">
-        <div class="student-promo-header">
-          <div class="student-promo-icon">
-            <img src="icons/netaville-mark.png" alt="">
-          </div>
-          <div class="student-promo-title" data-i18n="studentPromoTitle">Get the Student Discount</div>
-        </div>
-        <p class="student-promo-subtitle" data-i18n="studentPromoSubtitle">Sign up in Netaville with your student email, then ask staff to verify you</p>
-        <a href="#" id="btn-student-promo-download" class="student-promo-btn" target="_blank" rel="noopener" data-i18n="studentPromoBtn">Get Netaville</a>
       </div>
 
       <!-- Notifications Opt-In Nudge (Customer, shown once before they've decided) -->
@@ -681,18 +684,6 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
-        <div class="settings-item" id="btn-change-username">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </div>
-            <div>
-              <div class="settings-item-label" data-i18n="settingsUsername">Username</div>
-              <div class="settings-item-sublabel" id="settings-username-value">—</div>
-            </div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
         <div class="settings-item" id="notifications-toggle-row">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -940,7 +931,6 @@
       </div>
     </div>
     
-    <!-- Set/Change Username Modal (from Settings > Account) -->
     <!-- Set/Change Display Name Modal (from Settings > Account) -->
     <div class="modal" id="modal-set-displayname">
       <div class="modal-overlay" id="overlay-set-displayname"></div>
@@ -961,21 +951,19 @@
       </div>
     </div>
 
-    <div class="modal" id="modal-set-username">
-      <div class="modal-overlay" id="overlay-set-username"></div>
+    <!-- One-time notification permission ask, shown right after a customer's
+         first login while permission is still undecided (see
+         refreshNotifPromoVisibility/showNotifPermissionModal in app.js). -->
+    <div class="modal" id="modal-notif-permission">
+      <div class="modal-overlay" id="overlay-notif-permission"></div>
       <div class="modal-content">
         <div class="modal-handle"></div>
-        <h3 class="modal-title" data-i18n="setUsernameTitle">Choose a Username</h3>
-        <p class="modal-subtitle" data-i18n="setUsernameSubtitle">So friends can find and add you. This is different from your display name.</p>
-
-        <div class="form-group">
-          <input type="text" id="set-username-input" class="form-input" placeholder="Username" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phUsername">
-        </div>
-        <p class="pin-error" id="set-username-error"></p>
+        <h3 class="modal-title" data-i18n="notifPromoTitle">Never Miss a Free Coffee</h3>
+        <p class="modal-subtitle" data-i18n="notifPromoSubtitle">Turn on notifications to know the moment your card's full, or a friend adds you.</p>
 
         <div class="modal-actions" style="margin-top: 16px;">
-          <button class="btn-secondary" id="btn-set-username-skip" data-i18n="btnSkipForNow">Later</button>
-          <button class="btn-primary" id="btn-set-username-save" data-i18n="btnSave">Save</button>
+          <button class="btn-secondary" id="btn-notif-permission-skip" data-i18n="btnSkipForNow">Later</button>
+          <button class="btn-primary" id="btn-notif-permission-enable" data-i18n="notifPromoBtn">Turn On Notifications</button>
         </div>
       </div>
     </div>
@@ -1006,7 +994,7 @@
       <div class="modal-content">
         <div class="modal-handle"></div>
         <h3 class="modal-title" data-i18n="friendsModalTitle">Friends</h3>
-        <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Send a friend request by username. Once they accept, you can gift each other a free coffee.</p>
+        <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Send a friend request by their display name. Once they accept, you can gift each other a free coffee.</p>
 
         <div class="form-group friends-add-row">
           <!-- Decoy fields ahead of the real input: Safari/Chrome's
@@ -1016,7 +1004,7 @@
                suggestions off the actual username field. -->
           <input type="text" name="username" autocomplete="username" class="visually-hidden" tabindex="-1" aria-hidden="true">
           <input type="password" name="password" autocomplete="current-password" class="visually-hidden" tabindex="-1" aria-hidden="true">
-          <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's username" name="friend-search-86" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phFriendUsername">
+          <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's display name" name="friend-search-86" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phFriendName">
           <button class="btn-primary" id="btn-add-friend" data-i18n="btnAddFriend">Add</button>
         </div>
         <p class="pin-error" id="add-friend-error"></p>

@@ -76,6 +76,7 @@ const TRANSLATIONS = {
     errChooseUsername: "Please choose a username",
     errChooseDisplayName: "Please enter a display name",
     errDisplayNameRateLimited: "You can change your name again on {date}",
+    errDisplayNameTaken: "That name is already taken by another card — try adding an initial or number",
     errPasswordMinLength: "Password must be at least 6 characters",
     errPasswordWeak: "Password must be 8+ characters with an uppercase letter, a lowercase letter, and a number",
     errUsernameTaken: "That username is taken. Wrong password? Use \"Find My Card\" to log in.",
@@ -238,18 +239,13 @@ const TRANSLATIONS = {
     btnDelete: "Delete",
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
-    settingsUsername: "Username",
-    settingsUsernameNotSet: "Not set",
-    setUsernameTitle: "Choose a Username",
-    setUsernameSubtitle: "So friends can find and add you. This is different from your display name.",
     btnSkipForNow: "Later",
-    toastUsernameSaved: "Username saved!",
     settingsNotifications: "Notifications",
     settingsNotificationsSub: "Know the moment a reward's ready",
     toastNotificationsEnabled: "Notifications enabled!",
     toastNotificationsDisabled: "Notifications turned off",
     errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
-    errNotificationsIOSInstall: "On iPhone/iPad, add this app to your Home Screen first — Share, then \"Add to Home Screen\" — notifications only work from the installed app, not a browser tab",
+    errNotificationsInstallRequired: "Add this app to your Home Screen first — notifications only work from the installed app, not a browser tab",
     notifPromoTitle: "Never Miss a Free Coffee",
     notifPromoSubtitle: "Turn on notifications to know the moment your card's full, or a friend adds you.",
     notifPromoBtn: "Turn On Notifications",
@@ -263,13 +259,14 @@ const TRANSLATIONS = {
     settingsFriends: "Friends",
     settingsFriendsSub: "Gift a free coffee to someone",
     friendsModalTitle: "Friends",
-    friendsModalSubtitle: "Send a friend request by username. Once they accept, you can gift each other a free coffee.",
-    phFriendUsername: "Friend's username",
+    friendsModalSubtitle: "Send a friend request by their display name. Once they accept, you can gift each other a free coffee.",
+    phFriendName: "Friend's display name",
+    errEnterFriendName: "Please enter a name",
     btnAddFriend: "Add",
     friendRequestsLabel: "Friend Requests",
     friendsListLabel: "Your Friends",
     friendsEmpty: "No friends yet — send a request above.",
-    errFriendNotFound: "No account found with that username",
+    errFriendNotFound: "No account found with that name",
     errCannotAddSelf: "You can't add yourself",
     toastFriendAdded: "Added {name} as a friend!",
     toastFriendRequestSent: "Friend request sent to {name}",
@@ -291,7 +288,7 @@ const TRANSLATIONS = {
     loadingText: "Loading…",
     errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
-    setDisplayNameSubtitle: "The name shown on your card. Changeable once every 14 days.",
+    setDisplayNameSubtitle: "The name shown on your card, and how friends find and add you. Changeable once every 14 days.",
     toastDisplayNameSaved: "Display name saved!",
     homeGreetingGuest: "Hi, Guest",
     hiName: "Hi, {name}",
@@ -299,7 +296,7 @@ const TRANSLATIONS = {
     homeSubtitleRewardReady: "★ Reward Ready for Redemption",
     progressMsgRewardReady: "Reward earned! Show barista to redeem.",
     homeSubtitleDigital: "Digital Punchcard",
-    progressMsgStampsNeeded: "{n} more to your free coffee!",
+    progressMsgStampsNeeded: "{n} to go!",
     menuModalEditItem: "Edit Item",
     menuModalAddItem: "Add New Item",
     loggedInAs: "Logged in as {name}",
@@ -363,6 +360,7 @@ const TRANSLATIONS = {
     errChooseUsername: "Ве молиме изберете корисничко име",
     errChooseDisplayName: "Ве молиме внесете име за прикажување",
     errDisplayNameRateLimited: "Можете повторно да го смените вашето име на {date}",
+    errDisplayNameTaken: "Тоа име веќе го користи друга картичка — пробајте да додадете иницијал или број",
     errPasswordMinLength: "Лозинката мора да има најмалку 6 карактери",
     errPasswordWeak: "Лозинката мора да има 8+ карактери, голема буква, мала буква и број",
     errUsernameTaken: "Тоа корисничко име е зафатено. Погрешна лозинка? Користете „Најди ја мојата картичка“ за да се најавите.",
@@ -525,18 +523,13 @@ const TRANSLATIONS = {
     btnDelete: "Избриши",
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
-    settingsUsername: "Корисничко име",
-    settingsUsernameNotSet: "Не е поставено",
-    setUsernameTitle: "Изберете корисничко име",
-    setUsernameSubtitle: "За да можат пријателите да ве најдат и додадат. Ова е различно од вашето име за прикажување.",
     btnSkipForNow: "Подоцна",
-    toastUsernameSaved: "Корисничкото име е зачувано!",
     settingsNotifications: "Известувања",
     settingsNotificationsSub: "Дознајте веднаш штом наградата е достапна",
     toastNotificationsEnabled: "Известувањата се овозможени!",
     toastNotificationsDisabled: "Известувањата се исклучени",
     errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
-    errNotificationsIOSInstall: 'На iPhone/iPad, прво додајте ја апликацијата на почетниот екран — Share, па „Add to Home Screen" — известувањата работат само од инсталираната апликација, не од прелистувач',
+    errNotificationsInstallRequired: 'Прво додајте ја апликацијата на почетниот екран — известувањата работат само од инсталираната апликација, не од прелистувач',
     notifPromoTitle: "Не пропуштајте бесплатно кафе",
     notifPromoSubtitle: "Вклучете известувања за да дознаете веднаш кога картичката е полна, или кога некој ве додава како пријател.",
     notifPromoBtn: "Вклучи известувања",
@@ -550,13 +543,14 @@ const TRANSLATIONS = {
     settingsFriends: "Пријатели",
     settingsFriendsSub: "Подарете бесплатно кафе некому",
     friendsModalTitle: "Пријатели",
-    friendsModalSubtitle: "Испратете барање за пријателство по корисничко име. Штом прифати, можете да си подарувате бесплатно кафе.",
-    phFriendUsername: "Корисничко име на пријателот",
+    friendsModalSubtitle: "Испратете барање за пријателство по нивното име за прикажување. Штом прифати, можете да си подарувате бесплатно кафе.",
+    phFriendName: "Име за прикажување на пријателот",
+    errEnterFriendName: "Ве молиме внесете име",
     btnAddFriend: "Додај",
     friendRequestsLabel: "Барања за пријателство",
     friendsListLabel: "Ваши пријатели",
     friendsEmpty: "Сè уште немате пријатели — испратете барање погоре.",
-    errFriendNotFound: "Не е пронајдена сметка со тоа корисничко име",
+    errFriendNotFound: "Не е пронајдена сметка со тоа име",
     errCannotAddSelf: "Не можете да се додадете себеси",
     toastFriendAdded: "{name} е додаден како пријател!",
     toastFriendRequestSent: "Барањето за пријателство е испратено до {name}",
@@ -578,7 +572,7 @@ const TRANSLATIONS = {
     loadingText: "Се вчитува…",
     errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
-    setDisplayNameSubtitle: "Името прикажано на вашата картичка. Може да се менува секои 14 дена.",
+    setDisplayNameSubtitle: "Името прикажано на вашата картичка, и по кое пријателите ве наоѓаат и додаваат. Може да се менува секои 14 дена.",
     toastDisplayNameSaved: "Името е зачувано!",
     homeGreetingGuest: "Здраво, Гостин",
     hiName: "Здраво, {name}",
@@ -586,7 +580,7 @@ const TRANSLATIONS = {
     homeSubtitleRewardReady: "★ Наградата е спремна за искористување",
     progressMsgRewardReady: "Наградата е освоена! Прикажете му на бариста за да ја искористите.",
     homeSubtitleDigital: "Дигитална картичка за лојалност",
-    progressMsgStampsNeeded: "Уште {n} до бесплатно кафе!",
+    progressMsgStampsNeeded: "Уште {n}!",
     menuModalEditItem: "Уреди ставка",
     menuModalAddItem: "Додади нова ставка",
     loggedInAs: "Најавени сте како {name}",
@@ -650,6 +644,7 @@ const TRANSLATIONS = {
     errChooseUsername: "Ju lutemi zgjidhni një emër përdoruesi",
     errChooseDisplayName: "Ju lutemi vendosni një emër shfaqjeje",
     errDisplayNameRateLimited: "Mund ta ndryshoni emrin tuaj përsëri më {date}",
+    errDisplayNameTaken: "Ai emër përdoret tashmë nga një kartë tjetër — provo të shtosh një inicial ose numër",
     errPasswordMinLength: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
     errPasswordWeak: "Fjalëkalimi duhet të ketë 8+ shkronja, një shkronjë të madhe, një të vogël dhe një numër",
     errUsernameTaken: "Ky emër përdoruesi është i zënë. Fjalëkalim i gabuar? Përdor \"Gjej Kartën Time\" për t'u identifikuar.",
@@ -812,18 +807,13 @@ const TRANSLATIONS = {
     btnDelete: "Fshi",
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
-    settingsUsername: "Emri i përdoruesit",
-    settingsUsernameNotSet: "Nuk është caktuar",
-    setUsernameTitle: "Zgjidh një Emër Përdoruesi",
-    setUsernameSubtitle: "Që miqtë të mund të të gjejnë e të shtojnë. Ky është ndryshe nga emri yt i shfaqur.",
     btnSkipForNow: "Më vonë",
-    toastUsernameSaved: "Emri i përdoruesit u ruajt!",
     settingsNotifications: "Njoftimet",
     settingsNotificationsSub: "Merr vesh sapo shpërblimi është gati",
     toastNotificationsEnabled: "Njoftimet u aktivizuan!",
     toastNotificationsDisabled: "Njoftimet u çaktivizuan",
     errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
-    errNotificationsIOSInstall: "Në iPhone/iPad, shto këtë aplikacion në Home Screen fillimisht — Share, pastaj \"Add to Home Screen\" — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
+    errNotificationsInstallRequired: "Shto këtë aplikacion në Home Screen fillimisht — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
     notifPromoTitle: "Mos e Humb Asnjë Kafe Falas",
     notifPromoSubtitle: "Aktivizo njoftimet për të ditur menjëherë kur karta jote është plot, ose kur një mik të shton.",
     notifPromoBtn: "Aktivizo Njoftimet",
@@ -837,13 +827,14 @@ const TRANSLATIONS = {
     settingsFriends: "Miqtë",
     settingsFriendsSub: "Dhuro një kafe falas dikujt",
     friendsModalTitle: "Miqtë",
-    friendsModalSubtitle: "Dërgo një kërkesë miqësie me emrin e përdoruesit. Sapo ta pranojë, mund t'i dhuroni njëri-tjetrit një kafe falas.",
-    phFriendUsername: "Emri i përdoruesit të mikut",
+    friendsModalSubtitle: "Dërgo një kërkesë miqësie me emrin e tij/saj të shfaqur. Sapo ta pranojë, mund t'i dhuroni njëri-tjetrit një kafe falas.",
+    phFriendName: "Emri i shfaqur i mikut",
+    errEnterFriendName: "Ju lutemi vendosni një emër",
     btnAddFriend: "Shto",
     friendRequestsLabel: "Kërkesa Miqësie",
     friendsListLabel: "Miqtë e tu",
     friendsEmpty: "Ende nuk ke miq — dërgo një kërkesë më lart.",
-    errFriendNotFound: "Nuk u gjet asnjë llogari me atë emër përdoruesi",
+    errFriendNotFound: "Nuk u gjet asnjë llogari me atë emër",
     errCannotAddSelf: "Nuk mund ta shtosh veten",
     toastFriendRequestSent: "Kërkesa e miqësisë u dërgua te {name}",
     toastFriendRequestAccepted: "Ti dhe {name} tani jeni miq!",
@@ -865,7 +856,7 @@ const TRANSLATIONS = {
     loadingText: "Duke u ngarkuar…",
     errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
-    setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj. Ndryshueshëm një herë në 14 ditë.",
+    setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj, dhe si të gjejnë e shtojnë miqtë. Ndryshueshëm një herë në 14 ditë.",
     toastDisplayNameSaved: "Emri u ruajt!",
     homeGreetingGuest: "Përshëndetje, Mysafir",
     hiName: "Përshëndetje, {name}",
@@ -873,7 +864,7 @@ const TRANSLATIONS = {
     homeSubtitleRewardReady: "★ Shpërblimi Gati për t'u Shfrytëzuar",
     progressMsgRewardReady: "Shpërblimi u fitua! Tregoja baristës për ta shfrytëzuar.",
     homeSubtitleDigital: "Karta Dixhitale e Besnikërisë",
-    progressMsgStampsNeeded: "Edhe {n} deri te kafeja falas!",
+    progressMsgStampsNeeded: "Edhe {n}!",
     menuModalEditItem: "Ndrysho Artikullin",
     menuModalAddItem: "Shto Artikull të Ri",
     loggedInAs: "I identifikuar si {name}",
@@ -1365,6 +1356,7 @@ const cloud = {
           const nextChangeAt = msg.split(':').slice(1).join(':').split('"')[0] || null;
           return { error: 'rate_limited', nextChangeAt };
         }
+        if (msg.includes('name_taken')) return { error: 'name_taken' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         return { error: 'unknown' };
       }
@@ -1375,31 +1367,6 @@ const cloud = {
     }
   },
 
-  // Login username (customers.phone) — Google sign-ins start with this
-  // blank, since Google auth needs no password/username of its own.
-  // Setting one is what makes a Google-signed-in customer findable by
-  // the friends username search (and gives them a password-login
-  // fallback), matching the same identity resolution as every other
-  // customer-self RPC.
-  async setUsername(token, username) {
-    if (!supabaseClient) return { error: 'offline' };
-    try {
-      const res = await withTimeout(
-        supabaseClient.rpc('customer_set_username', { p_token: token || null, p_username: username }),
-        4000
-      );
-      if (res.error) {
-        const msg = res.error.message || '';
-        if (msg.includes('username_taken')) return { error: 'username_taken' };
-        if (msg.includes('invalid_input')) return { error: 'invalid_input' };
-        return { error: 'unknown' };
-      }
-      if (!res.data || !res.data.length) return { error: 'unknown' };
-      return { customer: mapDbRowToCustomer(res.data[0]) };
-    } catch (e) {
-      return { error: 'offline' };
-    }
-  },
 
   // ---- Push notifications ----
   async savePushSubscription(token, subscription) {
@@ -1513,11 +1480,11 @@ const cloud = {
   },
 
   // ---- Friends & gifting ----
-  async sendFriendRequest(token, username) {
+  async sendFriendRequest(token, friendName) {
     if (!supabaseClient) return { error: 'offline' };
     try {
       const res = await withTimeout(
-        supabaseClient.rpc('customer_send_friend_request', { p_token: token || null, p_friend_username: username }),
+        supabaseClient.rpc('customer_send_friend_request', { p_token: token || null, p_friend_username: friendName }),
         4000
       );
       if (res.error) {
@@ -2472,20 +2439,16 @@ const DOM = {
   campaignToggle: document.getElementById('campaign-toggle'),
   campaignStatusText: document.getElementById('campaign-status-text'),
   btnChangeDisplayName: document.getElementById('btn-change-displayname'),
-  btnChangeUsername: document.getElementById('btn-change-username'),
-  settingsUsernameValue: document.getElementById('settings-username-value'),
   modalSetDisplayName: document.getElementById('modal-set-displayname'),
   overlaySetDisplayName: document.getElementById('overlay-set-displayname'),
   setDisplayNameInput: document.getElementById('set-displayname-input'),
   setDisplayNameError: document.getElementById('set-displayname-error'),
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
-  modalSetUsername: document.getElementById('modal-set-username'),
-  overlaySetUsername: document.getElementById('overlay-set-username'),
-  setUsernameInput: document.getElementById('set-username-input'),
-  setUsernameError: document.getElementById('set-username-error'),
-  btnSetUsernameSkip: document.getElementById('btn-set-username-skip'),
-  btnSetUsernameSave: document.getElementById('btn-set-username-save'),
+  modalNotifPermission: document.getElementById('modal-notif-permission'),
+  overlayNotifPermission: document.getElementById('overlay-notif-permission'),
+  btnNotifPermissionSkip: document.getElementById('btn-notif-permission-skip'),
+  btnNotifPermissionEnable: document.getElementById('btn-notif-permission-enable'),
   notificationsToggleRow: document.getElementById('notifications-toggle-row'),
   notificationsToggle: document.getElementById('notifications-toggle'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
@@ -2653,7 +2616,6 @@ window.addEventListener('popstate', handleHashRoute);
 
 async function initApp() {
   let splashDismissed = false;
-  let needsUsernamePrompt = false;
   const dismissSplash = (targetView = 'view-signup') => {
     if (splashDismissed) return;
     splashDismissed = true;
@@ -2785,11 +2747,6 @@ async function initApp() {
             if (googleResult) {
               await db.saveCustomer(googleResult.customer);
               saveUserSession(googleResult.customer);
-              // Google sign-in has no username/password of its own, so
-              // customers.phone (which doubles as the friends-search
-              // username) starts blank — prompt for one so this account
-              // isn't permanently unfindable by friends.
-              if (!googleResult.customer.phone) needsUsernamePrompt = true;
             } else {
               await supabaseClient.auth.signOut().catch(() => {});
             }
@@ -2895,7 +2852,6 @@ async function initApp() {
     }
 
     setTimeout(() => dismissSplash(targetView), 400);
-    if (needsUsernamePrompt) setTimeout(() => promptSetUsername(), 1400);
 
     // NOTE: the full customer list is only fetched once staff unlock admin
     // mode with the PIN (see toggleAdminMode(true) call sites) — it used to
@@ -2993,14 +2949,16 @@ function isStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
-// iOS Safari only supports the Push API for a site that's been added to
-// the Home Screen (iOS 16.4+) — it's entirely unavailable in a normal
-// browser tab, permission prompt included. Attempting it there doesn't
-// throw a distinguishable error, it just behaves as if blocked, which
-// reads as a mysterious failure rather than the fixable "install the
-// app first" it actually is.
-function pushRequiresIOSInstall() {
-  return isIOSDevice() && !isStandaloneMode();
+// iOS Safari only supports the Push API at all for a site added to the
+// Home Screen (browser-tab push there is unavailable, permission prompt
+// included, and fails silently rather than with a distinguishable
+// error). Elsewhere (desktop/Android Chrome) push does technically work
+// in a plain tab, but gating it the same way sidesteps a browser-tab
+// subscribe path that's proven flaky in practice, and keeps the ask
+// consistent: notifications are something you get from the installed
+// app, not a bare tab.
+function pushRequiresInstall() {
+  return !isStandaloneMode();
 }
 
 // Reflects actual current state (permission + an active subscription),
@@ -3008,7 +2966,7 @@ function pushRequiresIOSInstall() {
 // after e.g. the OS-level permission gets revoked outside the app.
 async function refreshNotificationsToggleState() {
   if (!DOM.notificationsToggle) return;
-  if (!pushNotificationsSupported() || pushRequiresIOSInstall()) {
+  if (!pushNotificationsSupported() || pushRequiresInstall()) {
     DOM.notificationsToggle.checked = false;
     if (DOM.notificationsToggleRow) DOM.notificationsToggleRow.style.opacity = '0.5';
     return;
@@ -3043,7 +3001,7 @@ async function refreshNotificationsToggleState() {
 
 async function enablePushNotifications() {
   if (!pushNotificationsSupported()) return { error: 'unsupported' };
-  if (pushRequiresIOSInstall()) return { error: 'ios_install_required' };
+  if (pushRequiresInstall()) return { error: 'install_required' };
 
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return { error: 'blocked' };
@@ -3204,7 +3162,6 @@ function setupEventListeners() {
   wireEnterKeyChain(document.getElementById('modal-edit-menu-item'), DOM.btnSaveMenuItem);
   wireEnterKeyChain(document.getElementById('modal-edit-customer'), DOM.btnSaveEditCustomer);
   wireEnterKeyChain(DOM.modalSetDisplayName, DOM.btnSetDisplayNameSave);
-  wireEnterKeyChain(DOM.modalSetUsername, DOM.btnSetUsernameSave);
 
   // Navigation
   DOM.navItems.forEach(item => {
@@ -3283,8 +3240,10 @@ function setupEventListeners() {
   if (DOM.btnCloseAvatarPicker) DOM.btnCloseAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
   if (DOM.overlayAvatarPicker) DOM.overlayAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
 
-  // Change Display Name (Settings > Account) — separate from the login
-  // username above; this is the name shown on the card/QR/leaderboard.
+  // Change Display Name (Settings > Account) — the name shown on the
+  // card/QR/leaderboard, and (since the friend-search-by-name migration)
+  // also what friends search for, so it's the only "name" a customer
+  // needs to think about.
   if (DOM.btnChangeDisplayName) {
     DOM.btnChangeDisplayName.addEventListener('click', async () => {
       const activeId = state.myCustomerId;
@@ -3293,17 +3252,6 @@ function setupEventListeners() {
       if (DOM.setDisplayNameInput) DOM.setDisplayNameInput.value = (customer && customer.name) || '';
       if (DOM.setDisplayNameError) DOM.setDisplayNameError.textContent = '';
       openModal(DOM.modalSetDisplayName);
-    });
-  }
-
-  if (DOM.btnChangeUsername) {
-    DOM.btnChangeUsername.addEventListener('click', async () => {
-      const activeId = state.myCustomerId;
-      if (!activeId) return;
-      const customer = await db.getCustomer(activeId);
-      if (DOM.setUsernameInput) DOM.setUsernameInput.value = (customer && customer.phone) || '';
-      if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
-      openModal(DOM.modalSetUsername);
     });
   }
 
@@ -4101,6 +4049,10 @@ function setupEventListeners() {
         DOM.setDisplayNameError.textContent = t('errDisplayNameRateLimited', { date: dateStr });
         return;
       }
+      if (result.error === 'name_taken') {
+        DOM.setDisplayNameError.textContent = t('errDisplayNameTaken');
+        return;
+      }
       if (result.error) {
         DOM.setDisplayNameError.textContent = t('errServerConnection');
         return;
@@ -4123,47 +4075,6 @@ function setupEventListeners() {
     });
   }
 
-  // Choose-a-username prompt (shown once after a Google sign-in that has
-  // no username yet) — always skippable, unlike the mandatory display
-  // name prompt, since a username here is only needed for the friends
-  // feature and password-login fallback, not for the app to work at all.
-  if (DOM.btnSetUsernameSkip) {
-    DOM.btnSetUsernameSkip.addEventListener('click', () => closeModal(DOM.modalSetUsername));
-  }
-  if (DOM.overlaySetUsername) {
-    DOM.overlaySetUsername.addEventListener('click', () => closeModal(DOM.modalSetUsername));
-  }
-  if (DOM.btnSetUsernameSave) {
-    DOM.btnSetUsernameSave.addEventListener('click', async () => {
-      const username = (DOM.setUsernameInput ? DOM.setUsernameInput.value : '').trim();
-      if (!username) {
-        DOM.setUsernameError.textContent = t('errChooseUsername');
-        return;
-      }
-      if (!state.myCustomerId) {
-        closeModal(DOM.modalSetUsername);
-        return;
-      }
-
-      DOM.btnSetUsernameSave.disabled = true;
-      const result = await cloud.setUsername(state.myToken, username);
-      DOM.btnSetUsernameSave.disabled = false;
-
-      if (result.error === 'username_taken') {
-        DOM.setUsernameError.textContent = t('errUsernameTaken');
-        return;
-      }
-      if (result.error) {
-        DOM.setUsernameError.textContent = t('errServerConnection');
-        return;
-      }
-
-      await db.saveCustomer(result.customer);
-      state.customers = await db.getAllCustomers();
-      closeModal(DOM.modalSetUsername);
-      showToast(t('toastUsernameSaved'), 'success');
-    });
-  }
 
   // Notifications toggle (Settings > Account) — always reflects a
   // deliberate tap, never an auto-prompt on load. Reverts itself on any
@@ -4179,7 +4090,7 @@ function setupEventListeners() {
         if (result.error) {
           DOM.notificationsToggle.checked = false;
           const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
-            : result.error === 'ios_install_required' ? t('errNotificationsIOSInstall')
+            : result.error === 'install_required' ? t('errNotificationsInstallRequired')
             : result.error === 'blocked' ? t('errNotificationsBlocked')
             : t('errServerConnection');
           showToast(msg, 'error');
@@ -4209,13 +4120,52 @@ function setupEventListeners() {
 
       if (result.error) {
         const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
-          : result.error === 'ios_install_required' ? t('errNotificationsIOSInstall')
+          : result.error === 'install_required' ? t('errNotificationsInstallRequired')
           : result.error === 'blocked' ? t('errNotificationsBlocked')
           : t('errServerConnection');
         showToast(msg, 'error');
         // A denied browser permission prompt can't be re-asked from code —
         // dismiss the nudge either way so it doesn't keep offering a
         // button that will just fail the same way every time.
+        dismissNotifPromo();
+        return;
+      }
+      dismissNotifPromo();
+      refreshNotificationsToggleState();
+      showToast(t('toastNotificationsEnabled'), 'success');
+    });
+  }
+
+  // One-time login modal — a stronger, user-initiated version of the same
+  // ask above, shown once so it isn't missed the way a scrollable banner
+  // can be. Shares enablePushNotifications() with the banner/Settings
+  // toggle; "Later" just falls back to the banner staying available.
+  if (DOM.overlayNotifPermission) {
+    DOM.overlayNotifPermission.addEventListener('click', () => {
+      closeModal(DOM.modalNotifPermission);
+      markNotifPermissionModalShown();
+    });
+  }
+  if (DOM.btnNotifPermissionSkip) {
+    DOM.btnNotifPermissionSkip.addEventListener('click', () => {
+      closeModal(DOM.modalNotifPermission);
+      markNotifPermissionModalShown();
+    });
+  }
+  if (DOM.btnNotifPermissionEnable) {
+    DOM.btnNotifPermissionEnable.addEventListener('click', async () => {
+      DOM.btnNotifPermissionEnable.disabled = true;
+      const result = await enablePushNotifications();
+      DOM.btnNotifPermissionEnable.disabled = false;
+      closeModal(DOM.modalNotifPermission);
+      markNotifPermissionModalShown();
+
+      if (result.error) {
+        const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
+          : result.error === 'install_required' ? t('errNotificationsInstallRequired')
+          : result.error === 'blocked' ? t('errNotificationsBlocked')
+          : t('errServerConnection');
+        showToast(msg, 'error');
         dismissNotifPromo();
         return;
       }
@@ -4294,13 +4244,13 @@ function setupEventListeners() {
 
   if (DOM.btnAddFriend) {
     DOM.btnAddFriend.addEventListener('click', async () => {
-      const username = (DOM.addFriendInput.value || '').trim();
-      if (!username) {
-        DOM.addFriendError.textContent = t('errChooseUsername');
+      const friendName = (DOM.addFriendInput.value || '').trim();
+      if (!friendName) {
+        DOM.addFriendError.textContent = t('errEnterFriendName');
         return;
       }
       DOM.btnAddFriend.disabled = true;
-      const result = await cloud.sendFriendRequest(state.myToken, username);
+      const result = await cloud.sendFriendRequest(state.myToken, friendName);
       DOM.btnAddFriend.disabled = false;
 
       if (result.error === 'not_found') {
@@ -4838,18 +4788,6 @@ function promptMandatoryDisplayName() {
   openModal(DOM.modalSetDisplayName);
 }
 
-// Shown once, shortly after a Google sign-in whose account has no
-// username yet (customers.phone starts blank for Google — there's no
-// password step to collect one during). Always skippable: a username
-// only matters for the friends feature and the password-login
-// fallback, not for the app to work at all.
-function promptSetUsername() {
-  if (!DOM.modalSetUsername || !state.myCustomerId) return;
-  if (DOM.setUsernameInput) DOM.setUsernameInput.value = '';
-  if (DOM.setUsernameError) DOM.setUsernameError.textContent = '';
-  openModal(DOM.modalSetUsername);
-}
-
 function initStampGrid() {
   DOM.stampGrid.innerHTML = '';
   for (let i = 0; i < MAX_STAMPS; i++) {
@@ -4957,17 +4895,36 @@ function refreshStudentPromoVisibility(customer) {
 // requests). Never shown again once the customer either enables it or
 // dismisses the card, and never shown at all where it'd just be a dead
 // end (iOS outside the installed app, unsupported browsers).
+function notifPermissionUndecided() {
+  return !state.isAdmin && pushNotificationsSupported() && !pushRequiresInstall()
+    && typeof Notification !== 'undefined' && Notification.permission === 'default';
+}
+
 function refreshNotifPromoVisibility() {
   if (!DOM.notifPromoBanner) return;
   const dismissed = localStorage.getItem('86_notif_promo_dismissed') === '1';
-  const eligible = !state.isAdmin && !dismissed && pushNotificationsSupported() && !pushRequiresIOSInstall()
-    && typeof Notification !== 'undefined' && Notification.permission === 'default';
-  DOM.notifPromoBanner.classList.toggle('hidden', !eligible);
+  DOM.notifPromoBanner.classList.toggle('hidden', dismissed || !notifPermissionUndecided());
 }
 
 function dismissNotifPromo() {
   localStorage.setItem('86_notif_promo_dismissed', '1');
   if (DOM.notifPromoBanner) DOM.notifPromoBanner.classList.add('hidden');
+}
+
+function markNotifPermissionModalShown() {
+  localStorage.setItem('86_notif_permission_modal_shown', '1');
+}
+
+// The stronger, one-time login ask (see the modal wiring in
+// setupEventListeners) — fires once per browser the first time a
+// customer's permission is still undecided, then never again regardless
+// of what they choose (Settings/the banner stay as the fallback).
+function maybeShowNotifPermissionModal() {
+  if (!DOM.modalNotifPermission) return;
+  const alreadyShown = localStorage.getItem('86_notif_permission_modal_shown') === '1';
+  if (alreadyShown || !notifPermissionUndecided()) return;
+  markNotifPermissionModalShown();
+  openModal(DOM.modalNotifPermission);
 }
 
 let lastCardCustomerId = null;
@@ -5124,10 +5081,6 @@ async function updateCardUI() {
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
   updateGreetingMarquee();
 
-  if (DOM.settingsUsernameValue) {
-    DOM.settingsUsernameValue.textContent = customer.phone ? customer.phone : t('settingsUsernameNotSet');
-  }
-
   // Render Customer 2D Monochrome Avatar
   if (DOM.userAvatarDisplay) {
     const avatarKey = customer.avatar || 'person';
@@ -5232,6 +5185,7 @@ async function updateCardUI() {
 
   refreshStudentPromoVisibility(customer);
   refreshNotifPromoVisibility();
+  maybeShowNotifPermissionModal();
   updateCardBackStats(customer);
 
   if (state.isAdmin) {
@@ -5269,12 +5223,17 @@ function canVoidRedemption(customer) {
 // ==========================================
 // NOTIFICATIONS PANEL
 // ==========================================
+// Monochrome line icons (matches the rest of the app's icon set — e.g.
+// the gift/coffee paths are the same ones used on the card back) instead
+// of full-color emoji, which stood out against the app's monochrome
+// design system.
 const NOTIF_TYPE_ICON = {
-  friend_request: '👋',
-  friend_accepted: '🎉',
-  gift_received: '🎁',
-  reward_banked: '☕'
+  friend_request: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+  friend_accepted: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+  gift_received: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>',
+  reward_banked: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>'
 };
+const NOTIF_TYPE_ICON_DEFAULT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
 
 function formatNotifTime(iso) {
   const then = new Date(iso).getTime();
@@ -5295,12 +5254,7 @@ function formatNotifTime(iso) {
 async function refreshNotifBadge() {
   if (!DOM.notifBellBadge || !state.myCustomerId || state.isAdmin) return;
   const count = await cloud.unreadNotificationCount(state.myToken);
-  if (count > 0) {
-    DOM.notifBellBadge.textContent = count > 99 ? '99+' : String(count);
-    DOM.notifBellBadge.classList.remove('hidden');
-  } else {
-    DOM.notifBellBadge.classList.add('hidden');
-  }
+  DOM.notifBellBadge.classList.toggle('hidden', count <= 0);
 }
 
 async function loadAndRenderNotifications() {
@@ -5344,7 +5298,7 @@ function renderNotificationsList(notifications) {
 
     const icon = document.createElement('div');
     icon.className = 'notif-row-icon';
-    icon.textContent = NOTIF_TYPE_ICON[n.type] || '🔔';
+    icon.innerHTML = NOTIF_TYPE_ICON[n.type] || NOTIF_TYPE_ICON_DEFAULT;
     row.appendChild(icon);
 
     const content = document.createElement('div');
@@ -5371,18 +5325,18 @@ function renderNotificationsList(notifications) {
       const actions = document.createElement('div');
       actions.className = 'notif-row-actions';
 
-      const declineBtn = document.createElement('button');
-      declineBtn.className = 'btn-secondary notif-decline-btn';
-      declineBtn.dataset.requestId = n.data.request_id;
-      declineBtn.textContent = t('btnDeclineRequest');
-      actions.appendChild(declineBtn);
-
       const acceptBtn = document.createElement('button');
       acceptBtn.className = 'btn-primary notif-accept-btn';
       acceptBtn.dataset.requestId = n.data.request_id;
       acceptBtn.dataset.requestName = (n.data && n.data.requester_name) || '';
       acceptBtn.textContent = t('btnAcceptRequest');
       actions.appendChild(acceptBtn);
+
+      const declineBtn = document.createElement('button');
+      declineBtn.className = 'btn-secondary notif-decline-btn';
+      declineBtn.dataset.requestId = n.data.request_id;
+      declineBtn.textContent = t('btnDeclineRequest');
+      actions.appendChild(declineBtn);
 
       content.appendChild(actions);
     }

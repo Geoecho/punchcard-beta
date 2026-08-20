@@ -131,6 +131,7 @@ input { font: inherit; color: inherit; }
   padding-bottom: calc(72px + 20px + var(--sab));
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* iOS Safari has a long-documented bug where an element that is both
      overflow:auto AND carries its own `transform` stops responding to
@@ -660,6 +661,12 @@ input { font: inherit; color: inherit; }
   margin: 20px 20px 0;
   perspective: 1400px;
   -webkit-perspective: 1400px;
+  /* preserve-3d below promotes .card-flip-inner to its own compositing
+     layer on iOS, which has been known to swallow touch-scroll gestures
+     that start over it instead of passing them up to .view's scroll —
+     explicit pan-y keeps vertical scroll working on/over the card
+     itself rather than only in the empty space around it. */
+  touch-action: pan-y;
 }
 .card-flip-inner {
   position: relative;
@@ -668,6 +675,7 @@ input { font: inherit; color: inherit; }
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
+  touch-action: pan-y;
 }
 /* iOS Safari has historically needed the -webkit-transform set
    explicitly alongside the unprefixed one, or backface-visibility:hidden
@@ -1314,10 +1322,9 @@ input { font: inherit; color: inherit; }
 }
 .btn-notif-bell:active { transform: scale(0.94); }
 .notif-bell-badge {
-  position: absolute; top: -4px; right: -4px;
-  min-width: 16px; height: 16px; padding: 0 4px;
-  border-radius: 999px; background: var(--error); color: #fff;
-  font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
+  position: absolute; top: 0; right: 0;
+  width: 9px; height: 9px;
+  border-radius: 999px; background: var(--accent-main);
   box-shadow: 0 0 0 2px var(--bg-primary);
 }
 
@@ -1339,15 +1346,15 @@ input { font: inherit; color: inherit; }
 .notif-row-icon {
   width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-secondary); font-size: 15px;
+  background: var(--bg-secondary); color: var(--text-primary);
 }
 .notif-row-content { flex: 1; min-width: 0; }
 .notif-row-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .notif-row-body { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
 .notif-row-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.notif-row-actions { display: flex; gap: 8px; margin-top: 10px; }
+.notif-row-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .notif-row-actions .btn-primary, .notif-row-actions .btn-secondary {
-  flex: 1; padding: 8px 12px; font-size: 12px;
+  width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px;
 }
 .notif-row-delete {
   flex-shrink: 0; color: var(--text-muted); cursor: pointer; padding: 4px; margin: -4px -4px 0 0;
@@ -1906,6 +1913,26 @@ input { font: inherit; color: inherit; }
 .notif-promo-close {
   position: absolute; top: 10px; right: 10px;
   color: var(--text-muted); padding: 4px; cursor: pointer;
+}
+
+/* Bolder, high-contrast treatment for the student discount banner only
+   (targeted by id, not the shared .student-promo-banner class) — matches
+   the inverted-block language of .campaign-banner below so this actually
+   stands out, while the notif-permission fallback banner (same shared
+   class, different id) stays in the quieter default style now that the
+   one-time login modal is the primary ask for that one. */
+#student-promo-banner {
+  background: var(--text-primary);
+  border: none;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.12);
+}
+#student-promo-banner .student-promo-title { color: var(--bg-primary); }
+#student-promo-banner .student-promo-subtitle { color: var(--bg-primary); opacity: 0.7; }
+#student-promo-banner .student-promo-icon { background: var(--bg-primary); }
+#student-promo-banner .student-promo-icon img { filter: none; }
+#student-promo-banner .student-promo-btn {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* ── Double Stamps Campaign Banner (Home View) ────────────── */
