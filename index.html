@@ -20,10 +20,36 @@
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   
   <link rel="stylesheet" href="./styles.css">
+
+  <!-- Runs before first paint so a staff desktop never flashes the
+       mobile-only block: the actual admin panel is desktop-friendly on
+       purpose (see the >=900px rules in styles.css), only the customer
+       card experience is mobile/tablet-only. The width+pointer check
+       below (in styles.css) does the real, resize-reactive gating; this
+       just exempts the staff entry route from it. -->
+  <script>
+    (function () {
+      var isStaffRoute = location.hash === '#admin' || location.hash === '#poster'
+        || location.hash === '#/poster' || location.search.indexOf('admin=true') !== -1;
+      if (isStaffRoute) document.documentElement.classList.add('staff-desktop-ok');
+    })();
+  </script>
 </head>
 <body>
   <!-- Confetti Canvas for Celebrations -->
   <canvas id="confetti-canvas"></canvas>
+
+  <!-- Shown instead of the app on a desktop-class browser (mouse pointer
+       + wide viewport — see styles.css) unless html.staff-desktop-ok is
+       set. Customers get this; staff reach the admin panel via #admin,
+       which is exempted. -->
+  <div class="desktop-block-overlay">
+    <div class="desktop-block-icon">
+      <svg width="44" height="34" viewBox="0 0 44 34" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="21" height="32" rx="3"></rect><line x1="8.5" y1="27.5" x2="14.5" y2="27.5"></line><rect x="27" y="9" width="16" height="24" rx="2.5"></rect><line x1="33" y1="29" x2="37" y2="29"></line></svg>
+    </div>
+    <h1 class="desktop-block-title">Made for Your Pocket</h1>
+    <p class="desktop-block-subtitle">Eightysix° Punchcard runs on your phone or tablet — that's where your stamps, rewards, and card actually live. Pull it up there to get started.</p>
+  </div>
 
   <div id="app">
     

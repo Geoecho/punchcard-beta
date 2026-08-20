@@ -2593,10 +2593,12 @@ function handleHashRoute() {
   const hash = window.location.hash;
   const search = window.location.search;
   if (hash === '#admin' || search.includes('admin=true')) {
+    document.documentElement.classList.add('staff-desktop-ok');
     switchView('view-admin-login');
     return true;
   }
   if (hash === '#poster' || hash === '#/poster') {
+    document.documentElement.classList.add('staff-desktop-ok');
     switchView('view-poster');
     return true;
   }
@@ -4720,6 +4722,12 @@ function renderStaffProfile() {
 
 function toggleAdminMode(isActive) {
   state.isAdmin = isActive;
+  // Desktop is blocked to a "use your phone" message for customers (see
+  // the inline script in index.html's <head>), but staff run the admin
+  // panel from a desktop all the time — make sure reaching admin mode
+  // any way (not just the #admin route the head script already checks)
+  // lifts the block for the rest of this tab's session.
+  if (isActive) document.documentElement.classList.add('staff-desktop-ok');
 
   // Swap nav tabs: show admin-only tabs in admin mode, customer tabs otherwise
   DOM.customerNavItems.forEach(el => {

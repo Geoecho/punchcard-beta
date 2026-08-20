@@ -2557,12 +2557,14 @@ input { font: inherit; color: inherit; }
   }
   .menu-stamp-note { grid-column: 1 / -1; }
   .menu-category { margin-bottom: 8px; }
-  .lb-your-rank { width: 100%; max-width: 520px; margin-left: auto; margin-right: auto; }
-  .lb-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 10px 20px;
-  }
+  /* Leaderboard is customer-facing (reached from the customer nav, same
+     as the card), not an admin data table, so it stays the same narrow
+     reading-width column as the rest of the customer side instead of
+     the admin grids below — with this beta's handful of customers, a
+     multi-column grid mostly showed one sparse row of cards next to a
+     lot of dead space, while .lb-your-rank stayed narrow above it. */
+  .lb-scroll-area { width: 100%; max-width: 560px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+  .lb-your-rank { width: 100%; }
 
   /* Centered dialogs read better than a bottom sheet on a big screen */
   .modal { align-items: center; padding: 24px; }
@@ -2574,3 +2576,44 @@ input { font: inherit; color: inherit; }
   .modal.active .modal-content { transform: scale(1); }
 }
 #qr-reader__header_message, #qr-reader__dashboard, #qr-reader__status_span { display: none !important; }
+
+/* ── Desktop block (customer side only) ──────────────────────
+   The card experience is built for a phone/tablet in hand — a mouse-
+   driven desktop browser gets this message instead of a stretched-out
+   version of a pocket app. Gated on (hover: hover) + (pointer: fine)
+   rather than width alone, since a touch tablet in landscape can be
+   just as wide as a small laptop but should still see the real app.
+   html.staff-desktop-ok (set for the #admin/#poster routes — see the
+   inline script in index.html's <head> and toggleAdminMode in app.js)
+   exempts staff, who run the admin panel from a desktop on purpose. */
+.desktop-block-overlay { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+  .desktop-block-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: var(--bg-primary);
+    padding: 40px;
+  }
+  #app { display: none; }
+}
+html.staff-desktop-ok .desktop-block-overlay { display: none !important; }
+html.staff-desktop-ok #app { display: block !important; }
+
+.desktop-block-icon { color: var(--text-secondary); margin-bottom: 28px; }
+.desktop-block-title {
+  font-size: 28px;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.desktop-block-subtitle {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 360px;
+}
