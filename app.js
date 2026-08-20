@@ -1257,11 +1257,20 @@ const cloud = {
     try {
       const res = await withTimeout(
         supabaseClient.rpc('staff_create_customer', { p_token: staffToken, p_customer_id: customerId, p_name: name, p_phone: phone }),
-        4000
+        8000
       );
-      if (res.error || !res.data || !res.data.length) return null;
+      if (res.error) {
+        // Log the real reason — a genuine network drop, a slow-mobile
+        // timeout, and an actual server-side rejection (bad RLS, a
+        // constraint violation, etc.) all end up here, and only one of
+        // those is actually "check your connection".
+        console.error('staffCreateCustomer failed:', res.error.message || res.error);
+        return null;
+      }
+      if (!res.data || !res.data.length) return null;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
+      console.error('staffCreateCustomer threw:', e && e.message);
       return null;
     }
   },
@@ -1666,7 +1675,7 @@ const cloud = {
     try {
       const res = await withTimeout(
         supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
-        4000
+        8000
       );
       if (res.error) {
         const msg = String(res.error.message || '');
@@ -1683,16 +1692,21 @@ const cloud = {
           if (!created) return { error: 'customer_missing' };
           const retry = await withTimeout(
             supabaseClient.rpc('staff_add_stamp', { p_token: token, p_customer_id: customerId, p_base_stamps: baseStamps, p_drink_name: drinkName }),
-            4000
+            8000
           );
           if (retry.error || !retry.data || !retry.data.length) return { error: 'customer_missing' };
           return { customer: mapDbRowToCustomer(retry.data[0]) };
         }
+        // Anything else is a genuine server-side rejection, not a dropped
+        // connection — log the real reason so it's actually diagnosable
+        // instead of every unrecognized error reading as "network error".
+        console.error('staffAddStamp failed:', msg);
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
       return { customer: mapDbRowToCustomer(res.data[0]) };
     } catch (e) {
+      console.error('staffAddStamp threw:', e && e.message);
       return { error: 'offline' };
     }
   },
@@ -2696,7 +2710,14 @@ async function initApp() {
     // session below. Gated on the URL actually carrying OAuth tokens so a
     // completely ordinary guest visit (the overwhelming majority of page
     // loads) never pays for this extra network round-trip at all.
-    const returningFromOAuth = /[#&](access_token|error)=/.test(window.location.hash);
+    // Checks both the hash (implicit flow: #access_token=...) and the
+    // query string (PKCE flow: ?code=...) — supabase-js's default flow
+    // can vary by SDK version, and only checking the hash meant a PKCE
+    // return was silently ignored: the SDK had already exchanged the
+    // code and stashed a valid session, but we'd never call getSession()
+    // to notice it, so the app just fell through to the login screen as
+    // if nothing had happened.
+    const returningFromOAuth = /[#&?](access_token|error|code)=/.test(window.location.hash + window.location.search);
     if (!state.myCustomerId && supabaseClient && returningFromOAuth) {
       try {
         const { data } = await withTimeout(supabaseClient.auth.getSession(), 4000);
@@ -2713,11 +2734,22 @@ async function initApp() {
               await db.saveCustomer(googleResult.customer);
               saveUserSession(googleResult.customer);
             } else {
+              console.error('Google sign-in: session established but customer_login_google RPC failed');
+              showToast('Google sign-in failed — please try again', 'error');
               await supabaseClient.auth.signOut().catch(() => {});
             }
           }
+        } else if (/[#&?]error=/.test(window.location.hash + window.location.search)) {
+          console.error('Google sign-in: OAuth redirect returned an error', window.location.hash || window.location.search);
+          showToast('Google sign-in failed — please try again', 'error');
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Google sign-in: error while completing OAuth redirect', e);
+        showToast('Google sign-in failed — please try again', 'error');
+      }
+      // Strip the OAuth params from the URL so a page refresh doesn't
+      // re-run this block against a now-consumed/stale code or token.
+      history.replaceState(null, '', window.location.pathname);
     }
 
     // Load saved staff session (tokens last 24h server-side; if it's
