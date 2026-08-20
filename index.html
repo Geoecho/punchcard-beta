@@ -258,6 +258,10 @@
         </div>
       </header>
 
+      <!-- Everything below scrolls; the header above does not — it's a
+           plain sibling outside this box, not a sticky child inside it.
+           See .home-scroll in styles.css for why. -->
+      <div class="home-scroll" id="home-scroll">
       <div class="install-prompt-banner hidden" id="install-banner">
         <div class="install-prompt-left">
           <div class="install-prompt-icon">
@@ -467,6 +471,7 @@
         </div>
         <h2 class="empty-title" data-i18n="staffModeTitle">Staff Mode Active</h2>
         <p class="empty-text" data-i18n="staffModeText">Select a customer from the list to view and stamp their card.</p>
+      </div>
       </div>
     </div>
 

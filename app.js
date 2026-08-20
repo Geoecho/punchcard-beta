@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v75';
+const APP_BUILD_ID = 'v76';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -4453,10 +4453,13 @@ function setupEventListeners() {
 function setupScrollDiagnostic() {
   const view = DOM.viewHome;
   if (!view || !DOM.homeGreeting) return;
+  // .home-scroll, not view-home itself, is the element that actually
+  // scrolls now — see getScrollableEl().
+  const scrollEl = getScrollableEl(view);
   let touchCount = 0, moveCount = 0, scrollCount = 0;
-  view.addEventListener('touchstart', () => { touchCount++; }, { passive: true });
-  view.addEventListener('touchmove', () => { moveCount++; }, { passive: true });
-  view.addEventListener('scroll', () => { scrollCount++; }, { passive: true });
+  scrollEl.addEventListener('touchstart', () => { touchCount++; }, { passive: true });
+  scrollEl.addEventListener('touchmove', () => { moveCount++; }, { passive: true });
+  scrollEl.addEventListener('scroll', () => { scrollCount++; }, { passive: true });
 
   let pressTimer = null;
   const showDiagnostic = () => {
@@ -4466,10 +4469,10 @@ function setupScrollDiagnostic() {
     const navRect = nav ? nav.getBoundingClientRect() : null;
     alert(
       'BUILD: ' + APP_BUILD_ID + '\n\n' +
-      'scrollHeight: ' + view.scrollHeight + '\n' +
-      'clientHeight: ' + view.clientHeight + '\n' +
-      'overflow: ' + (view.scrollHeight - view.clientHeight) + 'px\n' +
-      'scrollTop: ' + view.scrollTop + '\n' +
+      'scrollHeight: ' + scrollEl.scrollHeight + '\n' +
+      'clientHeight: ' + scrollEl.clientHeight + '\n' +
+      'overflow: ' + (scrollEl.scrollHeight - scrollEl.clientHeight) + 'px\n' +
+      'scrollTop: ' + scrollEl.scrollTop + '\n' +
       'touchstart events: ' + touchCount + '\n' +
       'touchmove events: ' + moveCount + '\n' +
       'scroll events: ' + scrollCount + '\n' +
@@ -4492,6 +4495,14 @@ function setupScrollDiagnostic() {
 // UI UPDATES & HELPERS
 // ==========================================
 
+// Most views scroll themselves directly. view-home doesn't — its header
+// is a plain sibling outside the scroll box (see .home-scroll in
+// styles.css), so #view-home itself never scrolls and .home-scroll is
+// the element every scroll-position fix below actually needs to touch.
+function getScrollableEl(view) {
+  return view.querySelector('.home-scroll') || view;
+}
+
 function switchView(viewId) {
   state.currentView = viewId;
 
@@ -4512,7 +4523,7 @@ function switchView(viewId) {
       // scroll has a long history of getting stuck rather than
       // clamping back in that situation. Reset on every switch — also
       // just correct tab-nav behavior (each tab starts at the top).
-      view.scrollTop = 0;
+      getScrollableEl(view).scrollTop = 0;
     } else {
       view.classList.remove('active');
     }
@@ -5097,11 +5108,12 @@ async function updateCardUI() {
 function nudgeActiveViewScroll() {
   DOM.views.forEach(view => {
     if (!view.classList.contains('active')) return;
-    const maxScroll = Math.max(0, view.scrollHeight - view.clientHeight);
-    if (view.scrollTop > maxScroll) view.scrollTop = maxScroll;
-    view.style.overflow = 'hidden';
-    void view.offsetHeight;
-    view.style.overflow = '';
+    const scrollEl = getScrollableEl(view);
+    const maxScroll = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+    if (scrollEl.scrollTop > maxScroll) scrollEl.scrollTop = maxScroll;
+    scrollEl.style.overflow = 'hidden';
+    void scrollEl.offsetHeight;
+    scrollEl.style.overflow = '';
   });
 }
 

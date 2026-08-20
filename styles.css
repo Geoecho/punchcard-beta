@@ -600,19 +600,24 @@ input { font: inherit; color: inherit; }
 }
 
 /* ── Home View ────────────────────────────────────────────── */
-/* position: sticky was tried here before and pulled — at the time #app
-   used height:100dvh, which over-measures the real iOS viewport (see
-   #app above), and a sticky header on top of that broken height math is
-   what actually killed touch-scroll on this view, not sticky itself.
-   #app now uses fixed top:0/bottom:0 instead, so this is back on the
-   theory that the height bug — not the sticky header — was the real
-   cause. Needs confirming on a real iPhone, not just here: if scroll
-   breaks again, revert this rule to `position: static` first before
-   reaching for anything else. */
+/* Two rewrites of "keep the header fixed while the card scrolls" were
+   tried and rolled back before this one, both variations on the same
+   idea: make the header position: sticky inside the view's own
+   overflow:scroll box. iOS WKWebView has a long, inconsistent history
+   with sticky-inside-nested-overflow specifically — sometimes it's the
+   real cause of a stuck scroll gesture, sometimes it's a red herring
+   for a different bug (like #app's old height:100dvh miscalculation)
+   that happened to be diagnosed at the same time. Either way, sticky
+   was never the only option — this view now uses the pattern that
+   doesn't need sticky at all: the header is a plain, static, in-flow
+   sibling OUTSIDE the scrolling box (.home-scroll below), not a pinned
+   child inside it. A header that's simply never part of the scroll
+   container can't be broken by a scroll-container bug, whatever form
+   that bug takes. This is the standard "fixed chrome + independently
+   scrolling body" layout every native-feeling app uses, and it's the
+   one variant of this fix not yet tried here. */
 .home-header {
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  flex-shrink: 0;
   /* Matches .customers-header/.settings-header's padding (24px 24px
      16px) — this one had drifted to a shorter 20px/12px, the only
      header among the app's views not on the shared rhythm. */
@@ -622,6 +627,31 @@ input { font: inherit; color: inherit; }
   align-items: center;
   background: var(--bg-primary);
 }
+/* #view-home no longer scrolls itself — .home-header above and
+   .home-scroll below are its only two children, stacked by the base
+   .view's flex-direction: column. All the actual overflow/momentum-
+   scroll properties the generic .view carries move down onto
+   .home-scroll instead, since it's the element that's now genuinely
+   the scrollable one. */
+#view-home {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.home-scroll {
+  flex: 1;
+  /* Without this a flex child refuses to shrink below its content's
+     natural height, which defeats overflow-y here entirely — the
+     single most common reason a "flex column + scrollable child"
+     layout silently doesn't scroll at all. */
+  min-height: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: calc(var(--nav-h) + 20px + var(--sab));
+}
+.home-scroll::-webkit-scrollbar { display: none; }
 .header-left {
   display: flex;
   align-items: center;
