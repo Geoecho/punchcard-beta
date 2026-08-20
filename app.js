@@ -16,11 +16,6 @@ const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
 const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 
-// Push notifications — public key only (safe to ship client-side; the
-// matching private key that actually signs outgoing pushes lives only
-// in the /api/send-push server function's environment).
-const VAPID_PUBLIC_KEY = 'BFab1o_b_UHZufxv0_ITw8avQ880_qs0ANokCv-3PTNWcluiqotxPurRbVCDt8k3iqG1Q1X69ZMHsHgOAiXHN9c';
-
 // Netaville app store links — the "student discount" promo banner stays
 // hidden until these are filled in, so it can't ever point somewhere broken.
 const NETAVILLE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.netcetera.android.netaville.prod&hl=en&gl=US&pli=1';
@@ -82,6 +77,7 @@ const TRANSLATIONS = {
     errUsernameTaken: "That username is taken. Wrong password? Use \"Find My Card\" to log in.",
     errInvalidSignupInput: "Please enter a username and a stronger password",
     errServerConnection: "Could not reach the server. Check your connection and try again.",
+    errSessionExpired: "Your session expired — please log in again.",
     errAcceptTos: "Please accept the Terms of Service & Privacy Policy",
     errSignupGeneric: "Something went wrong. Please try again.",
     errEnterUsernamePassword: "Please enter your username and password",
@@ -243,12 +239,6 @@ const TRANSLATIONS = {
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
     btnSkipForNow: "Later",
-    toastNotificationsEnabled: "Notifications enabled!",
-    errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
-    errNotificationsInstallRequired: "Add this app to your Home Screen first — notifications only work from the installed app, not a browser tab",
-    notifPromoTitle: "Never Miss a Free Coffee",
-    notifPromoSubtitle: "Turn on notifications to know the moment your card's full, or a friend adds you.",
-    notifPromoBtn: "Turn On Notifications",
     notifPanelTitle: "Notifications",
     notifPanelEmpty: "You're all caught up — no notifications yet.",
     btnClearAll: "Clear All",
@@ -286,7 +276,6 @@ const TRANSLATIONS = {
     confirmRemoveFriendText: "Remove {name}? You'll need to send a new request to add them again.",
     btnConfirmRemoveFriend: "Remove",
     loadingText: "Loading…",
-    errNotificationsUnsupported: "Notifications aren't supported on this device or browser",
     setDisplayNameTitle: "Display Name",
     setDisplayNameSubtitle: "The name shown on your card, and how friends find and add you. Changeable once every 14 days.",
     toastDisplayNameSaved: "Display name saved!",
@@ -366,6 +355,7 @@ const TRANSLATIONS = {
     errUsernameTaken: "Тоа корисничко име е зафатено. Погрешна лозинка? Користете „Најди ја мојата картичка“ за да се најавите.",
     errInvalidSignupInput: "Внесете корисничко име и посилна лозинка",
     errServerConnection: "Не може да се поврземе со серверот. Проверете ја вашата врска и обидете се повторно.",
+    errSessionExpired: "Вашата сесија истече — најавете се повторно.",
     errAcceptTos: "Ве молиме прифатете ги Условите за користење и Политиката за приватност",
     errSignupGeneric: "Нешто тргна наопаку. Обидете се повторно.",
     errEnterUsernamePassword: "Внесете ги вашето корисничко име и лозинка",
@@ -527,12 +517,6 @@ const TRANSLATIONS = {
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
     btnSkipForNow: "Подоцна",
-    toastNotificationsEnabled: "Известувањата се овозможени!",
-    errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
-    errNotificationsInstallRequired: 'Прво додајте ја апликацијата на почетниот екран — известувањата работат само од инсталираната апликација, не од прелистувач',
-    notifPromoTitle: "Не пропуштајте бесплатно кафе",
-    notifPromoSubtitle: "Вклучете известувања за да дознаете веднаш кога картичката е полна, или кога некој ве додава како пријател.",
-    notifPromoBtn: "Вклучи известувања",
     notifPanelTitle: "Известувања",
     notifPanelEmpty: "Сè е ажурирано — сè уште нема известувања.",
     btnClearAll: "Избриши сè",
@@ -570,7 +554,6 @@ const TRANSLATIONS = {
     confirmRemoveFriendText: "Да го отстраните {name}? Ќе треба да испратите ново барање за повторно да се додадете.",
     btnConfirmRemoveFriend: "Отстрани",
     loadingText: "Се вчитува…",
-    errNotificationsUnsupported: "Известувањата не се поддржани на овој уред или прелистувач",
     setDisplayNameTitle: "Име за прикажување",
     setDisplayNameSubtitle: "Името прикажано на вашата картичка, и по кое пријателите ве наоѓаат и додаваат. Може да се менува секои 14 дена.",
     toastDisplayNameSaved: "Името е зачувано!",
@@ -650,6 +633,7 @@ const TRANSLATIONS = {
     errUsernameTaken: "Ky emër përdoruesi është i zënë. Fjalëkalim i gabuar? Përdor \"Gjej Kartën Time\" për t'u identifikuar.",
     errInvalidSignupInput: "Vendos një emër përdoruesi dhe një fjalëkalim më të fortë",
     errServerConnection: "Nuk mund të lidhemi me serverin. Kontrollo lidhjen dhe provo përsëri.",
+    errSessionExpired: "Sesioni juaj skadoi — ju lutemi identifikohuni përsëri.",
     errAcceptTos: "Ju lutemi pranoni Kushtet e Shërbimit dhe Politikën e Privatësisë",
     errSignupGeneric: "Diçka shkoi keq. Provo përsëri.",
     errEnterUsernamePassword: "Vendos emrin e përdoruesit dhe fjalëkalimin",
@@ -811,12 +795,6 @@ const TRANSLATIONS = {
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
     btnSkipForNow: "Më vonë",
-    toastNotificationsEnabled: "Njoftimet u aktivizuan!",
-    errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
-    errNotificationsInstallRequired: "Shto këtë aplikacion në Home Screen fillimisht — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
-    notifPromoTitle: "Mos e Humb Asnjë Kafe Falas",
-    notifPromoSubtitle: "Aktivizo njoftimet për të ditur menjëherë kur karta jote është plot, ose kur një mik të shton.",
-    notifPromoBtn: "Aktivizo Njoftimet",
     notifPanelTitle: "Njoftimet",
     notifPanelEmpty: "Je i përditësuar — ende s'ka njoftime.",
     btnClearAll: "Pastro të gjitha",
@@ -854,7 +832,6 @@ const TRANSLATIONS = {
     confirmRemoveFriendText: "Të heq {name}? Do të duhet të dërgosh një kërkesë të re për ta shtuar përsëri.",
     btnConfirmRemoveFriend: "Hiq",
     loadingText: "Duke u ngarkuar…",
-    errNotificationsUnsupported: "Njoftimet nuk mbështeten në këtë pajisje ose shfletues",
     setDisplayNameTitle: "Emri i Shfaqur",
     setDisplayNameSubtitle: "Emri i shfaqur në kartën tuaj, dhe si të gjejnë e shtojnë miqtë. Ndryshueshëm një herë në 14 ditë.",
     toastDisplayNameSaved: "Emri u ruajt!",
@@ -1368,39 +1345,6 @@ const cloud = {
   },
 
 
-  // ---- Push notifications ----
-  async savePushSubscription(token, subscription) {
-    if (!supabaseClient) return false;
-    try {
-      const json = subscription.toJSON();
-      const res = await withTimeout(
-        supabaseClient.rpc('customer_save_push_subscription', {
-          p_token: token || null,
-          p_endpoint: json.endpoint,
-          p_p256dh: json.keys.p256dh,
-          p_auth: json.keys.auth
-        }),
-        4000
-      );
-      return !res.error;
-    } catch (e) {
-      return false;
-    }
-  },
-
-  async removePushSubscription(token, endpoint) {
-    if (!supabaseClient) return false;
-    try {
-      const res = await withTimeout(
-        supabaseClient.rpc('customer_remove_push_subscription', { p_token: token || null, p_endpoint: endpoint }),
-        4000
-      );
-      return !res.error;
-    } catch (e) {
-      return false;
-    }
-  },
-
   // ---- In-app notification inbox ----
   // Separate from Web Push: this is the persistent record a customer
   // sees inside the app regardless of push permission state, written
@@ -1492,6 +1436,12 @@ const cloud = {
         if (msg.includes('friend_not_found')) return { error: 'not_found' };
         if (msg.includes('cannot_add_self')) return { error: 'self' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        // A stale/expired customer_sessions token raises this server-side
+        // (customer_id_from_caller) — surfacing it as a generic "check
+        // your connection" error is actively misleading since the
+        // backend is reachable and responded fine, the caller just isn't
+        // authenticated anymore.
+        if (msg.includes('unauthorized')) return { error: 'session_expired' };
         return { error: 'unknown' };
       }
       if (!res.data || !res.data.length) return { error: 'unknown' };
@@ -2396,9 +2346,6 @@ const DOM = {
   btnToggleStudentLabel: document.getElementById('btn-toggle-student-label'),
   btnShowQr: document.getElementById('btn-show-qr'),
   studentPromoBanner: document.getElementById('student-promo-banner'),
-  notifPromoBanner: document.getElementById('notif-promo-banner'),
-  btnNotifPromoDismiss: document.getElementById('btn-notif-promo-dismiss'),
-  btnNotifPromoEnable: document.getElementById('btn-notif-promo-enable'),
   btnStudentPromoDownload: document.getElementById('btn-student-promo-download'),
   settingsStudentSection: document.getElementById('settings-student-section'),
   settingsStudentLink: document.getElementById('settings-student-link'),
@@ -2458,10 +2405,6 @@ const DOM = {
   setDisplayNameError: document.getElementById('set-displayname-error'),
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
-  modalNotifPermission: document.getElementById('modal-notif-permission'),
-  overlayNotifPermission: document.getElementById('overlay-notif-permission'),
-  btnNotifPermissionSkip: document.getElementById('btn-notif-permission-skip'),
-  btnNotifPermissionEnable: document.getElementById('btn-notif-permission-enable'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
   btnOpenFriendsHome: document.getElementById('btn-open-friends-home'),
   btnOpenNotifications: document.getElementById('btn-open-notifications'),
@@ -2936,91 +2879,6 @@ function showUpdateBanner() {
   }, 5000);
 }
 
-// ==========================================
-// PUSH NOTIFICATIONS (customer opt-in)
-// ==========================================
-// PushManager wants the VAPID key as a raw Uint8Array, not the
-// base64url string it's stored/transmitted as.
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  const output = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
-  return output;
-}
-
-function pushNotificationsSupported() {
-  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-}
-
-// iPadOS 13+ reports as "MacIntel" in a plain desktop-Safari-style user
-// agent — touch-point count is the standard way to tell it apart from
-// an actual Mac.
-function isIOSDevice() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-function isStandaloneMode() {
-  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-}
-
-// iOS Safari only supports the Push API at all for a site added to the
-// Home Screen (browser-tab push there is unavailable, permission prompt
-// included, and fails silently rather than with a distinguishable
-// error). Elsewhere (desktop/Android Chrome) push does technically work
-// in a plain tab, but gating it the same way sidesteps a browser-tab
-// subscribe path that's proven flaky in practice, and keeps the ask
-// consistent: notifications are something you get from the installed
-// app, not a bare tab.
-function pushRequiresInstall() {
-  return !isStandaloneMode();
-}
-
-// Silently repairs a dropped push subscription — no Settings toggle to
-// reflect anymore, but if the OS/browser permission is still granted
-// and the subscription itself went missing (happens after service
-// worker updates), this quietly re-subscribes without prompting again,
-// so push keeps working in the background.
-async function ensurePushSubscriptionHealthy() {
-  if (!pushNotificationsSupported() || pushRequiresInstall()) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    if (!sub && Notification.permission === 'granted') {
-      const newSub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-      await cloud.savePushSubscription(state.myToken, newSub);
-    }
-  } catch (e) {}
-}
-
-async function enablePushNotifications() {
-  if (!pushNotificationsSupported()) return { error: 'unsupported' };
-  if (pushRequiresInstall()) return { error: 'install_required' };
-
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return { error: 'blocked' };
-
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-    const saved = await cloud.savePushSubscription(state.myToken, sub);
-    if (!saved) return { error: 'offline' };
-    return { ok: true };
-  } catch (e) {
-    return { error: 'offline' };
-  }
-}
 
 // token is only passed on an actual login/signup — omit it (e.g. when
 // just refreshing the displayed name/avatar after a local edit) and the
@@ -3646,7 +3504,7 @@ function setupEventListeners() {
   // would otherwise let the app boot straight back into admin mode with
   // no auth on the next reload (the original bug: logging out of a
   // customer account left a valid staff token behind).
-  const handleUserLogout = () => {
+  const handleUserLogout = (toastMessage = t('toastLoggedOut'), toastType = 'success') => {
     cloud.unsubscribe();
     // Also end the Google session, if there was one — otherwise the next
     // "Continue with Google" tap on this device (e.g. a shared phone)
@@ -3665,12 +3523,12 @@ function setupEventListeners() {
 
     DOM.nav.classList.add('hidden');
     switchView('view-signup');
-    showToast(t('toastLoggedOut'), 'success');
+    showToast(toastMessage, toastType);
   };
 
-  if (DOM.btnLogoutHeader) DOM.btnLogoutHeader.addEventListener('click', handleUserLogout);
-  if (DOM.btnLogoutUser) DOM.btnLogoutUser.addEventListener('click', handleUserLogout);
-  if (DOM.btnStaffLogout) DOM.btnStaffLogout.addEventListener('click', handleUserLogout);
+  if (DOM.btnLogoutHeader) DOM.btnLogoutHeader.addEventListener('click', () => handleUserLogout());
+  if (DOM.btnLogoutUser) DOM.btnLogoutUser.addEventListener('click', () => handleUserLogout());
+  if (DOM.btnStaffLogout) DOM.btnStaffLogout.addEventListener('click', () => handleUserLogout());
 
   // Staff Profile: avatar (reuses the same picker modal as the customer
   // "Choose Avatar" flow, but flagged so the click handler inside it saves
@@ -4065,75 +3923,6 @@ function setupEventListeners() {
   }
 
 
-  // Home-screen notifications nudge — same enablePushNotifications() path
-  // as the Settings toggle, just surfaced at a moment that explains why
-  // it's worth doing instead of requiring someone to go find it.
-  if (DOM.btnNotifPromoDismiss) {
-    DOM.btnNotifPromoDismiss.addEventListener('click', dismissNotifPromo);
-  }
-  if (DOM.btnNotifPromoEnable) {
-    DOM.btnNotifPromoEnable.addEventListener('click', async () => {
-      DOM.btnNotifPromoEnable.disabled = true;
-      const result = await enablePushNotifications();
-      DOM.btnNotifPromoEnable.disabled = false;
-
-      if (result.error) {
-        const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
-          : result.error === 'install_required' ? t('errNotificationsInstallRequired')
-          : result.error === 'blocked' ? t('errNotificationsBlocked')
-          : t('errServerConnection');
-        showToast(msg, 'error');
-        // A denied browser permission prompt can't be re-asked from code —
-        // dismiss the nudge either way so it doesn't keep offering a
-        // button that will just fail the same way every time.
-        dismissNotifPromo();
-        return;
-      }
-      dismissNotifPromo();
-      ensurePushSubscriptionHealthy();
-      showToast(t('toastNotificationsEnabled'), 'success');
-    });
-  }
-
-  // One-time login modal — a stronger, user-initiated version of the same
-  // ask above, shown once so it isn't missed the way a scrollable banner
-  // can be. Shares enablePushNotifications() with the banner/Settings
-  // toggle; "Later" just falls back to the banner staying available.
-  if (DOM.overlayNotifPermission) {
-    DOM.overlayNotifPermission.addEventListener('click', () => {
-      closeModal(DOM.modalNotifPermission);
-      markNotifPermissionModalShown();
-    });
-  }
-  if (DOM.btnNotifPermissionSkip) {
-    DOM.btnNotifPermissionSkip.addEventListener('click', () => {
-      closeModal(DOM.modalNotifPermission);
-      markNotifPermissionModalShown();
-    });
-  }
-  if (DOM.btnNotifPermissionEnable) {
-    DOM.btnNotifPermissionEnable.addEventListener('click', async () => {
-      DOM.btnNotifPermissionEnable.disabled = true;
-      const result = await enablePushNotifications();
-      DOM.btnNotifPermissionEnable.disabled = false;
-      closeModal(DOM.modalNotifPermission);
-      markNotifPermissionModalShown();
-
-      if (result.error) {
-        const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
-          : result.error === 'install_required' ? t('errNotificationsInstallRequired')
-          : result.error === 'blocked' ? t('errNotificationsBlocked')
-          : t('errServerConnection');
-        showToast(msg, 'error');
-        dismissNotifPromo();
-        return;
-      }
-      dismissNotifPromo();
-      ensurePushSubscriptionHealthy();
-      showToast(t('toastNotificationsEnabled'), 'success');
-    });
-  }
-
   // Notifications Panel (Home header bell)
   if (DOM.btnOpenNotifications) {
     DOM.btnOpenNotifications.addEventListener('click', async () => {
@@ -4218,6 +4007,11 @@ function setupEventListeners() {
       }
       if (result.error === 'self') {
         DOM.addFriendError.textContent = t('errCannotAddSelf');
+        return;
+      }
+      if (result.error === 'session_expired') {
+        closeModal(DOM.modalFriends);
+        handleUserLogout(t('errSessionExpired'), 'error');
         return;
       }
       if (result.error) {
@@ -4613,7 +4407,6 @@ function switchView(viewId) {
     updateSettingsStats();
     if (!state.isAdmin && state.selectedCustomerId) {
       db.getCustomer(state.selectedCustomerId).then(c => refreshStudentPromoVisibility(c));
-      ensurePushSubscriptionHealthy();
     }
   }
   if (viewId === 'view-activity') renderActivityList();
@@ -4864,45 +4657,6 @@ function refreshStudentPromoVisibility(customer) {
     DOM.settingsStudentLink.href = storeUrl || '#';
     DOM.settingsStudentSection.classList.toggle('hidden', !showPromo);
   }
-}
-
-// A one-time nudge on the home screen for customers who haven't decided
-// on notifications yet — the Settings toggle works fine but nobody goes
-// looking for it unprompted, so opt-in stays low without a visible ask
-// at a moment that actually explains the payoff (reward-ready, friend
-// requests). Never shown again once the customer either enables it or
-// dismisses the card, and never shown at all where it'd just be a dead
-// end (iOS outside the installed app, unsupported browsers).
-function notifPermissionUndecided() {
-  return !state.isAdmin && pushNotificationsSupported() && !pushRequiresInstall()
-    && typeof Notification !== 'undefined' && Notification.permission === 'default';
-}
-
-function refreshNotifPromoVisibility() {
-  if (!DOM.notifPromoBanner) return;
-  const dismissed = localStorage.getItem('86_notif_promo_dismissed') === '1';
-  DOM.notifPromoBanner.classList.toggle('hidden', dismissed || !notifPermissionUndecided());
-}
-
-function dismissNotifPromo() {
-  localStorage.setItem('86_notif_promo_dismissed', '1');
-  if (DOM.notifPromoBanner) DOM.notifPromoBanner.classList.add('hidden');
-}
-
-function markNotifPermissionModalShown() {
-  localStorage.setItem('86_notif_permission_modal_shown', '1');
-}
-
-// The stronger, one-time login ask (see the modal wiring in
-// setupEventListeners) — fires once per browser the first time a
-// customer's permission is still undecided, then never again regardless
-// of what they choose (Settings/the banner stay as the fallback).
-function maybeShowNotifPermissionModal() {
-  if (!DOM.modalNotifPermission) return;
-  const alreadyShown = localStorage.getItem('86_notif_permission_modal_shown') === '1';
-  if (alreadyShown || !notifPermissionUndecided()) return;
-  markNotifPermissionModalShown();
-  openModal(DOM.modalNotifPermission);
 }
 
 let lastCardCustomerId = null;
@@ -5162,8 +4916,6 @@ async function updateCardUI() {
   if (!state.isAdmin) refreshCustomerCampaignBanner();
 
   refreshStudentPromoVisibility(customer);
-  refreshNotifPromoVisibility();
-  maybeShowNotifPermissionModal();
   updateCardBackStats(customer);
 
   if (state.isAdmin) {
@@ -5191,6 +4943,30 @@ async function updateCardUI() {
       DOM.btnVoidRedemption.classList.toggle('hidden', !canVoidRedemption(customer));
     }
   }
+
+  nudgeActiveViewScroll();
+}
+
+// iOS Safari can get an overflow:auto view's touch-scroll recognizer
+// stuck when the view's content height changes while it's on-screen and
+// untouched — e.g. a live stamp update growing/shrinking the wallet
+// card, reward banner, or student promo. switchView() already guards
+// against the same freeze for tab navigation (resetting scrollTop so a
+// stale offset never sits past a new, shorter scrollHeight), but that
+// only runs when a view becomes active — not when its content changes
+// under a tab the customer is already sitting on. Toggling overflow off
+// and back on forces iOS to recompute the scrollable region against the
+// new layout instead of leaving stale gesture state around one it no
+// longer matches.
+function nudgeActiveViewScroll() {
+  DOM.views.forEach(view => {
+    if (!view.classList.contains('active')) return;
+    const maxScroll = Math.max(0, view.scrollHeight - view.clientHeight);
+    if (view.scrollTop > maxScroll) view.scrollTop = maxScroll;
+    view.style.overflow = 'hidden';
+    void view.offsetHeight;
+    view.style.overflow = '';
+  });
 }
 
 function canVoidRedemption(customer) {

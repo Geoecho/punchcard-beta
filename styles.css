@@ -131,7 +131,6 @@ input { font: inherit; color: inherit; }
   padding-bottom: calc(72px + 20px + var(--sab));
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* iOS Safari has a long-documented bug where an element that is both
      overflow:auto AND carries its own `transform` stops responding to
@@ -142,7 +141,13 @@ input { font: inherit; color: inherit; }
      dropped entirely rather than chasing another iOS workaround for a
      bug class with no consistent fix. Content taller than the screen
      (the home view with the wallet card + student discount promo both
-     showing) was completely unreachable on iOS as a result. */
+     showing) was completely unreachable on iOS as a result.
+     -webkit-overflow-scrolling: touch itself dropped for the same
+     reason: it's a legacy iOS<13 shim, and it has its own documented
+     conflict with `position: sticky` descendants (.home-header) that
+     freezes touch-scroll on the container entirely rather than just
+     breaking the stickiness. Modern iOS already gives overflow:auto
+     native momentum scrolling without this property. */
 }
 .view::-webkit-scrollbar { display: none; }
 .view.active {
@@ -1925,17 +1930,10 @@ input { font: inherit; color: inherit; }
 }
 .student-promo-btn:active { transform: scale(0.98); }
 .student-promo-banner { position: relative; }
-.notif-promo-close {
-  position: absolute; top: 10px; right: 10px;
-  color: var(--text-muted); padding: 4px; cursor: pointer;
-}
 
-/* Bolder, high-contrast treatment for the student discount banner only
-   (targeted by id, not the shared .student-promo-banner class) — matches
-   the inverted-block language of .campaign-banner below so this actually
-   stands out, while the notif-permission fallback banner (same shared
-   class, different id) stays in the quieter default style now that the
-   one-time login modal is the primary ask for that one. */
+/* Bolder, high-contrast treatment for the student discount banner —
+   matches the inverted-block language of .campaign-banner below so this
+   actually stands out. */
 #student-promo-banner {
   background: var(--text-primary);
   border: none;

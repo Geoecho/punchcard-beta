@@ -6,7 +6,12 @@
   <meta name="theme-color" content="#000000">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- "black" (opaque), not "black-translucent" — translucent lets iOS
+       draw the status bar as a see-through overlay on top of our content,
+       so anything scrolled to the very top (behind the sticky home
+       header) shows through it. Layout geometry (env(safe-area-inset-*))
+       is identical either way; this only makes the bar itself solid. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Eightysix°">
   
   <title>Eightysix° Punchcard</title>
@@ -410,23 +415,6 @@
           </svg>
           <span data-i18n="settingsFriends">Friends</span>
         </button>
-      </div>
-
-      <!-- Notifications Opt-In Nudge (Customer, shown once before they've decided) -->
-      <div class="student-promo-banner hidden" id="notif-promo-banner">
-        <button class="notif-promo-close" id="btn-notif-promo-dismiss" aria-label="Dismiss">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-        <div class="student-promo-header">
-          <div class="student-promo-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--bg-primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          </div>
-          <div class="student-promo-text">
-            <div class="student-promo-title" data-i18n="notifPromoTitle">Never Miss a Free Coffee</div>
-            <p class="student-promo-subtitle" data-i18n="notifPromoSubtitle">Turn on notifications to know the moment your card's full, or a friend adds you.</p>
-          </div>
-        </div>
-        <button class="student-promo-btn" id="btn-notif-promo-enable" data-i18n="notifPromoBtn">Turn On Notifications</button>
       </div>
 
       <!-- Admin Add Stamp Action (Hidden by default) -->
@@ -982,23 +970,6 @@
         <div class="modal-actions" style="margin-top: 16px;">
           <button class="btn-secondary" id="btn-set-displayname-skip" data-i18n="btnCancel">Cancel</button>
           <button class="btn-primary" id="btn-set-displayname-save" data-i18n="btnSave">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- One-time notification permission ask, shown right after a customer's
-         first login while permission is still undecided (see
-         refreshNotifPromoVisibility/showNotifPermissionModal in app.js). -->
-    <div class="modal" id="modal-notif-permission">
-      <div class="modal-overlay" id="overlay-notif-permission"></div>
-      <div class="modal-content">
-        <div class="modal-handle"></div>
-        <h3 class="modal-title" data-i18n="notifPromoTitle">Never Miss a Free Coffee</h3>
-        <p class="modal-subtitle" data-i18n="notifPromoSubtitle">Turn on notifications to know the moment your card's full, or a friend adds you.</p>
-
-        <div class="modal-actions" style="margin-top: 16px;">
-          <button class="btn-secondary" id="btn-notif-permission-skip" data-i18n="btnSkipForNow">Later</button>
-          <button class="btn-primary" id="btn-notif-permission-enable" data-i18n="notifPromoBtn">Turn On Notifications</button>
         </div>
       </div>
     </div>
