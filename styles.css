@@ -64,6 +64,13 @@
   --sat: env(safe-area-inset-top);
   --sab: env(safe-area-inset-bottom);
 
+  /* Bottom nav's content height (10px+10px vertical padding, 22px icon +
+     4px gap + label above that) — .bottom-nav pins its own height to
+     this and .view's padding-bottom reserves it, both off the same
+     variable so they can't drift apart again the way a duplicated
+     literal "72px" in two places eventually would. */
+  --nav-h: 72px;
+
   /* App shell width — bumped up for desktop/admin in the media query below */
   --app-max-w: 768px;
 }
@@ -142,7 +149,11 @@ input { font: inherit; color: inherit; }
   transition: opacity 0.22s var(--ease-out), visibility 0s 0.22s;
   z-index: 1;
   padding-top: var(--sat);
-  padding-bottom: calc(72px + 20px + var(--sab));
+  /* --nav-h (not a second hardcoded "72px") so this can't quietly drift
+     out of sync with .bottom-nav's own actual height again — the 20px
+     on top is breathing room between the last bit of content and the
+     nav, not part of the nav's own footprint. */
+  padding-bottom: calc(var(--nav-h) + 20px + var(--sab));
   /* scroll, not auto — the scrollbar is hidden either way (below), but
      `scroll` commits WebKit to an always-scrollable container up front
      instead of `auto`'s content-dependent decision, which is worth
@@ -1189,19 +1200,28 @@ input { font: inherit; color: inherit; }
 
 /* ── Bottom Navigation ────────────────────────────────────── */
 .bottom-nav {
-  /* absolute (against #app, which is position:relative), not fixed
-     (against the viewport) — iOS standalone/home-screen mode has a
-     long-standing gap between what env(safe-area-inset-bottom) and
-     100dvh each resolve to for a fixed-position element vs. #app's own
-     box, which left this floating above the true bottom edge only when
-     installed. Anchoring to #app's own box sidesteps that mismatch
-     entirely since #app is already sized off the same dvh value. */
-  position: absolute;
+  /* fixed (against the real viewport), not absolute (against #app) —
+     tried anchoring to #app instead over a theory that #app's own
+     100dvh box and the true bottom edge could disagree in standalone
+     iOS, but that traded one bug for a worse one: it left the nav
+     floating visibly above the true bottom edge specifically on
+     installed iOS (confirmed working correctly at the true edge on
+     Android the whole time, on the exact same CSS) — i.e. #app's box, not
+     fixed-positioning, was the unreliable part. position:fixed +
+     viewport-fit=cover + this padding's own env(safe-area-inset-bottom)
+     is the standard, engine-native way to pin something to the physical
+     bottom edge and isn't at the mercy of #app's height calculation at
+     all — a position:fixed element also isn't clipped by #app's
+     overflow:hidden, so it can't be shortchanged by #app falling short
+     of the true viewport either. */
+  position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--app-max-w);
+  height: calc(var(--nav-h) + var(--sab));
+  box-sizing: border-box;
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

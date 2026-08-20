@@ -8,11 +8,11 @@
 // ==========================================
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
-// Bumped alongside service-worker.js's CACHE_NAME on every deploy —
-// surfaced in the scroll diagnostic (setupScrollDiagnostic) so it's
-// possible to confirm a device is actually running the latest code
-// instead of a stale service-worker cache before diagnosing anything else.
-const APP_BUILD_ID = 'v70';
+// Bumped alongside service-worker.js's CACHE_NAME on every deploy — lets
+// a deployed build be confirmed (e.g. curl the live app.js and grep for
+// this) independent of whatever a given browser/service-worker cache is
+// actually serving a specific device.
+const APP_BUILD_ID = 'v71';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -2271,10 +2271,10 @@ const db = {
 // ==========================================
 const DOM = {
   views: document.querySelectorAll('.view'),
+  viewHome: document.getElementById('view-home'),
   viewSplash: document.getElementById('view-splash'),
   viewSignup: document.getElementById('view-signup'),
   viewAdminLogin: document.getElementById('view-admin-login'),
-  viewHome: document.getElementById('view-home'),
   viewMenu: document.getElementById('view-menu'),
   viewAdminMenu: document.getElementById('view-admin-menu'),
   viewCustomers: document.getElementById('view-customers'),
@@ -4367,54 +4367,6 @@ function setupEventListeners() {
     }
     closeModal(DOM.modalScanQr);
   }
-
-  setupScrollDiagnostic();
-}
-
-// TEMPORARY — long-press the greeting text on the Card tab (~1.2s) to
-// pop up live scroll metrics for the persistent iOS "can't scroll the
-// card tab" report. Purely observational (passive listeners, doesn't
-// touch scroll behavior itself) so it's safe in production; pull this
-// out once that's actually diagnosed and fixed. Answers three different
-// questions depending on what shows up:
-//   - overflowPx <= 0: there's nothing to scroll — not a touch/gesture
-//     bug at all, just not enough content below the fold right now.
-//   - overflowPx > 0 but touchmove count stays 0 after swiping: touch
-//     events aren't reaching the view at all (something upstream is
-//     consuming them, or a touch-action value is blocking dispatch).
-//   - touchmove count goes up but scroll count doesn't: the gesture IS
-//     recognized but never turns into an actual scroll — the deepest
-//     version of this bug, and the one an actual fix would target.
-function setupScrollDiagnostic() {
-  const view = DOM.viewHome;
-  if (!view || !DOM.homeGreeting) return;
-  let touchCount = 0, moveCount = 0, scrollCount = 0;
-  view.addEventListener('touchstart', () => { touchCount++; }, { passive: true });
-  view.addEventListener('touchmove', () => { moveCount++; }, { passive: true });
-  view.addEventListener('scroll', () => { scrollCount++; }, { passive: true });
-
-  let pressTimer = null;
-  const showDiagnostic = () => {
-    const overflowPx = view.scrollHeight - view.clientHeight;
-    alert(
-      'scrollHeight: ' + view.scrollHeight + '\n' +
-      'clientHeight: ' + view.clientHeight + '\n' +
-      'overflow: ' + overflowPx + 'px\n' +
-      'scrollTop: ' + view.scrollTop + '\n' +
-      'touchstart events: ' + touchCount + '\n' +
-      'touchmove events: ' + moveCount + '\n' +
-      'scroll events: ' + scrollCount + '\n' +
-      'computed overflow-y: ' + getComputedStyle(view).overflowY + '\n' +
-      'standalone: ' + (window.navigator.standalone === true) + '\n' +
-      'app build: ' + APP_BUILD_ID + '\n' +
-      'sw controller: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no')
-    );
-  };
-  DOM.homeGreeting.addEventListener('touchstart', () => {
-    pressTimer = setTimeout(showDiagnostic, 1200);
-  }, { passive: true });
-  DOM.homeGreeting.addEventListener('touchend', () => clearTimeout(pressTimer));
-  DOM.homeGreeting.addEventListener('touchmove', () => clearTimeout(pressTimer));
 }
 
 // ==========================================
