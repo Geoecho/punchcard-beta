@@ -2303,10 +2303,12 @@ input { font: inherit; color: inherit; }
 .menu-section-btn-danger:hover, .menu-section-btn-danger:active { color: var(--error); border-color: var(--error); }
 .menu-item {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 4px;
 }
 .menu-item.stamp-bonus .menu-item-name {
   color: var(--text-primary);
@@ -2316,18 +2318,25 @@ input { font: inherit; color: inherit; }
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  flex: 1;
+  flex: 1 1 130px;
+  min-width: 0;
 }
 .menu-item-sub {
   font-size: 11px;
   color: var(--text-muted);
-  margin-right: 8px;
   white-space: nowrap;
 }
+/* margin-left: auto keeps this pinned to the right edge whether it shares
+   the item's first line or, once name+sub+price can't all fit (long
+   names, or a student discount adding both a struck-through price and a
+   badge alongside a bonus-stamp chip), wraps to its own line below —
+   flexbox resolves auto margins per wrapped line, not just the first. */
 .menu-item-price-group {
-  white-space: nowrap;
+  margin-left: auto;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
 }
 .menu-item-price {
