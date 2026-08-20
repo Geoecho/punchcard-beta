@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v76';
+const APP_BUILD_ID = 'v77';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -4813,12 +4813,24 @@ let cardBackRankCache = {};
 // Safari has proven unreliable at actually suppressing the away-facing
 // side via either backface-visibility or a visibility:hidden fallback,
 // both bitten by the same underlying iOS compositing bugs. This is what
-// actually controls which face can be seen: display:none, toggled with
-// a delay timed to the transform's midpoint (90deg — edge-on, so the
-// instant swap is imperceptible regardless of which browser is
-// rendering the rotation itself correctly). A display:none element is
-// removed from the render tree entirely, so there's no compositor
-// state left over for iOS to get wrong.
+// actually controls which face can be seen: display:none, toggled at
+// the exact moment the transform passes 90deg — edge-on, so the swap
+// is imperceptible regardless of which browser is rendering the
+// rotation itself correctly. A display:none element is removed from
+// the render tree entirely, so there's no compositor state left over
+// for iOS to get wrong.
+//
+// The delay below is NOT half the transition's duration — that was the
+// original (buggy) assumption, and it's wrong for any non-linear easing.
+// .card-flip-inner's transition uses cubic-bezier(0.4, 0.15, 0.2, 1),
+// 600ms — a curve that front-loads most of the rotation, so by the time
+// 50% of the duration (300ms) has elapsed, the card has already rotated
+// to ~145deg, not 90deg. That's the gap that let a "flipped" card still
+// show its old face for a moment: the swap fired ~104ms late. Solving
+// for the actual time the eased value crosses 0.5 gives ~196ms — that's
+// the number to change if CARD_FLIP_MS or the easing curve ever does.
+const CARD_FLIP_MS = 600;
+const CARD_FLIP_SWAP_DELAY_MS = 196;
 let cardFlipDisplayTimer = null;
 let cardIntroFlipTimer = null;
 let cardIntroFlipBackTimer = null;
@@ -4835,7 +4847,7 @@ function setCardFlipped(flipped) {
     // clearing its inline override falls back to hidden, not visible —
     // it needs an explicit 'block' when showing, unlike the front face.
     if (DOM.cardFaceBack) DOM.cardFaceBack.style.display = flipped ? 'block' : 'none';
-  }, 300);
+  }, CARD_FLIP_SWAP_DELAY_MS);
 }
 
 // One-time "peek at the back" reveal — flips to the stats side shortly

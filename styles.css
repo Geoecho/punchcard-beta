@@ -64,12 +64,18 @@
   --sat: env(safe-area-inset-top);
   --sab: env(safe-area-inset-bottom);
 
-  /* Bottom nav's content height (10px+10px vertical padding, 22px icon +
-     4px gap + label above that) — .bottom-nav pins its own height to
-     this and .view's padding-bottom reserves it, both off the same
-     variable so they can't drift apart again the way a duplicated
-     literal "72px" in two places eventually would. */
-  --nav-h: 72px;
+  /* Bottom nav's content height (8px+8px vertical padding, 4px+4px item
+     padding, 22px icon + 4px gap + label above that) — .bottom-nav pins
+     its own height to this and .view's padding-bottom reserves it, both
+     off the same variable so they can't drift apart again the way a
+     duplicated literal "72px" in two places eventually would. Was 72px
+     (10+10 bar padding, 6+6 item padding) — trimmed to 64px since that
+     left almost no free space inside the bar itself, meaning the "too
+     much space under the tab items" it was fixed for was really the
+     safe-area strip below the bar reading as an oversized, mismatched
+     gap (see #bottom-bar-fill) rather than this box being genuinely
+     too tall — but 8px was still real, worth trimming regardless. */
+  --nav-h: 64px;
 
   /* App shell width — bumped up for desktop/admin in the media query below */
   --app-max-w: 768px;
@@ -104,6 +110,20 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: env(safe-area-inset-top);
+  background: #000000;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+/* Same mask, bottom edge — see the markup comment on #bottom-bar-fill
+   in index.html. Sits above .bottom-nav's z-index (50) so it wins over
+   that element's own translucent rgba(10,10,10,0.95)+blur background in
+   exactly the strip below the icons, where nothing interactive lives,
+   hence pointer-events: none is safe here too. */
+#bottom-bar-fill {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: env(safe-area-inset-bottom);
   background: #000000;
   z-index: 10000;
   pointer-events: none;
@@ -1281,7 +1301,7 @@ input { font: inherit; color: inherit; }
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 10px 16px calc(10px + var(--sab));
+  padding: 8px 16px calc(8px + var(--sab));
   z-index: 50;
 }
 .nav-item {
@@ -1289,7 +1309,7 @@ input { font: inherit; color: inherit; }
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 6px 16px;
+  padding: 4px 16px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
   background: transparent;
@@ -1366,7 +1386,10 @@ input { font: inherit; color: inherit; }
 .customer-edit-btn:active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
 
 /* Floating Action Buttons */
-.customers-actions { position: fixed; bottom: calc(88px + var(--sab)); right: max(20px, calc((100vw - var(--app-max-w)) / 2 + 20px)); display: flex; flex-direction: column; gap: 12px; z-index: 40; }
+/* bottom was a literal 88px (the old 72px --nav-h + 16px clearance) —
+   switched to the variable so it can't drift out of sync with the nav's
+   actual height again, the same reasoning --nav-h's own comment gives. */
+.customers-actions { position: fixed; bottom: calc(var(--nav-h) + 16px + var(--sab)); right: max(20px, calc((100vw - var(--app-max-w)) / 2 + 20px)); display: flex; flex-direction: column; gap: 12px; z-index: 40; }
 .fab {
   width: 54px; height: 54px; border-radius: 50%;
   background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-glass-strong);

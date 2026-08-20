@@ -52,6 +52,17 @@
        so it's a no-op elsewhere. -->
   <div id="status-bar-fill"></div>
 
+  <!-- Same idea, bottom edge: .bottom-nav's own background is a
+       translucent rgba(10,10,10,0.95) + blur (a deliberate frosted-glass
+       tab bar look), which is visibly not pure black against the rest
+       of this pure-#000 app — most noticeable in the home-indicator
+       strip below the icons, where there's no content to blur over and
+       the translucency just reads as a mismatched, washed-out gray gap.
+       This mask paints that exact strip pure black on top of it,
+       independent of the nav's own translucency. Zero height outside
+       standalone iOS, so it's a no-op elsewhere. -->
+  <div id="bottom-bar-fill"></div>
+
   <!-- Confetti Canvas for Celebrations -->
   <canvas id="confetti-canvas"></canvas>
 
