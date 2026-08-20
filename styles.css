@@ -547,14 +547,17 @@ input { font: inherit; color: inherit; }
 }
 
 /* ── Home View ────────────────────────────────────────────── */
+/* position: sticky dropped — it's a well-documented iOS Safari
+   touch-scroll troublemaker on an overflow:auto ancestor, and this is
+   the only header among the app's views that had it (every other tab
+   scrolls fine). The "pinned header" look was a nice-to-have; a header
+   that scrolls away with the rest of the content isn't worth trading
+   for a broken scroll container on the one tab customers open the most. */
 .home-header {
   padding: 20px 24px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 5;
   background: var(--bg-primary);
 }
 .header-left {
@@ -668,32 +671,18 @@ input { font: inherit; color: inherit; }
    faces are absolutely positioned and don't contribute to layout. */
 .card-flip-scene {
   margin: 20px 20px 0;
-  /* touch-action alone was tried first (still kept, harmless) but
-     wasn't sufficient — iOS Safari has a much deeper bug where a
-     PERSISTENT perspective/preserve-3d 3D-rendering context anywhere
-     inside a scrolling container can break that container's own
-     touch-scroll, regardless of touch-action on the 3D element itself.
-     perspective/preserve-3d now only get applied via .card-flip-3d
-     (toggled in JS, see setCardFlipped) for the ~600ms the card is
-     actually rotating plus however long it's resting flipped to the
-     back — never while just sitting on the front face, which is what
-     the card spends the vast majority of its time doing. */
-  touch-action: pan-y;
-}
-.card-flip-scene.card-flip-3d {
   perspective: 1400px;
   -webkit-perspective: 1400px;
+  touch-action: pan-y;
 }
 .card-flip-inner {
   position: relative;
   width: 100%;
   cursor: pointer;
-  transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
-  touch-action: pan-y;
-}
-.card-flip-inner.card-flip-3d {
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
+  touch-action: pan-y;
 }
 /* iOS Safari has historically needed the -webkit-transform set
    explicitly alongside the unprefixed one, or backface-visibility:hidden
@@ -1360,7 +1349,7 @@ input { font: inherit; color: inherit; }
 .notif-panel-clear-all:active { color: var(--error); }
 
 .notif-row {
-  display: flex; align-items: flex-start; gap: 10px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px;
   padding: 12px; background: var(--bg-glass); border: 1px solid var(--border-glass);
   border-radius: var(--radius-md); position: relative;
 }
@@ -1379,9 +1368,14 @@ input { font: inherit; color: inherit; }
 .notif-row-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .notif-row-body { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
 .notif-row-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.notif-row-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+/* flex-basis: 100% forces this onto its own line below the icon+text
+   row (which is what .notif-row's flex-wrap is for) instead of being
+   squeezed into the narrower text column — the buttons then span the
+   full card width edge to edge, not just the space left of the 32px
+   icon. */
+.notif-row-actions { flex: 1 1 100%; display: flex; gap: 8px; margin-top: 2px; }
 .notif-row-actions .btn-primary, .notif-row-actions .btn-secondary {
-  width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px;
+  flex: 1; box-sizing: border-box; padding: 10px 12px; font-size: 13px;
 }
 .notif-row-delete {
   flex-shrink: 0; color: var(--text-muted); cursor: pointer; padding: 4px; margin: -4px -4px 0 0;

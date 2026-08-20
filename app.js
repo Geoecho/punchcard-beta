@@ -4685,7 +4685,6 @@ let cardBackRankCache = {};
 // removed from the render tree entirely, so there's no compositor
 // state left over for iOS to get wrong.
 let cardFlipDisplayTimer = null;
-let cardFlip3DTimer = null;
 let cardIntroFlipTimer = null;
 let cardIntroFlipBackTimer = null;
 function setCardFlipped(flipped) {
@@ -4693,23 +4692,6 @@ function setCardFlipped(flipped) {
   const alreadyFlipped = DOM.cardFlipInner.classList.contains('flipped');
   DOM.cardFlipInner.classList.toggle('flipped', flipped);
   if (alreadyFlipped === flipped) return;
-
-  // .card-flip-3d supplies perspective/preserve-3d (styles.css) — kept
-  // off the card everywhere else so the scroll container carries zero
-  // persistent 3D-compositing layer while the card just sits on its
-  // front face, which is what it's doing almost all the time. Needed
-  // for the whole transition either direction, and needs to stay on
-  // afterward if the card is resting flipped to the back (without
-  // preserve-3d there, the back face's content renders mirrored).
-  clearTimeout(cardFlip3DTimer);
-  if (DOM.punchcard) DOM.punchcard.classList.add('card-flip-3d');
-  DOM.cardFlipInner.classList.add('card-flip-3d');
-  if (!flipped) {
-    cardFlip3DTimer = setTimeout(() => {
-      if (DOM.punchcard) DOM.punchcard.classList.remove('card-flip-3d');
-      DOM.cardFlipInner.classList.remove('card-flip-3d');
-    }, 650);
-  }
 
   clearTimeout(cardFlipDisplayTimer);
   cardFlipDisplayTimer = setTimeout(() => {
@@ -5021,6 +5003,17 @@ const NOTIF_TYPE_ICON = {
 };
 const NOTIF_TYPE_ICON_DEFAULT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
 
+// Notification titles are written server-side (Supabase SQL functions)
+// and still lead with a colored emoji (e.g. "🎉 Friend request
+// accepted") from before the panel switched to its own monochrome
+// NOTIF_TYPE_ICON per row — that context now makes the emoji redundant
+// as well as visually inconsistent. Stripped client-side rather than
+// requiring a DB migration, so it's fixed for every row regardless of
+// which SQL version last wrote it.
+function stripLeadingEmoji(str) {
+  return (str || '').replace(/^[\p{Extended_Pictographic}️‍]+\s*/u, '');
+}
+
 function formatNotifTime(iso) {
   const then = new Date(iso).getTime();
   if (!then || isNaN(then)) return '';
@@ -5092,7 +5085,7 @@ function renderNotificationsList(notifications) {
 
     const title = document.createElement('div');
     title.className = 'notif-row-title';
-    title.textContent = n.title;
+    title.textContent = stripLeadingEmoji(n.title);
     content.appendChild(title);
 
     const body = document.createElement('div');
@@ -5105,8 +5098,21 @@ function renderNotificationsList(notifications) {
     time.textContent = formatNotifTime(n.createdAt);
     content.appendChild(time);
 
+    row.appendChild(content);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'notif-row-delete';
+    deleteBtn.dataset.id = n.id;
+    deleteBtn.setAttribute('aria-label', t('btnClose'));
+    deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    row.appendChild(deleteBtn);
+
     // Friend requests are still actionable from right here — no need to
-    // dig into the Friends modal separately to respond to one.
+    // dig into the Friends modal separately to respond to one. A direct
+    // child of .row (not nested in .notif-row-content), with flex-basis:
+    // 100% (styles.css) so it wraps onto its own full-width line below
+    // the icon+text — spanning the whole row edge to edge instead of
+    // being squeezed into the narrower text column next to the icon.
     if (n.type === 'friend_request' && n.data && n.data.request_id) {
       const actions = document.createElement('div');
       actions.className = 'notif-row-actions';
@@ -5124,17 +5130,8 @@ function renderNotificationsList(notifications) {
       declineBtn.textContent = t('btnDeclineRequest');
       actions.appendChild(declineBtn);
 
-      content.appendChild(actions);
+      row.appendChild(actions);
     }
-
-    row.appendChild(content);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'notif-row-delete';
-    deleteBtn.dataset.id = n.id;
-    deleteBtn.setAttribute('aria-label', t('btnClose'));
-    deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-    row.appendChild(deleteBtn);
 
     DOM.notificationsList.appendChild(row);
   });
