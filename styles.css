@@ -143,7 +143,11 @@ input { font: inherit; color: inherit; }
   z-index: 1;
   padding-top: var(--sat);
   padding-bottom: calc(72px + 20px + var(--sab));
-  overflow-y: auto;
+  /* scroll, not auto — the scrollbar is hidden either way (below), but
+     `scroll` commits WebKit to an always-scrollable container up front
+     instead of `auto`'s content-dependent decision, which is worth
+     ruling out as a factor now that this is a repeat "stuck" report. */
+  overflow-y: scroll;
   overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
