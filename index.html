@@ -6,12 +6,14 @@
   <meta name="theme-color" content="#000000">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- "black" (opaque), not "black-translucent" — translucent lets iOS
-       draw the status bar as a see-through overlay on top of our content,
-       so anything scrolled to the very top (behind the sticky home
-       header) shows through it. Layout geometry (env(safe-area-inset-*))
-       is identical either way; this only makes the bar itself solid. -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- "black" (Apple's fixed opaque style) isn't actually pure #000 — it
+       renders as a dark gray, visibly off from this app's pure-black
+       design. iOS gives no way to set a literal status-bar color other
+       than "black-translucent" (content draws under a genuinely
+       see-through status bar) + our own opaque fill behind it — see the
+       #status-bar-fill element/CSS for the fixed, pure-black mask that
+       actually paints that region regardless of scroll position. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Eightysix°">
   
   <title>Eightysix° Punchcard</title>
@@ -41,6 +43,15 @@
   </script>
 </head>
 <body>
+  <!-- Pure-black mask for the status-bar-height strip at the very top of
+       the screen — see the apple-mobile-web-app-status-bar-style comment
+       in <head>. Fixed (not part of #app/.view's own layout or scroll),
+       so it always paints solid black there regardless of which view is
+       active or how far anything has scrolled. Zero height outside
+       standalone iOS (env(safe-area-inset-top) is 0 everywhere else),
+       so it's a no-op elsewhere. -->
+  <div id="status-bar-fill"></div>
+
   <!-- Confetti Canvas for Celebrations -->
   <canvas id="confetti-canvas"></canvas>
 

@@ -88,6 +88,20 @@ body {
 /* CRITICAL UTILITY */
 .hidden { display: none !important; }
 
+/* Pure-black status-bar mask — see the <head> comment on
+   apple-mobile-web-app-status-bar-style and the markup comment on this
+   element in index.html. z-index above #confetti-canvas (and
+   everything else) so it's never accidentally covered; pointer-events:
+   none so it can never intercept a tap into the real status bar. */
+#status-bar-fill {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: env(safe-area-inset-top);
+  background: #000000;
+  z-index: 10000;
+  pointer-events: none;
+}
+
 /* Canvas for Confetti */
 #confetti-canvas {
   position: fixed;
@@ -131,6 +145,8 @@ input { font: inherit; color: inherit; }
   padding-bottom: calc(72px + 20px + var(--sab));
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* iOS Safari has a long-documented bug where an element that is both
      overflow:auto AND carries its own `transform` stops responding to
@@ -142,12 +158,18 @@ input { font: inherit; color: inherit; }
      bug class with no consistent fix. Content taller than the screen
      (the home view with the wallet card + student discount promo both
      showing) was completely unreachable on iOS as a result.
-     -webkit-overflow-scrolling: touch itself dropped for the same
-     reason: it's a legacy iOS<13 shim, and it has its own documented
-     conflict with `position: sticky` descendants (.home-header) that
-     freezes touch-scroll on the container entirely rather than just
-     breaking the stickiness. Modern iOS already gives overflow:auto
-     native momentum scrolling without this property. */
+     -webkit-overflow-scrolling: touch was dropped for a stretch too,
+     over a suspected conflict with the .home-header position: sticky
+     that used to live on this view's only header — that header is gone
+     now (see .home-header in the Home View section), so this is back:
+     an installed iOS PWA runs its content in a standalone WKWebView, a
+     meaningfully different host than a plain Safari tab, and this legacy
+     property still measurably affects whether that host reliably starts
+     a touch-scroll gesture on a NESTED overflow:auto div — especially
+     when the overflow amount is small (e.g. no reward banner adding
+     extra height), which is exactly the "some tabs scroll, this one
+     sometimes doesn't" pattern reported. overscroll-behavior-y: contain
+     alongside it stops any residual scroll from chaining up into #app. */
 }
 .view::-webkit-scrollbar { display: none; }
 .view.active {
@@ -554,7 +576,10 @@ input { font: inherit; color: inherit; }
    that scrolls away with the rest of the content isn't worth trading
    for a broken scroll container on the one tab customers open the most. */
 .home-header {
-  padding: 20px 24px 12px;
+  /* Matches .customers-header/.settings-header's padding (24px 24px
+     16px) — this one had drifted to a shorter 20px/12px, the only
+     header among the app's views not on the shared rhythm. */
+  padding: 24px 24px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -829,11 +854,18 @@ input { font: inherit; color: inherit; }
   align-items: center;
   gap: 6px;
 }
+/* height: 26px matches .card-flip-btn (the rotate-card button) they sit
+   beside in .card-header-actions — both badges used to be sized purely
+   off padding + font line-height, which landed a couple px shorter than
+   the button next to them. box-sizing: border-box so the border/padding
+   already in the height figure, not stacked on top of it. */
 .stamp-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 9px;
+  height: 26px;
+  padding: 0 9px;
+  box-sizing: border-box;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-glass-strong);
   background: var(--bg-glass);
@@ -847,10 +879,9 @@ input { font: inherit; color: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 9px;
-  /* Same 1px border thickness as .stamp-badge (in its own background
-     color, so invisible against the fill) — otherwise this chip sits
-     2px shorter than the rank chip despite matching padding/font-size. */
+  height: 26px;
+  padding: 0 9px;
+  box-sizing: border-box;
   border: 1px solid var(--text-primary);
   border-radius: var(--radius-sm);
   background: var(--text-primary);
