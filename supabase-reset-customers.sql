@@ -12,9 +12,16 @@
 --     usernames/passwords, and any Google-linked accounts.
 --   - Everything that references a customer row via ON DELETE CASCADE:
 --     login sessions (customer_sessions), push notification
---     subscriptions (push_subscriptions), and friend requests/
---     friendships (customer_friend_requests) — nothing extra to run,
---     Postgres clears these automatically as part of the same delete.
+--     subscriptions (push_subscriptions), friend requests/friendships
+--     (customer_friend_requests), and in-app notifications
+--     (customer_notifications) — nothing extra to run, Postgres clears
+--     these automatically as part of the same delete.
+--   - Referral links (customers.referred_by, a customer referencing
+--     another customer's id): safe here specifically because this is
+--     ONE statement deleting every row at once — Postgres checks that
+--     constraint at the end of the statement, by which point nothing is
+--     left to violate it. Do not turn this into a filtered/looped
+--     delete without also handling that column, or it can fail.
 --
 -- WHAT THIS DOES NOT TOUCH:
 --   - Staff accounts (Stacy/Kiko/Iva) and their sessions — you'll
