@@ -543,10 +543,14 @@ input { font: inherit; color: inherit; }
 
 /* ── Home View ────────────────────────────────────────────── */
 .home-header {
-  padding: 20px 24px 0;
+  padding: 20px 24px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-primary);
 }
 .header-left {
   display: flex;
@@ -1870,6 +1874,7 @@ input { font: inherit; color: inherit; }
   to { opacity: 1; transform: translateY(0); }
 }
 .student-promo-header { display: flex; align-items: center; gap: 10px; }
+.student-promo-text { min-width: 0; }
 .student-promo-icon {
   width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm);
   background: var(--text-primary); padding: 7px; box-sizing: border-box;
@@ -1889,9 +1894,9 @@ input { font: inherit; color: inherit; }
 .student-promo-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 .student-promo-subtitle {
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: var(--text-secondary);
-  margin: 0;
+  margin: 3px 0 0;
 }
 .student-promo-btn {
   display: block;
@@ -2505,6 +2510,7 @@ input { font: inherit; color: inherit; }
   .rewards-wallet-card,
   .install-prompt-banner,
   .campaign-banner,
+  .student-promo-banner,
   .home-actions,
   .admin-actions,
   .empty-state {
@@ -2529,6 +2535,12 @@ input { font: inherit; color: inherit; }
   #view-settings > .settings-header,
   #view-settings > .quick-stats {
     grid-column: 1 / -1;
+  }
+  /* .quick-stats is a fixed 3-column grid — left to span the full grid
+     row here, each tile would balloon out to a third of 1200px instead
+     of staying a normal-sized stat card. */
+  #view-settings > .quick-stats {
+    max-width: 640px;
   }
 
   /* Admin: real grids instead of one long stacked list */
