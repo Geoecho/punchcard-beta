@@ -668,23 +668,32 @@ input { font: inherit; color: inherit; }
    faces are absolutely positioned and don't contribute to layout. */
 .card-flip-scene {
   margin: 20px 20px 0;
+  /* touch-action alone was tried first (still kept, harmless) but
+     wasn't sufficient — iOS Safari has a much deeper bug where a
+     PERSISTENT perspective/preserve-3d 3D-rendering context anywhere
+     inside a scrolling container can break that container's own
+     touch-scroll, regardless of touch-action on the 3D element itself.
+     perspective/preserve-3d now only get applied via .card-flip-3d
+     (toggled in JS, see setCardFlipped) for the ~600ms the card is
+     actually rotating plus however long it's resting flipped to the
+     back — never while just sitting on the front face, which is what
+     the card spends the vast majority of its time doing. */
+  touch-action: pan-y;
+}
+.card-flip-scene.card-flip-3d {
   perspective: 1400px;
   -webkit-perspective: 1400px;
-  /* preserve-3d below promotes .card-flip-inner to its own compositing
-     layer on iOS, which has been known to swallow touch-scroll gestures
-     that start over it instead of passing them up to .view's scroll —
-     explicit pan-y keeps vertical scroll working on/over the card
-     itself rather than only in the empty space around it. */
-  touch-action: pan-y;
 }
 .card-flip-inner {
   position: relative;
   width: 100%;
   cursor: pointer;
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0.15, 0.2, 1);
   touch-action: pan-y;
+}
+.card-flip-inner.card-flip-3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 /* iOS Safari has historically needed the -webkit-transform set
    explicitly alongside the unprefixed one, or backface-visibility:hidden
@@ -709,20 +718,22 @@ input { font: inherit; color: inherit; }
      back always read as the same physical card thickness. */
   min-height: 100%;
   margin: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
-/* Both backface-visibility and a visibility:hidden fallback proved
-   unreliable on iOS Safari for actually suppressing the inactive face —
-   both are 3D-compositing-adjacent properties, and iOS's handling of
-   composited layers under preserve-3d has long-standing, inconsistently
-   fixed bugs. display:none is the one mechanism with no such history:
-   a display:none element is removed from the render tree entirely, not
-   just hidden, so there's nothing for any compositor to get wrong. JS
-   (setCardFlipped) now toggles it directly, timed to the transform's
-   midpoint where the card is edge-on and imperceptible either way. This
-   default (back hidden, front implicitly shown) only covers the very
-   first paint before that JS has run even once. */
+/* backface-visibility:hidden used to sit on .card-container.card-face
+   here, meant to suppress the away-facing side — dropped entirely, not
+   just made conditional like perspective/preserve-3d above, because it
+   never actually did that job (proved unreliable on iOS Safari, same
+   family of composited-layer bugs as preserve-3d) and had nothing left
+   to contribute once display:none took over as the real mechanism
+   below. Keeping an inert 3D-adjacent property around for free just
+   re-risks the exact touch-scroll bug this file is otherwise fighting.
+   display:none is what actually suppresses the inactive face: a
+   display:none element is removed from the render tree entirely, so
+   there's nothing for any compositor to get wrong. JS (setCardFlipped)
+   toggles it directly, timed to the transform's midpoint where the card
+   is edge-on and imperceptible either way. This default (back hidden,
+   front implicitly shown) only covers the very first paint before that
+   JS has run even once. */
 .card-face-back {
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg);

@@ -4685,6 +4685,7 @@ let cardBackRankCache = {};
 // removed from the render tree entirely, so there's no compositor
 // state left over for iOS to get wrong.
 let cardFlipDisplayTimer = null;
+let cardFlip3DTimer = null;
 let cardIntroFlipTimer = null;
 let cardIntroFlipBackTimer = null;
 function setCardFlipped(flipped) {
@@ -4692,6 +4693,23 @@ function setCardFlipped(flipped) {
   const alreadyFlipped = DOM.cardFlipInner.classList.contains('flipped');
   DOM.cardFlipInner.classList.toggle('flipped', flipped);
   if (alreadyFlipped === flipped) return;
+
+  // .card-flip-3d supplies perspective/preserve-3d (styles.css) — kept
+  // off the card everywhere else so the scroll container carries zero
+  // persistent 3D-compositing layer while the card just sits on its
+  // front face, which is what it's doing almost all the time. Needed
+  // for the whole transition either direction, and needs to stay on
+  // afterward if the card is resting flipped to the back (without
+  // preserve-3d there, the back face's content renders mirrored).
+  clearTimeout(cardFlip3DTimer);
+  if (DOM.punchcard) DOM.punchcard.classList.add('card-flip-3d');
+  DOM.cardFlipInner.classList.add('card-flip-3d');
+  if (!flipped) {
+    cardFlip3DTimer = setTimeout(() => {
+      if (DOM.punchcard) DOM.punchcard.classList.remove('card-flip-3d');
+      DOM.cardFlipInner.classList.remove('card-flip-3d');
+    }, 650);
+  }
 
   clearTimeout(cardFlipDisplayTimer);
   cardFlipDisplayTimer = setTimeout(() => {
