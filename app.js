@@ -220,6 +220,9 @@ const TRANSLATIONS = {
     rewardSubtitle: "You collected 10 stamps! Show your barista to redeem or save it to your wallet for later.",
     btnRedeemNow: "Redeem Now at Counter",
     btnKeepWallet: "Keep in Wallet & Reset Card",
+    milestoneTitle: "{tier} TIER REACHED",
+    milestoneSubtitle: "You just hit {tier} status — enjoy {n} bonus stamps!",
+    btnAwesome: "Awesome!",
     staffAccessTitle: "Staff Access",
     staffAccessSubtitle: "Enter PIN to access staff features.",
     labelName: "Name",
@@ -240,10 +243,7 @@ const TRANSLATIONS = {
     btnSave: "Save",
     settingsChangeDisplayName: "Display Name",
     btnSkipForNow: "Later",
-    settingsNotifications: "Notifications",
-    settingsNotificationsSub: "Know the moment a reward's ready",
     toastNotificationsEnabled: "Notifications enabled!",
-    toastNotificationsDisabled: "Notifications turned off",
     errNotificationsBlocked: "Notifications are blocked — enable them in your browser or device settings",
     errNotificationsInstallRequired: "Add this app to your Home Screen first — notifications only work from the installed app, not a browser tab",
     notifPromoTitle: "Never Miss a Free Coffee",
@@ -504,6 +504,9 @@ const TRANSLATIONS = {
     rewardSubtitle: "Собравте 10 печати! Прикажете му на бариста за да го искористите или зачувајте го во вашиот паричник за подоцна.",
     btnRedeemNow: "Искористи сега на шанкот",
     btnKeepWallet: "Зачувај во паричник и ресетирај картичка",
+    milestoneTitle: "Достигнато {tier} ниво",
+    milestoneSubtitle: "Штотуку го достигнавте статусот {tier} — уживајте {n} бонус печати!",
+    btnAwesome: "Одлично!",
     staffAccessTitle: "Пристап за вработени",
     staffAccessSubtitle: "Внесете ПИН за пристап до опциите за вработени.",
     labelName: "Име",
@@ -524,10 +527,7 @@ const TRANSLATIONS = {
     btnSave: "Зачувај",
     settingsChangeDisplayName: "Име за прикажување",
     btnSkipForNow: "Подоцна",
-    settingsNotifications: "Известувања",
-    settingsNotificationsSub: "Дознајте веднаш штом наградата е достапна",
     toastNotificationsEnabled: "Известувањата се овозможени!",
-    toastNotificationsDisabled: "Известувањата се исклучени",
     errNotificationsBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или уредот",
     errNotificationsInstallRequired: 'Прво додајте ја апликацијата на почетниот екран — известувањата работат само од инсталираната апликација, не од прелистувач',
     notifPromoTitle: "Не пропуштајте бесплатно кафе",
@@ -788,6 +788,9 @@ const TRANSLATIONS = {
     rewardSubtitle: "Mblodhe 10 vula! Tregoja baristës për ta shfrytëzuar ose ruaje në portofolin tënd për më vonë.",
     btnRedeemNow: "Shfrytëzo Tani te Banaku",
     btnKeepWallet: "Ruaje në Portofol & Rivendos Kartën",
+    milestoneTitle: "Niveli {tier} u arrit",
+    milestoneSubtitle: "Sapo arrite statusin {tier} — shijo {n} vula bonus!",
+    btnAwesome: "Fantastike!",
     staffAccessTitle: "Qasja e Stafit",
     staffAccessSubtitle: "Vendos PIN-in për të hyrë në veçoritë e stafit.",
     labelName: "Emri",
@@ -808,10 +811,7 @@ const TRANSLATIONS = {
     btnSave: "Ruaj",
     settingsChangeDisplayName: "Emri i Shfaqur",
     btnSkipForNow: "Më vonë",
-    settingsNotifications: "Njoftimet",
-    settingsNotificationsSub: "Merr vesh sapo shpërblimi është gati",
     toastNotificationsEnabled: "Njoftimet u aktivizuan!",
-    toastNotificationsDisabled: "Njoftimet u çaktivizuan",
     errNotificationsBlocked: "Njoftimet janë të bllokuara — aktivizoji te cilësimet e shfletuesit ose pajisjes",
     errNotificationsInstallRequired: "Shto këtë aplikacion në Home Screen fillimisht — njoftimet funksionojnë vetëm nga aplikacioni i instaluar, jo nga shfletuesi",
     notifPromoTitle: "Mos e Humb Asnjë Kafe Falas",
@@ -2114,8 +2114,10 @@ function startCloudPolling() {
 
       const localCustomer = await db.getCustomer(targetId);
       const previousStamps = localCustomer ? localCustomer.stamps : 0;
+      const previousTotalEarned = localCustomer ? localCustomer.totalStampsEarned : 0;
 
-      if (!localCustomer || localCustomer.stamps !== cloudCustomer.stamps || localCustomer.rewardsEarned !== cloudCustomer.rewardsEarned || localCustomer.avatar !== cloudCustomer.avatar) {
+      if (!localCustomer || localCustomer.stamps !== cloudCustomer.stamps || localCustomer.rewardsEarned !== cloudCustomer.rewardsEarned
+        || localCustomer.avatar !== cloudCustomer.avatar || localCustomer.totalStampsEarned !== cloudCustomer.totalStampsEarned) {
         console.log('🔄 Cloud polling updated customer card:', targetId, 'stamps:', cloudCustomer.stamps);
         await db.saveCustomer(cloudCustomer);
         state.customers = await db.getAllCustomers();
@@ -2132,6 +2134,17 @@ function startCloudPolling() {
           if (cloudCustomer.stamps === MAX_STAMPS && !state.isAdmin) {
             openModal(DOM.rewardOverlay);
             fireConfetti();
+          }
+        }
+
+        // Gold/Platinum milestone celebration — the bonus stamps
+        // themselves were already granted server-side; this just
+        // surfaces it the moment this device notices the crossing.
+        if (!state.isAdmin && cloudCustomer.totalStampsEarned > previousTotalEarned) {
+          const prevBadge = getEarnedBadge(previousTotalEarned);
+          const newBadge = getEarnedBadge(cloudCustomer.totalStampsEarned);
+          if (newBadge && newBadge.key !== (prevBadge && prevBadge.key) && (newBadge.key === 'gold' || newBadge.key === 'platinum')) {
+            showMilestoneCelebration(newBadge.key, newBadge.key === 'platinum' ? 10 : 5);
           }
         }
       }
@@ -2449,8 +2462,6 @@ const DOM = {
   overlayNotifPermission: document.getElementById('overlay-notif-permission'),
   btnNotifPermissionSkip: document.getElementById('btn-notif-permission-skip'),
   btnNotifPermissionEnable: document.getElementById('btn-notif-permission-enable'),
-  notificationsToggleRow: document.getElementById('notifications-toggle-row'),
-  notificationsToggle: document.getElementById('notifications-toggle'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
   btnOpenFriendsHome: document.getElementById('btn-open-friends-home'),
   btnOpenNotifications: document.getElementById('btn-open-notifications'),
@@ -2517,6 +2528,10 @@ const DOM = {
   btnCancelRedeem: document.getElementById('btn-cancel-redeem'),
 
   rewardOverlay: document.getElementById('reward-overlay'),
+  milestoneOverlay: document.getElementById('milestone-overlay'),
+  milestoneTitle: document.getElementById('milestone-title'),
+  milestoneSubtitle: document.getElementById('milestone-subtitle'),
+  btnCloseMilestone: document.getElementById('btn-close-milestone'),
   btnRedeemReward: document.getElementById('btn-redeem-reward'),
   btnCloseReward: document.getElementById('btn-close-reward'),
 
@@ -2963,42 +2978,24 @@ function pushRequiresInstall() {
   return !isStandaloneMode();
 }
 
-// Reflects actual current state (permission + an active subscription),
-// not just what the customer last clicked — so the toggle is honest
-// after e.g. the OS-level permission gets revoked outside the app.
-async function refreshNotificationsToggleState() {
-  if (!DOM.notificationsToggle) return;
-  if (!pushNotificationsSupported() || pushRequiresInstall()) {
-    DOM.notificationsToggle.checked = false;
-    if (DOM.notificationsToggleRow) DOM.notificationsToggleRow.style.opacity = '0.5';
-    return;
-  }
+// Silently repairs a dropped push subscription — no Settings toggle to
+// reflect anymore, but if the OS/browser permission is still granted
+// and the subscription itself went missing (happens after service
+// worker updates), this quietly re-subscribes without prompting again,
+// so push keeps working in the background.
+async function ensurePushSubscriptionHealthy() {
+  if (!pushNotificationsSupported() || pushRequiresInstall()) return;
   try {
     const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-
-    // A subscription is supposed to survive reloads and service worker
-    // updates on its own — if permission is already granted but there's
-    // no active subscription anyway, something knocked it loose. Since
-    // the browser already trusts this origin, re-subscribing doesn't
-    // need a fresh permission prompt — do it quietly and repair the
-    // toggle instead of just reporting it as off.
+    const sub = await reg.pushManager.getSubscription();
     if (!sub && Notification.permission === 'granted') {
-      try {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
-        await cloud.savePushSubscription(state.myToken, sub);
-      } catch (e) {
-        sub = null;
-      }
+      const newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      await cloud.savePushSubscription(state.myToken, newSub);
     }
-
-    DOM.notificationsToggle.checked = !!sub && Notification.permission === 'granted';
-  } catch (e) {
-    DOM.notificationsToggle.checked = false;
-  }
+  } catch (e) {}
 }
 
 async function enablePushNotifications() {
@@ -3022,22 +3019,6 @@ async function enablePushNotifications() {
     return { ok: true };
   } catch (e) {
     return { error: 'offline' };
-  }
-}
-
-async function disablePushNotifications() {
-  if (!pushNotificationsSupported()) return { ok: true };
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    if (sub) {
-      const endpoint = sub.endpoint;
-      await sub.unsubscribe();
-      await cloud.removePushSubscription(state.myToken, endpoint);
-    }
-    return { ok: true };
-  } catch (e) {
-    return { ok: true };
   }
 }
 
@@ -3953,6 +3934,12 @@ function setupEventListeners() {
     closeModal(DOM.rewardOverlay);
   });
 
+  // Tier milestone celebration — purely informational, the bonus stamps
+  // already landed server-side, so this is just a dismiss.
+  if (DOM.btnCloseMilestone) {
+    DOM.btnCloseMilestone.addEventListener('click', () => closeModal(DOM.milestoneOverlay));
+  }
+
   // Action: Redeem Reward (Counter / Wallet / Staff Mode) — server
   // verifies rewards_earned/stamps and expiry, decrements atomically,
   // and attributes staff-performed redemptions in the history entry.
@@ -4078,36 +4065,6 @@ function setupEventListeners() {
   }
 
 
-  // Notifications toggle (Settings > Account) — always reflects a
-  // deliberate tap, never an auto-prompt on load. Reverts itself on any
-  // failure so it never shows "on" when the subscription didn't actually
-  // go through.
-  if (DOM.notificationsToggle) {
-    DOM.notificationsToggle.addEventListener('change', async () => {
-      const wantOn = DOM.notificationsToggle.checked;
-      DOM.notificationsToggle.disabled = true;
-
-      if (wantOn) {
-        const result = await enablePushNotifications();
-        if (result.error) {
-          DOM.notificationsToggle.checked = false;
-          const msg = result.error === 'unsupported' ? t('errNotificationsUnsupported')
-            : result.error === 'install_required' ? t('errNotificationsInstallRequired')
-            : result.error === 'blocked' ? t('errNotificationsBlocked')
-            : t('errServerConnection');
-          showToast(msg, 'error');
-        } else {
-          showToast(t('toastNotificationsEnabled'), 'success');
-        }
-      } else {
-        await disablePushNotifications();
-        showToast(t('toastNotificationsDisabled'), 'info');
-      }
-
-      DOM.notificationsToggle.disabled = false;
-    });
-  }
-
   // Home-screen notifications nudge — same enablePushNotifications() path
   // as the Settings toggle, just surfaced at a moment that explains why
   // it's worth doing instead of requiring someone to go find it.
@@ -4133,7 +4090,7 @@ function setupEventListeners() {
         return;
       }
       dismissNotifPromo();
-      refreshNotificationsToggleState();
+      ensurePushSubscriptionHealthy();
       showToast(t('toastNotificationsEnabled'), 'success');
     });
   }
@@ -4172,7 +4129,7 @@ function setupEventListeners() {
         return;
       }
       dismissNotifPromo();
-      refreshNotificationsToggleState();
+      ensurePushSubscriptionHealthy();
       showToast(t('toastNotificationsEnabled'), 'success');
     });
   }
@@ -4626,8 +4583,21 @@ function switchView(viewId) {
   });
 
   DOM.views.forEach(view => {
-    if (view.id === viewId) view.classList.add('active');
-    else view.classList.remove('active');
+    if (view.id === viewId) {
+      view.classList.add('active');
+      // A view keeps whatever scroll position it was left at (same DOM
+      // element, just re-rendered with new content) — logging out and
+      // signing into a fresh account can land back on view-home with
+      // far less content than before (no student promo yet, no
+      // campaign banner, etc.), so the old scroll offset can end up
+      // past the new, shorter scrollHeight. iOS Safari's momentum
+      // scroll has a long history of getting stuck rather than
+      // clamping back in that situation. Reset on every switch — also
+      // just correct tab-nav behavior (each tab starts at the top).
+      view.scrollTop = 0;
+    } else {
+      view.classList.remove('active');
+    }
   });
 
   if (viewId === 'view-poster') {
@@ -4643,7 +4613,7 @@ function switchView(viewId) {
     updateSettingsStats();
     if (!state.isAdmin && state.selectedCustomerId) {
       db.getCustomer(state.selectedCustomerId).then(c => refreshStudentPromoVisibility(c));
-      refreshNotificationsToggleState();
+      ensurePushSubscriptionHealthy();
     }
   }
   if (viewId === 'view-activity') renderActivityList();
@@ -5239,7 +5209,9 @@ const NOTIF_TYPE_ICON = {
   friend_request: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
   friend_accepted: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
   gift_received: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>',
-  reward_banked: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>'
+  reward_banked: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>',
+  referral_bonus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>',
+  milestone_reached: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>'
 };
 const NOTIF_TYPE_ICON_DEFAULT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
 
@@ -5941,6 +5913,20 @@ function showToast(message, type = 'info', options = {}) {
   DOM.toast.classList.add('show');
   clearTimeout(toastHideTimer);
   toastHideTimer = setTimeout(() => DOM.toast.classList.remove('show'), options.duration || 2500);
+}
+
+// Gold/Platinum tier celebration — triggered from the cloud-polling
+// comparison in startCloudPolling() the moment totalStampsEarned
+// crosses a new tier's threshold. Purely a client-side "nice!" moment;
+// the actual bonus stamps were already granted server-side by
+// staff_add_stamp when the crossing happened.
+function showMilestoneCelebration(tier, bonus) {
+  if (!DOM.milestoneOverlay) return;
+  const tierLabel = t('badge_' + tier);
+  if (DOM.milestoneTitle) DOM.milestoneTitle.textContent = t('milestoneTitle', { tier: tierLabel });
+  if (DOM.milestoneSubtitle) DOM.milestoneSubtitle.textContent = t('milestoneSubtitle', { tier: tierLabel, n: bonus });
+  openModal(DOM.milestoneOverlay);
+  fireConfetti();
 }
 
 // ==========================================

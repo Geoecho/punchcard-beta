@@ -1149,7 +1149,14 @@ input { font: inherit; color: inherit; }
 
 /* ── Bottom Navigation ────────────────────────────────────── */
 .bottom-nav {
-  position: fixed;
+  /* absolute (against #app, which is position:relative), not fixed
+     (against the viewport) — iOS standalone/home-screen mode has a
+     long-standing gap between what env(safe-area-inset-bottom) and
+     100dvh each resolve to for a fixed-position element vs. #app's own
+     box, which left this floating above the true bottom edge only when
+     installed. Anchoring to #app's own box sidesteps that mismatch
+     entirely since #app is already sized off the same dvh value. */
+  position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -1876,8 +1883,11 @@ input { font: inherit; color: inherit; }
 .student-promo-header { display: flex; align-items: center; gap: 10px; }
 .student-promo-text { min-width: 0; }
 .student-promo-icon {
-  width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm);
-  background: var(--text-primary); padding: 7px; box-sizing: border-box;
+  /* Bigger than a plain settings-row icon (32px) — with title+subtitle
+     now stacked beside it, a 32px square read as too small next to
+     that two-line text block. */
+  width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-sm);
+  background: var(--text-primary); padding: 9px; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   animation: promoIconPulse 2.6s ease-in-out infinite;
 }

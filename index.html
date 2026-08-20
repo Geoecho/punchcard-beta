@@ -419,7 +419,7 @@
         </button>
         <div class="student-promo-header">
           <div class="student-promo-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--bg-primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--bg-primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           </div>
           <div class="student-promo-text">
             <div class="student-promo-title" data-i18n="notifPromoTitle">Never Miss a Free Coffee</div>
@@ -714,21 +714,6 @@
           </div>
           <div class="settings-item-chevron">›</div>
         </div>
-        <div class="settings-item" id="notifications-toggle-row">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            </div>
-            <div>
-              <div class="settings-item-label" data-i18n="settingsNotifications">Notifications</div>
-              <div class="settings-item-sublabel" data-i18n="settingsNotificationsSub">Know the moment a reward's ready</div>
-            </div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="notifications-toggle">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
         <div class="settings-item" id="btn-open-friends">
           <div class="settings-item-left">
             <div class="settings-item-icon">
@@ -910,6 +895,26 @@
         <div class="reward-actions">
           <button class="btn-primary btn-block" id="btn-redeem-reward" data-i18n="btnRedeemNow">Redeem Now at Counter</button>
           <button class="btn-secondary btn-block" id="btn-close-reward" data-i18n="btnKeepWallet">Keep in Wallet & Reset Card</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier Milestone Celebration Overlay (Gold/Platinum) — reuses the
+         reward-overlay's visual language, own modal since it's a plain
+         "nice!" dismiss, not a redeem flow. Title/subtitle/icon are set
+         dynamically in app.js (showMilestoneCelebration). -->
+    <div class="reward-overlay" id="milestone-overlay">
+      <div class="reward-content">
+        <div class="reward-icon-box">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+        </div>
+        <h2 class="reward-title" id="milestone-title">GOLD TIER REACHED</h2>
+        <p class="reward-subtitle" id="milestone-subtitle">You just hit Gold status — enjoy 5 bonus stamps!</p>
+        <div class="reward-actions">
+          <button class="btn-primary btn-block" id="btn-close-milestone" data-i18n="btnAwesome">Awesome!</button>
         </div>
       </div>
     </div>
