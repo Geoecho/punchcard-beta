@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v71';
+const APP_BUILD_ID = 'v72';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -4367,6 +4367,56 @@ function setupEventListeners() {
     }
     closeModal(DOM.modalScanQr);
   }
+
+  setupScrollDiagnostic();
+}
+
+// TEMPORARY — long-press the greeting text on the Card tab (~1.2s) for
+// live layout/scroll metrics. Browser-automated testing (real device
+// emulation, simulated safe-area-inset values) already confirmed the
+// CSS math itself is correct — real overflow exists and the QR/Friends
+// buttons clear the bottom nav with the intended gap — so what's left
+// to rule out is specific to actual iOS hardware: is this build even
+// the one running (a PWA that's merely backgrounded, not truly force-
+// quit, can keep running old code indefinitely), and does a real touch
+// gesture actually produce a scroll on-device the way a mouse/programmatic
+// one does in every other test environment.
+function setupScrollDiagnostic() {
+  const view = DOM.viewHome;
+  if (!view || !DOM.homeGreeting) return;
+  let touchCount = 0, moveCount = 0, scrollCount = 0;
+  view.addEventListener('touchstart', () => { touchCount++; }, { passive: true });
+  view.addEventListener('touchmove', () => { moveCount++; }, { passive: true });
+  view.addEventListener('scroll', () => { scrollCount++; }, { passive: true });
+
+  let pressTimer = null;
+  const showDiagnostic = () => {
+    const qr = document.getElementById('btn-show-qr');
+    const nav = document.getElementById('bottom-nav');
+    const qrRect = qr ? qr.getBoundingClientRect() : null;
+    const navRect = nav ? nav.getBoundingClientRect() : null;
+    alert(
+      'BUILD: ' + APP_BUILD_ID + '\n\n' +
+      'scrollHeight: ' + view.scrollHeight + '\n' +
+      'clientHeight: ' + view.clientHeight + '\n' +
+      'overflow: ' + (view.scrollHeight - view.clientHeight) + 'px\n' +
+      'scrollTop: ' + view.scrollTop + '\n' +
+      'touchstart events: ' + touchCount + '\n' +
+      'touchmove events: ' + moveCount + '\n' +
+      'scroll events: ' + scrollCount + '\n' +
+      (qrRect ? 'QR button bottom: ' + qrRect.bottom.toFixed(0) + '\n' : '') +
+      (navRect ? 'nav top: ' + navRect.top.toFixed(0) + '\n' : '') +
+      (qrRect && navRect ? 'QR-to-nav gap: ' + (navRect.top - qrRect.bottom).toFixed(0) + 'px\n' : '') +
+      'sat/sab: ' + getComputedStyle(document.documentElement).getPropertyValue('--sat') + ' / ' + getComputedStyle(document.documentElement).getPropertyValue('--sab') + '\n' +
+      'standalone: ' + (window.navigator.standalone === true) + '\n' +
+      'sw controller: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no')
+    );
+  };
+  DOM.homeGreeting.addEventListener('touchstart', () => {
+    pressTimer = setTimeout(showDiagnostic, 1200);
+  }, { passive: true });
+  DOM.homeGreeting.addEventListener('touchend', () => clearTimeout(pressTimer));
+  DOM.homeGreeting.addEventListener('touchmove', () => clearTimeout(pressTimer));
 }
 
 // ==========================================
