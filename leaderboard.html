@@ -26,19 +26,40 @@
     overflow: hidden;
     height: 100%;
   }
+  /* justify-content centers the wrapper horizontally when the viewport
+     exceeds max-width; no align-items override means the default
+     'stretch' applies, so the wrapper fills the full screen height
+     instead of shrink-wrapping to its content and floating centered
+     with dead space above/below whenever there isn't enough content
+     to fill a display — the bug that showed as "too much space" in
+     both orientations. */
   body {
     display: flex;
-    align-items: center;
     justify-content: center;
-    min-height: 100%;
+    height: 100%;
   }
   #fit-wrapper {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 1600px;
+    /* 1600px capped out well short of a common 1920px TV, leaving ~215px
+       of dead space on each side while top/bottom sat near zero — the
+       side-heavy imbalance being fixed here. 2000px comfortably fills
+       standard tablet/TV widths (a 1920px display now hits the actual
+       viewport edge, not this cap) while still capping how wide a single
+       row can stretch on anything larger. */
+    max-width: 2000px;
     padding: clamp(20px, 4vw, 44px) clamp(18px, 4.2vw, 40px);
-    transform-origin: center center;
+    /* Anchored to the top, not the center: when content is taller than
+       the screen and autoFit() below scales it down to avoid scrolling,
+       a center origin shrinks equally toward the middle and leaves a
+       matching blank bar ABOVE the content as well as below — the
+       actual source of "too much space" in both orientations, since a
+       center-anchored scale creates that symmetric gap regardless of
+       aspect ratio. Anchoring at the top keeps the header flush with
+       the screen edge and pushes all the freed-up space to the bottom,
+       where it reads as normal trailing room instead of dead space. */
+    transform-origin: top center;
   }
   ::-webkit-scrollbar { display: none; }
 
@@ -270,6 +291,17 @@
     flex-shrink: 0;
   }
   .tv-grid { column-count: 1; }
+  /* Width-gated, not orientation-gated: a portrait tablet is still wide
+     enough for two menu columns, and leaving the menu single-column
+     regardless of width was the main reason content ran so tall that
+     autoFit() had to shrink the whole display down hard, leaving a big
+     unused band below — the "too much space" that showed up in both
+     orientations. Splitting into columns whenever there's the width for
+     it roughly halves the menu's vertical footprint, so autoFit has far
+     less height to compensate for. */
+  @media (min-width: 640px) {
+    .tv-grid { column-count: 2; column-gap: clamp(24px, 3.2vw, 40px); }
+  }
   .tv-category { break-inside: avoid; margin-bottom: clamp(14px, 2.8vw, 24px); }
   .tv-category-title {
     font-size: clamp(11px, 1.9vw, 15px);
