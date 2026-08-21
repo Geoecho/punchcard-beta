@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v77';
+const APP_BUILD_ID = 'v78';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -128,7 +128,7 @@ const TRANSLATIONS = {
     studentStatusError: "Could not update — check your connection",
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
-    studentPromoSubtitle: "Sign up in Netaville with your student email, then ask staff to verify you",
+    studentPromoSubtitle: "Sign up in the Netaville App with your student email, then ask staff to verify you",
     studentPromoBtn: "Netaville App",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
@@ -406,7 +406,7 @@ const TRANSLATIONS = {
     cardBackMemberSince: "Член од",
     settingsStudentDiscount: "Студентски попуст",
     studentPromoTitle: "Добијте студентски попуст",
-    studentPromoSubtitle: "регистрирајте се на Netaville апликацијата со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди.",
+    studentPromoSubtitle: "Регистрирајте се на Netaville апликацијата со вашиот студентски е-маил, потоа побарајте персоналот да ве потврди.",
     studentPromoBtn: "Netaville Апликација",
     staffModeTitle: "Режим за вработени активен",
     staffModeText: "Изберете клиент од листата за да ја видите и печатите картичката.",
@@ -2723,8 +2723,25 @@ async function initApp() {
 
     // Keeps the notification bell badge current while a customer just
     // sits on the home screen — a friend request or gift can land at any
-    // time, not just when they happen to reopen the app.
-    setInterval(() => { if (state.myCustomerId && !state.isAdmin) refreshNotifBadge(); }, 45000);
+    // time, not just when they happen to reopen the app. This is polling,
+    // not realtime: customer_notifications deliberately has no RLS policy
+    // (see supabase-notifications-panel.sql — only trusted SECURITY
+    // DEFINER functions can touch it), the same reason the customers
+    // table below fell back from realtime to a short poll after
+    // supabase-security-lockdown.sql revoked its direct SELECT grant.
+    // 45s was the original interval and read as "not fast, only on
+    // reload" — 5s matches the same interval already used for stamps
+    // (see startCloudPolling below) instead of inventing a slower one
+    // just for this.
+    const refreshNotifIfCustomer = () => { if (state.myCustomerId && !state.isAdmin) refreshNotifBadge(); };
+    setInterval(refreshNotifIfCustomer, 5000);
+    // Also check the instant a backgrounded PWA is brought back to the
+    // foreground, rather than waiting up to 5s for the next tick — this
+    // is what actually makes "reopen the app" feel instant instead of
+    // "notifications arrive fast" being true only while it's already open.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshNotifIfCustomer();
+    });
 
     // Load saved user session
     const savedUserJson = localStorage.getItem('86_user_session');
@@ -3235,12 +3252,16 @@ function setupEventListeners() {
 
       const renderQr = (text) => {
         DOM.qrcodeDisplay.innerHTML = '';
+        // White-on-transparent — this is the in-app "Show My QR Code"
+        // modal (dark background), not the printable poster, which
+        // stays black-on-white further down since it needs to scan off
+        // paper. Canvas fillStyle accepts "transparent" directly.
         new QRCode(DOM.qrcodeDisplay, {
           text,
           width: 200,
           height: 200,
-          colorDark: "#000000",
-          colorLight: "#ffffff",
+          colorDark: "#ffffff",
+          colorLight: "transparent",
           correctLevel: QRCode.CorrectLevel.H
         });
       };
