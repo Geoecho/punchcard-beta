@@ -811,7 +811,7 @@
          ========================================== -->
     <nav class="bottom-nav hidden" id="bottom-nav">
       <!-- Customer Nav (shown when NOT admin) -->
-      <div class="nav-item active customer-nav-item" data-target="view-home">
+      <button type="button" class="nav-item active customer-nav-item" data-target="view-home">
         <!-- Was a calendar icon (two hanging tabs + divider) — an odd
              mismatch for a tab literally called "Card". This is Feather's
              credit-card glyph instead: a rounded rect with one stripe
@@ -821,8 +821,8 @@
           <line x1="1" y1="10" x2="23" y2="10"></line>
         </svg>
         <span class="nav-label" data-i18n="navCard">Card</span>
-      </div>
-      <div class="nav-item customer-nav-item" data-target="view-menu">
+      </button>
+      <button type="button" class="nav-item customer-nav-item" data-target="view-menu">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -830,8 +830,8 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
         <span class="nav-label" data-i18n="navMenu">Menu</span>
-      </div>
-      <div class="nav-item customer-nav-item" data-target="view-leaderboard">
+      </button>
+      <button type="button" class="nav-item customer-nav-item" data-target="view-leaderboard">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 21h8"></path>
           <path d="M12 17v4"></path>
@@ -840,9 +840,9 @@
           <path d="M7 6H5a2 2 0 0 0 0 4h1"></path>
         </svg>
         <span class="nav-label" data-i18n="navLeaderboard">Ranks</span>
-      </div>
+      </button>
       <!-- Admin Nav (shown only in admin mode) -->
-      <div class="nav-item admin-nav-item hidden" data-target="view-customers">
+      <button type="button" class="nav-item admin-nav-item hidden" data-target="view-customers">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -850,8 +850,8 @@
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
         <span class="nav-label" data-i18n="navCustomers">Customers</span>
-      </div>
-      <div class="nav-item admin-nav-item hidden" data-target="view-admin-menu">
+      </button>
+      <button type="button" class="nav-item admin-nav-item hidden" data-target="view-admin-menu">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -859,8 +859,8 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
         <span class="nav-label" data-i18n="navEditMenu">Edit Menu</span>
-      </div>
-      <div class="nav-item admin-nav-item hidden" data-target="view-activity">
+      </button>
+      <button type="button" class="nav-item admin-nav-item hidden" data-target="view-activity">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -868,14 +868,14 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
         <span class="nav-label" data-i18n="navActivity">Activity</span>
-      </div>
-      <div class="nav-item" data-target="view-settings">
+      </button>
+      <button type="button" class="nav-item" data-target="view-settings">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
         <span class="nav-label" data-i18n="navSettings">Settings</span>
-      </div>
+      </button>
     </nav>
 
     <!-- Scan QR FAB (Customers view only) — lives outside any .view so its

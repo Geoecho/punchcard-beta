@@ -18,7 +18,12 @@
   /* Typography */
   --text-primary: #FFFFFF;
   --text-secondary: #AAAAAA;
-  --text-muted: #666666;
+  /* #666666 measured ~3.66:1 against --bg-primary — under WCAG AA's
+     4.5:1 minimum for regular-size text, and this is used at 10-13px
+     in a lot of places (timestamps, section titles, subtitles, empty
+     states). #767676 measures ~4.62:1, clearing it with a small margin
+     while staying visually "muted" relative to --text-secondary. */
+  --text-muted: #767676;
   --text-inverse: #000000;
 
   /* Accents (Monochrome) */

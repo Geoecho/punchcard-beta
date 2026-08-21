@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v82';
+const APP_BUILD_ID = 'v83';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -3207,6 +3207,8 @@ function wireEnterKeyChain(container, submitBtn) {
 }
 
 function setupEventListeners() {
+  setupModalAccessibility();
+
   wireEnterKeyChain(DOM.formNewCard, DOM.btnSignupSubmit);
   wireEnterKeyChain(DOM.formFindCard, DOM.btnLoginSubmit);
   wireEnterKeyChain(document.getElementById('view-admin-login'), DOM.btnStaffLoginSubmit);
@@ -4853,8 +4855,89 @@ function toggleAdminMode(isActive) {
   }
 }
 
-function openModal(modalEl) { if (modalEl) modalEl.classList.add('active'); }
-function closeModal(modalEl) { if (modalEl) modalEl.classList.remove('active'); }
+// .modal is already visibility:hidden while inactive, which browsers
+// exclude from the tab order and the accessibility tree on their own —
+// what was actually missing: a screen reader is never told a dialog
+// opened at all (no role/label), and a keyboard user can Tab straight
+// through an open modal into whatever's behind it instead of staying
+// inside it. State is stored per-element (not in shared module
+// variables) so this stays correct even if a modal opens while another
+// is already open.
+function getModalFocusableEls(container) {
+  return Array.from(container.querySelectorAll(
+    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+}
+
+function openModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.add('active');
+
+  modalEl._returnFocusEl = document.activeElement;
+  // Deferred one frame on purpose — .modal's `transition: all 0.3s`
+  // includes visibility, and focusing an element the very same tick its
+  // ancestor's visibility flips from hidden to visible can silently
+  // fail (the focus call lands before the browser actually commits the
+  // element as focusable). Every accessible-modal library defers
+  // initial focus for exactly this reason; this is the same fix.
+  requestAnimationFrame(() => {
+    const focusables = getModalFocusableEls(modalEl);
+    (focusables[0] || modalEl).focus({ preventScroll: true });
+  });
+
+  modalEl._keydownHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeModal(modalEl);
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const els = getModalFocusableEls(modalEl);
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  modalEl.addEventListener('keydown', modalEl._keydownHandler);
+}
+
+function closeModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.remove('active');
+
+  if (modalEl._keydownHandler) {
+    modalEl.removeEventListener('keydown', modalEl._keydownHandler);
+    modalEl._keydownHandler = null;
+  }
+  // The trigger element (e.g. the button that opened this modal) may
+  // itself have been removed/re-rendered while the modal was open —
+  // contains() guards against focusing a detached element.
+  if (modalEl._returnFocusEl && document.body.contains(modalEl._returnFocusEl)) {
+    modalEl._returnFocusEl.focus({ preventScroll: true });
+  }
+  modalEl._returnFocusEl = null;
+}
+
+// One-time setup — role/label don't change per open/close, so these are
+// set once here rather than in openModal on every single call.
+function setupModalAccessibility() {
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    // Fallback focus target (openModal's `focusables[0] || modalEl") —
+    // a plain div can't actually receive focus without this.
+    if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
+    const title = modal.querySelector('.modal-title');
+    if (title) {
+      if (!title.id) title.id = modal.id + '-title';
+      modal.setAttribute('aria-labelledby', title.id);
+    }
+  });
+}
 
 // Opens the existing Display Name modal in a mode with no way out except
 // submitting a name — used right after a brand-new signup, since that
