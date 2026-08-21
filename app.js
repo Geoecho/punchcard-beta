@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v84';
+const APP_BUILD_ID = 'v85';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';

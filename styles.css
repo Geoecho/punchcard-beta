@@ -1334,9 +1334,12 @@ input { font: inherit; color: inherit; }
   max-width: var(--app-max-w);
   height: calc(var(--nav-h) + var(--sab));
   box-sizing: border-box;
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* Solid, not translucent — was rgba(10,10,10,0.95) + a 20px blur (a
+     deliberate frosted-glass look), but that's also exactly what
+     #bottom-bar-fill's mask was built to paper over in the safe-area
+     strip below it. Solid --bg-primary matches that mask exactly, so
+     there's no translucency left anywhere on the bar to mismatch. */
+  background: var(--bg-primary);
   border-top: 1px solid var(--border-glass);
   display: flex;
   justify-content: space-around;
@@ -1367,7 +1370,13 @@ input { font: inherit; color: inherit; }
 .nav-item.active::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  /* Was bottom: 0, which sat the dot flush inside the item's own 4px
+     bottom padding — right up against the label with no visible gap.
+     Pushed further down (into .bottom-nav's own bottom padding, which
+     has real room to spare) instead of growing .nav-item's own
+     padding, so this doesn't re-inflate --nav-h after it was
+     deliberately trimmed for the opposite complaint. */
+  bottom: -5px;
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
@@ -1530,12 +1539,14 @@ input { font: inherit; color: inherit; }
 .header-right { display: flex; align-items: center; flex-shrink: 0; }
 /* 32px to match the app's other bordered-circle icon buttons
    (.friend-row-gift-btn/.friend-row-remove-btn) — was 34px, the one
-   circular icon button that didn't match that size. */
+   circular icon button that didn't match that size. Corner radius
+   matches .card-flip-btn's rounded-square (--radius-sm) instead of a
+   full circle, per direct request. */
 .btn-notif-bell {
   position: relative;
   width: 32px; height: 32px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid var(--border-glass-strong); background: var(--bg-glass);
+  border-radius: var(--radius-sm); border: 1px solid var(--border-glass-strong); background: var(--bg-glass);
   color: var(--text-secondary); cursor: pointer;
 }
 .btn-notif-bell:active { transform: scale(0.94); }
@@ -2031,7 +2042,11 @@ input { font: inherit; color: inherit; }
   box-shadow: var(--shadow-md);
   transition: all 0.25s var(--ease-out);
 }
-.rewards-wallet-card #btn-redeem-banked { width: 100%; }
+/* Overrides its own .btn-small (8px/12px) — it's full-width on its own
+   row here, not squeezed inline next to text, so there's no layout
+   reason for it to be the smallest button in the app. Matches the
+   other full-width action buttons' 16px/15px standard. */
+.rewards-wallet-card #btn-redeem-banked { width: 100%; padding: 16px; font-size: 15px; }
 .wallet-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .wallet-icon {
   width: 44px;
@@ -2459,47 +2474,57 @@ input { font: inherit; color: inherit; }
 .menu-section-btn:disabled { opacity: 0.3; cursor: default; }
 .menu-section-btn:disabled:active { transform: none; }
 .menu-section-btn-danger:hover, .menu-section-btn-danger:active { color: var(--error); border-color: var(--error); }
+/* Was flex-wrap: wrap — on a tight row (long name, or a discount badge
+   + bonus chip alongside the price) that let the sub/price-group drop
+   to a second line, and which piece wrapped depended on exact pixel
+   widths, so it could look different item to item ("disordered"). Now
+   everything genuinely stays on one line: the name is the one thing
+   that shrinks and truncates with an ellipsis (see .menu-item-name),
+   subtext and price/discount never do, so the right-hand info is
+   always in the same place. */
 .menu-item {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   column-gap: 8px;
-  row-gap: 4px;
 }
 .menu-item.stamp-bonus .menu-item-name {
   color: var(--text-primary);
 }
+/* flex: 1 1 auto (not a fixed 130px basis) + the ellipsis truncation
+   below — the name is the one thing on this row that shrinks, so a
+   long name never pushes the subtext or price out of place or onto a
+   second line. Nothing else on the row shrinks or wraps. */
 .menu-item-name {
   font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  flex: 1 1 130px;
+  flex: 1 1 auto;
   min-width: 0;
-  order: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* order: 3 (after price-group) — price/discount is the more important
-   number when the row's too tight for everything on one line, the
-   subtext ("Hot / Iced") is the one that should give way and drop to
-   its own line first, not the other way around. */
 .menu-item-sub {
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
-  order: 3;
+  flex-shrink: 0;
 }
-/* margin-left: auto keeps this pinned to the right edge whether it shares
-   the item's first line or, once name+sub+price can't all fit (long
-   names, or a student discount adding both a struck-through price and a
-   badge alongside a bonus-stamp chip), wraps to its own line below —
-   flexbox resolves auto margins per wrapped line, not just the first. */
+/* margin-left: auto keeps this pinned to the right edge. flex-shrink:0
+   + nowrap (both inherited from .menu-item's own nowrap, reinforced
+   here) — this never gives up its space; .menu-item-name is what
+   shrinks instead, so price/discount/bonus-chip are always fully
+   visible on the same line as the name. */
 .menu-item-price-group {
   margin-left: auto;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   justify-content: flex-end;
   gap: 6px;
   order: 2;
@@ -2838,13 +2863,16 @@ input { font: inherit; color: inherit; }
   }
   .menu-stamp-note { grid-column: 1 / -1; }
   .menu-category { margin-bottom: 8px; }
-  /* Leaderboard is customer-facing (reached from the customer nav, same
-     as the card), not an admin data table, so it stays the same narrow
-     reading-width column as the rest of the customer side instead of
-     the admin grids below — with this beta's handful of customers, a
-     multi-column grid mostly showed one sparse row of cards next to a
-     lot of dead space, while .lb-your-rank stayed narrow above it. */
-  .lb-scroll-area { width: 100%; max-width: 560px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+  /* Was a fixed 560px reading column (like the card view) centered
+     inside the up-to-1200px shell — on a wide screen that meant huge
+     empty gutters on both sides, much more than the rest of the
+     customer side. Menu already fills out to a multi-column grid at
+     this width instead of staying narrow, so leaderboard was the odd
+     one out. Capped the gutter itself at 60px instead of the content
+     at a fixed width — leaderboard still reads narrower than menu in
+     practice (one list column vs. a multi-column grid), just without
+     the excess empty space. */
+  .lb-scroll-area { width: 100%; max-width: calc(100% - 120px); margin-left: auto; margin-right: auto; box-sizing: border-box; }
   .lb-your-rank { width: 100%; }
 
   /* Centered dialogs read better than a bottom sheet on a big screen */
