@@ -1036,10 +1036,18 @@ input { font: inherit; color: inherit; }
   position: relative;
   transition: all 0.3s var(--ease-out);
 }
+/* Hidden by default now — every empty slot used to show this cup icon
+   permanently, which read as visual noise across the whole card (10
+   identical muted icons sitting there doing nothing). It now only
+   appears for the brief .earning animation moment (see .earning
+   .cup-icon below), then fades out as the checkmark takes over for
+   the permanent earned look — "the icon appears only when you add a
+   stamp," not before. */
 .stamp-cup .cup-icon {
   width: 22px;
   height: 22px;
   color: var(--text-muted);
+  opacity: 0;
   transition: all 0.3s var(--ease-out);
   z-index: 2;
   position: relative;
@@ -1069,6 +1077,7 @@ input { font: inherit; color: inherit; }
 .stamp-cup.earned .cup-icon { opacity: 0; }
 .stamp-cup.earned .stamp-check { opacity: 1; transform: scale(1); }
 .stamp-cup.earning { animation: stamp-earn 0.6s var(--ease-bounce) forwards; }
+.stamp-cup.earning .cup-icon { animation: cup-flash 0.6s var(--ease-bounce) forwards; }
 .stamp-cup.earning .stamp-check { animation: check-pop 0.4s var(--ease-bounce) 0.1s forwards; }
 /* Ring burst radiating out from the cup the instant it's earned —
    pure CSS (no extra JS/canvas), just a pseudo-element that expands
@@ -1165,12 +1174,29 @@ input { font: inherit; color: inherit; }
   width: 100%;
   font-size: 15px;
   font-weight: 600;
-  padding: 14px;
+  /* Matches .show-qr-btn's 16px — was 14px, the two buttons sit
+     directly stacked on the home screen and were visibly different
+     heights. */
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   margin-top: 10px;
+  /* .btn-secondary's own background is the generic translucent
+     --bg-glass — fine on its own, but this button sits directly under
+     the card and the Rewards Wallet card, which both use the solid
+     --bg-card. The mismatch was subtle but real: two crisp solid-color
+     surfaces then one faintly-different translucent one right below.
+     Same border either way (--border-glass-strong), just the fill. */
+}
+/* .btn-secondary.friends-home-btn (two classes) beats plain .btn-
+   secondary on specificity regardless of source order — a plain
+   .friends-home-btn rule here lost to .btn-secondary's own background
+   because they're equal-specificity single-class selectors and
+   .btn-secondary happens to be declared later in this file. */
+.btn-secondary.friends-home-btn {
+  background: var(--bg-card);
 }
 .btn-add-stamp {
   width: 72px;
@@ -1319,6 +1345,7 @@ input { font: inherit; color: inherit; }
   z-index: 50;
 }
 .nav-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1327,10 +1354,27 @@ input { font: inherit; color: inherit; }
   border-radius: var(--radius-md);
   color: var(--text-muted);
   background: transparent;
-  transition: color 0.2s var(--ease-out), background-color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
+  transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .nav-item:active { transform: scale(0.92); }
-.nav-item.active { color: var(--accent-main); background: rgba(255,255,255,0.06); }
+.nav-item.active { color: var(--accent-main); }
+/* Was a flat rgba(255,255,255,0.06) rectangle filling the whole tab —
+   replaced with a small dot under the label instead. The icon color
+   change + pop animation already carry the "this is the active tab"
+   signal on their own; the rectangle was a second, blunter version of
+   the same message stacked on top, and read as a leftover from an
+   earlier design pass rather than a deliberate one. */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-main);
+}
 .nav-icon { width: 22px; height: 22px; transition: transform 0.2s var(--ease-out); }
 /* Replays every time an item newly gains .active, since the animation
    only matches while that class is present (nav clicks toggle it on
@@ -1484,9 +1528,12 @@ input { font: inherit; color: inherit; }
 
 /* ── Notifications: bell + panel ──────────────────────────── */
 .header-right { display: flex; align-items: center; flex-shrink: 0; }
+/* 32px to match the app's other bordered-circle icon buttons
+   (.friend-row-gift-btn/.friend-row-remove-btn) — was 34px, the one
+   circular icon button that didn't match that size. */
 .btn-notif-bell {
   position: relative;
-  width: 34px; height: 34px; flex-shrink: 0;
+  width: 32px; height: 32px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%; border: 1px solid var(--border-glass-strong); background: var(--bg-glass);
   color: var(--text-secondary); cursor: pointer;
@@ -1538,8 +1585,20 @@ input { font: inherit; color: inherit; }
 
 .settings-section { padding: 0 24px; margin-bottom: 24px; }
 .settings-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-.settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
-.settings-item-left { display: flex; align-items: center; gap: 12px; }
+/* gap is a guaranteed minimum between the text block and the chevron —
+   .settings-item-left had no flex:1/min-width:0 and .settings-item-
+   chevron had no rule of its own at all, so on a long row (the Student
+   Discount promo's full-sentence subtitle) there was nothing to stop
+   the text from growing right up against the arrow with no breathing
+   room, the same class of bug already fixed on .home-header. */
+.settings-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
+.settings-item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+/* The label+sublabel wrapper (icon's sibling) needs its own min-width:0
+   too — flex's default min-width:auto on this child would otherwise
+   still force .settings-item-left wide enough to fit the text
+   unbroken, defeating the fix above. */
+.settings-item-left > *:last-child { min-width: 0; }
+.settings-item-chevron { flex-shrink: 0; font-size: 20px; color: var(--text-muted); }
 .settings-item-icon { width: 32px; height: 32px; background: var(--bg-secondary); border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .settings-item-label { font-size: 14px; font-weight: 500; }
 .settings-item-sublabel { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -2077,14 +2136,17 @@ input { font: inherit; color: inherit; }
   color: var(--text-secondary);
   margin: 3px 0 0;
 }
+/* padding/font-size match .show-qr-btn/.friends-home-btn — was
+   11px/14px, noticeably smaller/shorter than the other two full-width
+   action buttons on the same screen. */
 .student-promo-btn {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 11px 14px;
+  padding: 16px;
   background: var(--text-primary);
   color: var(--bg-primary);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   text-align: center;
   border-radius: var(--radius-md);
@@ -2190,6 +2252,10 @@ input { font: inherit; color: inherit; }
 @keyframes stamp-earn { 0% { transform: scale(1) rotate(0deg); } 35% { transform: scale(1.28) rotate(-5deg); } 60% { transform: scale(0.94) rotate(3deg); } 100% { transform: scale(1) rotate(0deg); } }
 @keyframes stamp-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.7); opacity: 0; } }
 @keyframes check-pop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+/* Cup icon's one moment on screen: pops in as the earn bounce starts,
+   fades back out by the time check-pop (starts at 0.1s, ~17% of this
+   same 0.6s animation) takes over — the two never really overlap. */
+@keyframes cup-flash { 0% { opacity: 0; transform: scale(0.7); } 25% { opacity: 1; transform: scale(1.1); } 50%, 100% { opacity: 0; transform: scale(0.9); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
@@ -2412,11 +2478,17 @@ input { font: inherit; color: inherit; }
   color: var(--text-primary);
   flex: 1 1 130px;
   min-width: 0;
+  order: 1;
 }
+/* order: 3 (after price-group) — price/discount is the more important
+   number when the row's too tight for everything on one line, the
+   subtext ("Hot / Iced") is the one that should give way and drop to
+   its own line first, not the other way around. */
 .menu-item-sub {
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
+  order: 3;
 }
 /* margin-left: auto keeps this pinned to the right edge whether it shares
    the item's first line or, once name+sub+price can't all fit (long
@@ -2430,6 +2502,7 @@ input { font: inherit; color: inherit; }
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
+  order: 2;
 }
 .menu-item-price {
   font-family: var(--font-heading);
@@ -2629,12 +2702,39 @@ input { font: inherit; color: inherit; }
   font-weight: 700;
   color: var(--text-muted);
 }
-.lb-medal {
+/* Podium badges for ranks 1-3 — was colored medal emoji (🥇🥈🥉), the
+   only place in the app that broke from the monochrome design system.
+   Same number, three tiers of fill weight instead of three colors:
+   #1 solid white/black (most prominent), #2 a lighter glass fill, #3
+   just a stronger border. All built from tokens already used
+   elsewhere (--accent-main, --bg-glass-hover, --border-glass-strong),
+   not new colors. */
+.lb-rank-badge {
   width: 26px;
+  height: 26px;
   flex-shrink: 0;
-  text-align: center;
-  font-size: 20px;
-  line-height: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+}
+.lb-rank-badge-1 {
+  background: var(--accent-main);
+  color: var(--bg-primary);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+}
+.lb-rank-badge-2 {
+  background: var(--bg-glass-hover);
+  border: 1px solid var(--border-glass-strong);
+  color: var(--text-primary);
+}
+.lb-rank-badge-3 {
+  background: transparent;
+  border: 1px solid var(--border-glass-strong);
+  color: var(--text-secondary);
 }
 .lb-avatar {
   width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;

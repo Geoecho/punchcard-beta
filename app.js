@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v83';
+const APP_BUILD_ID = 'v84';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -278,7 +278,7 @@ const TRANSLATIONS = {
     confirmGiftTitle: "Gift This Reward?",
     confirmGiftText: "Send your free coffee to {name}? This can't be undone.",
     btnConfirmGift: "Send Gift",
-    toastGiftSent: "Gift sent! 🎁",
+    toastGiftSent: "Gift sent!",
     confirmRemoveFriendTitle: "Remove Friend?",
     confirmRemoveFriendText: "Remove {name}? You'll need to send a new request to add them again.",
     btnConfirmRemoveFriend: "Remove",
@@ -558,7 +558,7 @@ const TRANSLATIONS = {
     confirmGiftTitle: "Да го подарите ова?",
     confirmGiftText: "Испратете го вашето бесплатно кафе до {name}? Ова не може да се врати.",
     btnConfirmGift: "Испрати подарок",
-    toastGiftSent: "Подарокот е испратен! 🎁",
+    toastGiftSent: "Подарокот е испратен!",
     confirmRemoveFriendTitle: "Отстрани пријател?",
     confirmRemoveFriendText: "Да го отстраните {name}? Ќе треба да испратите ново барање за повторно да се додадете.",
     btnConfirmRemoveFriend: "Отстрани",
@@ -838,7 +838,7 @@ const TRANSLATIONS = {
     confirmGiftTitle: "Ta Dhurosh Këtë Shpërblim?",
     confirmGiftText: "Dërgo kafenë tënde falas te {name}? Kjo nuk mund të kthehet.",
     btnConfirmGift: "Dërgo Dhuratën",
-    toastGiftSent: "Dhurata u dërgua! 🎁",
+    toastGiftSent: "Dhurata u dërgua!",
     confirmRemoveFriendTitle: "Të heq mikun?",
     confirmRemoveFriendText: "Të heq {name}? Do të duhet të dërgosh një kërkesë të re për ta shtuar përsëri.",
     btnConfirmRemoveFriend: "Hiq",
@@ -2114,7 +2114,7 @@ const cloud = {
               hapticPulse(25);
             }
           } else if (updatedCustomer.rewardsEarned < previousRewards) {
-            showToast('Reward Redeemed! ☕', 'success');
+            showToast('Reward Redeemed!', 'success');
           } else if (updatedCustomer.stamps < previousStamps && updatedCustomer.stamps === 0) {
             showToast('Card reset for new stamps!', 'info');
           }
@@ -3422,6 +3422,7 @@ function setupEventListeners() {
       // it again out from under them.
       clearTimeout(cardIntroFlipTimer);
       clearTimeout(cardIntroFlipBackTimer);
+      playSwooshSound();
       hapticPulse(15);
       setCardFlipped(!DOM.cardFlipInner.classList.contains('flipped'));
     });
@@ -6066,6 +6067,42 @@ function playTapSound() {
   playTone(1200, ctx.currentTime, 0.05, ctx, 0.05);
 }
 
+// Card flip — the only cue so far built from filtered noise instead of
+// plain tones, since a believable "swoosh" needs actual noise texture,
+// not a pitch. A short white-noise burst swept through a bandpass
+// filter from high to low frequency, with its own quick attack/decay
+// envelope so it doesn't click at the start/end.
+function playSwooshSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const duration = 0.35;
+  const bufferSize = Math.floor(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = 0.9;
+  const now = ctx.currentTime;
+  filter.frequency.setValueAtTime(1800, now);
+  filter.frequency.exponentialRampToValueAtTime(300, now + duration);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.12, now + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  noise.start(now);
+  noise.stop(now + duration);
+}
+
 function playStampSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6455,14 +6492,13 @@ async function renderLeaderboard() {
     row.className = 'lb-row' + (rank <= 3 ? ` lb-top lb-top-${rank}` : '');
     if (myRank && rank === myRank.rank) row.classList.add('lb-is-me');
 
+    // Was colored medal emoji (🥇🥈🥉) — the one place in the whole app
+    // that broke from the monochrome design system. A tiered badge
+    // (same number, different fill weight) reads as "podium" without
+    // needing color.
     const rankEl = document.createElement('div');
-    if (rank <= 3) {
-      rankEl.className = 'lb-medal';
-      rankEl.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
-    } else {
-      rankEl.className = 'lb-rank-num';
-      rankEl.textContent = rank;
-    }
+    rankEl.className = rank <= 3 ? `lb-rank-badge lb-rank-badge-${rank}` : 'lb-rank-num';
+    rankEl.textContent = rank;
     row.appendChild(rankEl);
 
     const avatar = document.createElement('div');

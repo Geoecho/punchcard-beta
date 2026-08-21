@@ -509,7 +509,13 @@
          LEADERBOARD VIEW (Customer Only)
          ========================================== -->
     <div id="view-leaderboard" class="view">
-      <header class="customers-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
+      <!-- align-items: flex-start (not center, like every other
+           .customers-header) — this is the one header with a subtitle
+           under the title, and centering against that taller two-line
+           block pushed the logo visibly lower than the same logo sits
+           in every other tab's single-line header. Top-aligning it
+           against the title line keeps it consistent across tabs. -->
+      <header class="customers-header" style="display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px;">
         <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
         <div>
           <h2 style="margin: 0;" data-i18n="leaderboardTitle">Leaderboard</h2>
