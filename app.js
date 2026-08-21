@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v85';
+const APP_BUILD_ID = 'v86';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -130,7 +130,7 @@ const TRANSLATIONS = {
     settingsStudentDiscount: "Student Discount",
     studentPromoTitle: "Get the Student Discount",
     studentPromoSubtitle: "Sign up in the Netaville App with your student email, then ask staff to verify you",
-    studentPromoBtn: "Netaville App",
+    studentPromoBtn: "Get the App",
     staffModeTitle: "Staff Mode Active",
     staffModeText: "Select a customer from the list to view and stamp their card.",
     navCard: "Card",
@@ -2628,6 +2628,11 @@ const DOM = {
 
   modalConfirmRedeem: document.getElementById('modal-confirm-redeem'),
   overlayConfirmRedeem: document.getElementById('overlay-confirm-redeem'),
+  confirmRedeemText: document.getElementById('confirm-redeem-text'),
+  redeemQtyStepper: document.getElementById('redeem-qty-stepper'),
+  redeemQtyValue: document.getElementById('redeem-qty-value'),
+  btnRedeemQtyMinus: document.getElementById('btn-redeem-qty-minus'),
+  btnRedeemQtyPlus: document.getElementById('btn-redeem-qty-plus'),
   btnConfirmRedeem: document.getElementById('btn-confirm-redeem'),
   btnCancelRedeem: document.getElementById('btn-cancel-redeem'),
 
@@ -2721,11 +2726,31 @@ function handleHashRoute() {
     switchView('view-poster');
     return true;
   }
+  // Shop-display mode: a TV/monitor showing the live leaderboard, not a
+  // phone-in-hand customer or a logged-in staff member. Reuses the same
+  // view/render function the phone leaderboard uses (no separate data
+  // path to keep in sync) — .tv-mode in styles.css is what actually
+  // makes it look right on a big screen, plus a periodic refresh since
+  // there's nobody here to pull-to-refresh.
+  if (hash === '#leaderboard-tv') {
+    document.documentElement.classList.add('staff-desktop-ok', 'tv-mode');
+    state.tvMode = true;
+    switchView('view-leaderboard');
+    renderLeaderboard();
+    startLeaderboardTvRefresh();
+    return true;
+  }
   if (hash === '#signup' || hash === '#login') {
     switchView('view-signup');
     return true;
   }
   return false;
+}
+
+let leaderboardTvRefreshInterval = null;
+function startLeaderboardTvRefresh() {
+  clearInterval(leaderboardTvRefreshInterval);
+  leaderboardTvRefreshInterval = setInterval(renderLeaderboard, 45000);
 }
 
 window.addEventListener('hashchange', handleHashRoute);
@@ -3121,6 +3146,17 @@ function saveUserSession(customer, token) {
   cloud.subscribeToCustomer(customer.id);
 }
 
+// .avatar-option-btn.selected already existed in styles.css — a
+// checkmark-style highlight — but nothing ever applied the class, so
+// the picker never actually showed which avatar was already yours.
+// Called right before opening the modal from every entry point.
+function markSelectedAvatarInPicker(currentKey) {
+  if (!DOM.avatarGrid) return;
+  DOM.avatarGrid.querySelectorAll('.avatar-option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.avatar === currentKey);
+  });
+}
+
 function initAvatarPickerModal() {
   if (!DOM.avatarGrid) return;
   DOM.avatarGrid.innerHTML = '';
@@ -3279,19 +3315,23 @@ function setupEventListeners() {
 
   // Avatar Picker Modal Trigger (from Settings)
   if (DOM.btnChangeAvatar) {
-    DOM.btnChangeAvatar.addEventListener('click', () => {
+    DOM.btnChangeAvatar.addEventListener('click', async () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
       state.editingStaffAvatar = false;
+      const customer = await db.getCustomer(activeId);
+      markSelectedAvatarInPicker(customer ? customer.avatar : null);
       openModal(DOM.modalAvatarPicker);
     });
   }
 
   // Allow clicking the avatar on the home screen to change it
   if (DOM.userAvatarDisplay) {
-    DOM.userAvatarDisplay.addEventListener('click', () => {
+    DOM.userAvatarDisplay.addEventListener('click', async () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
       if (!activeId) return;
+      const customer = await db.getCustomer(activeId);
+      markSelectedAvatarInPicker(customer ? customer.avatar : null);
       state.editingStaffAvatar = false;
       openModal(DOM.modalAvatarPicker);
     });
@@ -3759,6 +3799,7 @@ function setupEventListeners() {
     DOM.btnStaffAvatar.addEventListener('click', () => {
       if (!state.staffToken) return;
       state.editingStaffAvatar = true;
+      markSelectedAvatarInPicker(state.staffAvatar);
       openModal(DOM.modalAvatarPicker);
     });
   }
@@ -3900,7 +3941,7 @@ function setupEventListeners() {
         cloud.sendPush({
           staffToken: state.staffToken,
           customerId: updated.id,
-          title: '🎉 Free coffee unlocked!',
+          title: 'Free coffee unlocked!',
           body: `${updated.name}, your card is full — come redeem your free drink.`,
           url: './index.html#signup'
         });
@@ -4029,7 +4070,14 @@ function setupEventListeners() {
   // Action: Redeem Reward (Counter / Wallet / Staff Mode) — server
   // verifies rewards_earned/stamps and expiry, decrements atomically,
   // and attributes staff-performed redemptions in the history entry.
-  const handleRedeem = async () => {
+  // quantity only ever matters for the 'wallet' method (redeeming
+  // already-banked rewards) — a just-filled card redeemed straight from
+  // DOM.rewardOverlay (the 'direct' method) is always exactly one, so
+  // that call site below never passes a quantity at all. Each unit is
+  // still its own RPC round-trip (the RPC itself only ever redeems
+  // one), looped here rather than adding a p_quantity parameter
+  // server-side — this reuses the existing, already-deployed RPC as-is.
+  const handleRedeem = async (quantity = 1) => {
     if (!state.selectedCustomerId) return;
 
     const customer = await db.getCustomer(state.selectedCustomerId);
@@ -4044,12 +4092,20 @@ function setupEventListeners() {
     const method = customer.rewardsEarned > 0 ? 'wallet' : (customer.stamps >= MAX_STAMPS ? 'direct' : null);
     if (!method) return;
 
+    const redeemCount = method === 'wallet' ? Math.max(1, Math.min(quantity, customer.rewardsEarned)) : 1;
     const isSelf = !state.isAdmin && state.selectedCustomerId === state.myCustomerId;
-    const result = isSelf
-      ? await cloud.redeemReward(state.myToken, method)
-      : await cloud.staffRedeemReward(state.staffToken, state.selectedCustomerId, method);
 
-    if (result.error) {
+    let result = null;
+    let redeemed = 0;
+    for (let i = 0; i < redeemCount; i++) {
+      result = isSelf
+        ? await cloud.redeemReward(state.myToken, method)
+        : await cloud.staffRedeemReward(state.staffToken, state.selectedCustomerId, method);
+      if (result.error) break;
+      redeemed++;
+    }
+
+    if (redeemed === 0) {
       showToast(result.error === 'reward_expired' ? 'This reward expired 1 year after it was earned' : t('errServerConnection'), 'error');
       closeModal(DOM.rewardOverlay);
       return;
@@ -4062,30 +4118,46 @@ function setupEventListeners() {
     await updateCardUI();
     playRedeemSound();
     hapticPulse([30, 40, 30, 40, 60]);
-    showToast('Reward redeemed! Enjoy your free coffee!', 'success');
+    if (redeemed < redeemCount) {
+      // A later unit in the loop failed (e.g. hit an unexpected server
+      // error partway through) — say exactly how many actually went
+      // through instead of a blanket success or failure message.
+      showToast(`Redeemed ${redeemed} of ${redeemCount} — try again for the rest`, 'error');
+    } else {
+      showToast(redeemed > 1 ? `${redeemed} rewards redeemed! Enjoy!` : 'Reward redeemed! Enjoy your free coffee!', 'success');
+    }
     renderCustomersList(DOM.customerSearch.value);
     renderActivityList();
   };
 
-  DOM.btnRedeemReward.addEventListener('click', handleRedeem);
+  DOM.btnRedeemReward.addEventListener('click', () => handleRedeem());
 
   // Banked-reward redemption is a single tap with no other confirmation
   // step, so it gets a confirm dialog first (unlike the reward-overlay's
   // Redeem button, which already sits behind a deliberate two-choice screen).
   if (DOM.modalConfirmRedeem) {
-    const openRedeemConfirm = () => openModal(DOM.modalConfirmRedeem);
+    const openRedeemConfirm = async () => {
+      const activeId = state.selectedCustomerId;
+      const customer = activeId ? await db.getCustomer(activeId) : null;
+      updateRedeemQtyStepper(customer ? customer.rewardsEarned : 0);
+      openModal(DOM.modalConfirmRedeem);
+    };
     if (DOM.btnRedeemBanked) DOM.btnRedeemBanked.addEventListener('click', openRedeemConfirm);
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', openRedeemConfirm);
 
+    if (DOM.btnRedeemQtyMinus) DOM.btnRedeemQtyMinus.addEventListener('click', () => stepRedeemQty(-1));
+    if (DOM.btnRedeemQtyPlus) DOM.btnRedeemQtyPlus.addEventListener('click', () => stepRedeemQty(1));
+
     DOM.btnConfirmRedeem.addEventListener('click', () => {
+      const qty = DOM.redeemQtyValue ? parseInt(DOM.redeemQtyValue.textContent, 10) || 1 : 1;
       closeModal(DOM.modalConfirmRedeem);
-      handleRedeem();
+      handleRedeem(qty);
     });
     DOM.btnCancelRedeem.addEventListener('click', () => closeModal(DOM.modalConfirmRedeem));
     DOM.overlayConfirmRedeem.addEventListener('click', () => closeModal(DOM.modalConfirmRedeem));
   } else {
-    if (DOM.btnRedeemBanked) DOM.btnRedeemBanked.addEventListener('click', handleRedeem);
-    if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', handleRedeem);
+    if (DOM.btnRedeemBanked) DOM.btnRedeemBanked.addEventListener('click', () => handleRedeem());
+    if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', () => handleRedeem());
   }
 
   // Right after a brand-new signup, this same modal reopens in mandatory
@@ -4271,7 +4343,7 @@ function setupEventListeners() {
           customerToken: state.myToken,
           targetCustomerId: result.friend.id,
           context: 'friend_accepted',
-          title: '🎉 Friend request accepted',
+          title: 'Friend request accepted',
           body: `${myName} accepted your friend request!`,
           url: './index.html#settings'
         });
@@ -4281,7 +4353,7 @@ function setupEventListeners() {
           customerToken: state.myToken,
           targetCustomerId: result.friend.id,
           context: 'friend_request',
-          title: '👋 New friend request',
+          title: 'New friend request',
           body: `${myName} wants to add you as a friend`,
           url: './index.html#settings'
         });
@@ -4310,7 +4382,7 @@ function setupEventListeners() {
           customerToken: state.myToken,
           targetCustomerId: btn.dataset.requesterId,
           context: 'friend_accepted',
-          title: '🎉 Friend request accepted',
+          title: 'Friend request accepted',
           body: `${myName} accepted your friend request!`,
           url: './index.html#settings'
         });
@@ -4413,7 +4485,7 @@ function setupEventListeners() {
         cloud.sendPush({
           staffToken: state.staffToken,
           broadcast: true,
-          title: `✨ ${result.label || 'Double Stamps'} is live!`,
+          title: `${result.label || 'Double Stamps'} is live!`,
           body: `${result.multiplier}x stamps on every order today at Eightysix°.`,
           url: './index.html#signup'
         }).then(res => {
@@ -4713,6 +4785,9 @@ function switchView(viewId) {
     renderPosterQr();
   } else if (viewId === 'view-signup' || viewId === 'view-splash' || viewId === 'view-admin-login') {
     if (DOM.nav) DOM.nav.classList.add('hidden');
+  } else if (viewId === 'view-leaderboard' && state.tvMode) {
+    // Shop-display mode — nobody's here to tap a tab bar.
+    if (DOM.nav) DOM.nav.classList.add('hidden');
   } else {
     if (DOM.nav) DOM.nav.classList.remove('hidden');
   }
@@ -4938,6 +5013,37 @@ function setupModalAccessibility() {
       modal.setAttribute('aria-labelledby', title.id);
     }
   });
+}
+
+// Called right before opening the redeem-confirm modal with however
+// many banked rewards this customer actually has. Hidden entirely at
+// 1 (or 0) — nothing to choose between yet.
+function updateRedeemQtyStepper(maxAvailable) {
+  if (!DOM.redeemQtyStepper || !DOM.redeemQtyValue) return;
+  const max = Math.max(1, maxAvailable || 1);
+  DOM.redeemQtyStepper.dataset.max = max;
+  DOM.redeemQtyValue.textContent = '1';
+  DOM.redeemQtyStepper.classList.toggle('hidden', max <= 1);
+  if (DOM.btnRedeemQtyMinus) DOM.btnRedeemQtyMinus.disabled = true;
+  if (DOM.btnRedeemQtyPlus) DOM.btnRedeemQtyPlus.disabled = max <= 1;
+  updateRedeemConfirmText(1);
+}
+
+function stepRedeemQty(delta) {
+  if (!DOM.redeemQtyStepper || !DOM.redeemQtyValue) return;
+  const max = parseInt(DOM.redeemQtyStepper.dataset.max, 10) || 1;
+  const next = Math.min(max, Math.max(1, (parseInt(DOM.redeemQtyValue.textContent, 10) || 1) + delta));
+  DOM.redeemQtyValue.textContent = next;
+  if (DOM.btnRedeemQtyMinus) DOM.btnRedeemQtyMinus.disabled = next <= 1;
+  if (DOM.btnRedeemQtyPlus) DOM.btnRedeemQtyPlus.disabled = next >= max;
+  updateRedeemConfirmText(next);
+}
+
+function updateRedeemConfirmText(qty) {
+  if (!DOM.confirmRedeemText) return;
+  DOM.confirmRedeemText.textContent = qty > 1
+    ? `This uses ${qty} free coffees from the wallet and can't be undone.`
+    : t('confirmRedeemSubtitle');
 }
 
 // Opens the existing Display Name modal in a mode with no way out except

@@ -37,8 +37,15 @@
   <script>
     (function () {
       var isStaffRoute = location.hash === '#admin' || location.hash === '#poster'
-        || location.hash === '#/poster' || location.search.indexOf('admin=true') !== -1;
+        || location.hash === '#/poster' || location.hash === '#leaderboard-tv'
+        || location.search.indexOf('admin=true') !== -1;
       if (isStaffRoute) document.documentElement.classList.add('staff-desktop-ok');
+      // #leaderboard-tv is an unattended shop-display mode (a TV/monitor
+      // showing the live leaderboard), not a phone-in-hand customer or a
+      // staff member — needs the desktop block bypassed the same way
+      // #poster does, but its own bigger-screen styling, not the phone-
+      // shaped customer app (see .tv-mode in styles.css).
+      if (location.hash === '#leaderboard-tv') document.documentElement.classList.add('tv-mode');
     })();
   </script>
 </head>
@@ -1106,7 +1113,15 @@
       <div class="modal-content">
         <div class="modal-handle"></div>
         <h3 class="modal-title" data-i18n="confirmRedeemTitle">Redeem Reward?</h3>
-        <p class="modal-subtitle" data-i18n="confirmRedeemSubtitle">This uses 1 free coffee from the wallet and can't be undone.</p>
+        <p class="modal-subtitle" id="confirm-redeem-text" data-i18n="confirmRedeemSubtitle">This uses 1 free coffee from the wallet and can't be undone.</p>
+        <!-- Only shown when the customer has more than 1 banked reward
+             (see updateRedeemQtyStepper) — redeeming the single reward
+             from a just-filled card never has a quantity to pick. -->
+        <div class="redeem-qty-stepper hidden" id="redeem-qty-stepper">
+          <button type="button" class="redeem-qty-btn" id="btn-redeem-qty-minus" aria-label="Fewer">−</button>
+          <span class="redeem-qty-value" id="redeem-qty-value">1</span>
+          <button type="button" class="redeem-qty-btn" id="btn-redeem-qty-plus" aria-label="More">+</button>
+        </div>
         <div class="modal-actions">
           <button class="btn-secondary" id="btn-cancel-redeem" data-i18n="btnCancel">Cancel</button>
           <button class="btn-primary" id="btn-confirm-redeem" data-i18n="btnConfirmRedeem">Redeem</button>
