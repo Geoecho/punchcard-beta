@@ -2906,6 +2906,15 @@ input { font: inherit; color: inherit; }
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     grid-auto-rows: min-content;
     align-content: start;
+    /* align-content (above) only packs row TRACKS from the top when the
+       grid has leftover vertical space — it says nothing about how tall
+       each ITEM renders within its own row. Grid's real default there is
+       align-items: normal, which computes to stretch: every card in a
+       row was being forced to match the row's tallest card (e.g. the
+       tiny 3-button "Language" card stretched to My Profile's ~430px,
+       leaving ~370px of dead space below its buttons). start makes each
+       card size to its own content instead. */
+    align-items: start;
     column-gap: 24px;
   }
   #view-settings > .settings-header,
