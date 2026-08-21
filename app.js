@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v80';
+const APP_BUILD_ID = 'v81';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -81,6 +81,7 @@ const TRANSLATIONS = {
     errPasswordWeak: "Password must be 8+ characters with an uppercase letter, a lowercase letter, and a number",
     errUsernameTaken: "That username is taken. Wrong password? Use \"Find My Card\" to log in.",
     errInvalidSignupInput: "Please enter a username and a stronger password",
+    errInappropriateName: "That name isn't allowed — please choose another.",
     errServerConnection: "Could not reach the server. Check your connection and try again.",
     errSessionExpired: "Your session expired — please log in again.",
     errAcceptTos: "Please accept the Terms of Service & Privacy Policy",
@@ -256,6 +257,7 @@ const TRANSLATIONS = {
     friendsModalTitle: "Friends",
     friendsModalSubtitle: "Send a friend request by their display name. Once they accept, you can gift each other a free coffee.",
     phFriendName: "Friend's display name",
+    phGiftMessage: "Add a message (optional)",
     errEnterFriendName: "Please enter a name",
     btnAddFriend: "Add",
     friendRequestsLabel: "Friend Requests",
@@ -359,6 +361,7 @@ const TRANSLATIONS = {
     errPasswordWeak: "Лозинката мора да има 8+ карактери, голема буква, мала буква и број",
     errUsernameTaken: "Тоа корисничко име е зафатено. Погрешна лозинка? Користете „Најди ја мојата картичка“ за да се најавите.",
     errInvalidSignupInput: "Внесете корисничко име и посилна лозинка",
+    errInappropriateName: "Тоа име не е дозволено — изберете друго.",
     errServerConnection: "Не може да се поврземе со серверот. Проверете ја вашата врска и обидете се повторно.",
     errSessionExpired: "Вашата сесија истече — најавете се повторно.",
     errAcceptTos: "Ве молиме прифатете ги Условите за користење и Политиката за приватност",
@@ -534,6 +537,7 @@ const TRANSLATIONS = {
     friendsModalTitle: "Пријатели",
     friendsModalSubtitle: "Испратете барање за пријателство по нивното име за прикажување. Штом прифати, можете да си подарувате бесплатно кафе.",
     phFriendName: "Име за прикажување на пријателот",
+    phGiftMessage: "Додади порака (опционално)",
     errEnterFriendName: "Ве молиме внесете име",
     btnAddFriend: "Додај",
     friendRequestsLabel: "Барања за пријателство",
@@ -637,6 +641,7 @@ const TRANSLATIONS = {
     errPasswordWeak: "Fjalëkalimi duhet të ketë 8+ shkronja, një shkronjë të madhe, një të vogël dhe një numër",
     errUsernameTaken: "Ky emër përdoruesi është i zënë. Fjalëkalim i gabuar? Përdor \"Gjej Kartën Time\" për t'u identifikuar.",
     errInvalidSignupInput: "Vendos një emër përdoruesi dhe një fjalëkalim më të fortë",
+    errInappropriateName: "Ai emër nuk lejohet — zgjidh një tjetër.",
     errServerConnection: "Nuk mund të lidhemi me serverin. Kontrollo lidhjen dhe provo përsëri.",
     errSessionExpired: "Sesioni juaj skadoi — ju lutemi identifikohuni përsëri.",
     errAcceptTos: "Ju lutemi pranoni Kushtet e Shërbimit dhe Politikën e Privatësisë",
@@ -812,6 +817,7 @@ const TRANSLATIONS = {
     friendsModalTitle: "Miqtë",
     friendsModalSubtitle: "Dërgo një kërkesë miqësie me emrin e tij/saj të shfaqur. Sapo ta pranojë, mund t'i dhuroni njëri-tjetrit një kafe falas.",
     phFriendName: "Emri i shfaqur i mikut",
+    phGiftMessage: "Shto një mesazh (opsionale)",
     errEnterFriendName: "Ju lutemi vendosni një emër",
     btnAddFriend: "Shto",
     friendRequestsLabel: "Kërkesa Miqësie",
@@ -1298,6 +1304,7 @@ const cloud = {
         const msg = res.error.message || '';
         if (msg.includes('username_taken')) return { error: 'username_taken' };
         if (msg.includes('weak_password')) return { error: 'weak_password' };
+        if (msg.includes('inappropriate_name')) return { error: 'inappropriate_name' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
@@ -1372,6 +1379,7 @@ const cloud = {
           return { error: 'rate_limited', nextChangeAt };
         }
         if (msg.includes('name_taken')) return { error: 'name_taken' };
+        if (msg.includes('inappropriate_name')) return { error: 'inappropriate_name' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
         return { error: 'unknown' };
       }
@@ -1546,11 +1554,11 @@ const cloud = {
     }
   },
 
-  async giftReward(token, friendId) {
+  async giftReward(token, friendId, message) {
     if (!supabaseClient) return { error: 'offline' };
     try {
       const res = await withTimeout(
-        supabaseClient.rpc('customer_gift_reward', { p_token: token || null, p_friend_id: friendId }),
+        supabaseClient.rpc('customer_gift_reward', { p_token: token || null, p_friend_id: friendId, p_message: message || null }),
         4000
       );
       if (res.error) {
@@ -2577,6 +2585,8 @@ const DOM = {
   modalConfirmGift: document.getElementById('modal-confirm-gift'),
   overlayConfirmGift: document.getElementById('overlay-confirm-gift'),
   confirmGiftText: document.getElementById('confirm-gift-text'),
+  giftMessageInput: document.getElementById('gift-message-input'),
+  giftMessageCount: document.getElementById('gift-message-count'),
   btnCancelGift: document.getElementById('btn-cancel-gift'),
   btnConfirmGift: document.getElementById('btn-confirm-gift'),
   modalConfirmRemoveFriend: document.getElementById('modal-confirm-remove-friend'),
@@ -3635,6 +3645,10 @@ function setupEventListeners() {
         showToast(t('errPasswordWeak'), 'error');
         return;
       }
+      if (result.error === 'inappropriate_name') {
+        showToast(t('errInappropriateName'), 'error');
+        return;
+      }
       if (result.error === 'invalid_input') {
         showToast(t('errInvalidSignupInput'), 'error');
         return;
@@ -4103,6 +4117,10 @@ function setupEventListeners() {
         DOM.setDisplayNameError.textContent = t('errDisplayNameTaken');
         return;
       }
+      if (result.error === 'inappropriate_name') {
+        DOM.setDisplayNameError.textContent = t('errInappropriateName');
+        return;
+      }
       if (result.error) {
         DOM.setDisplayNameError.textContent = t('errServerConnection');
         return;
@@ -4322,12 +4340,18 @@ function setupEventListeners() {
 
   if (DOM.btnCancelGift) DOM.btnCancelGift.addEventListener('click', () => closeModal(DOM.modalConfirmGift));
   if (DOM.overlayConfirmGift) DOM.overlayConfirmGift.addEventListener('click', () => closeModal(DOM.modalConfirmGift));
+  if (DOM.giftMessageInput && DOM.giftMessageCount) {
+    DOM.giftMessageInput.addEventListener('input', () => {
+      DOM.giftMessageCount.textContent = `${DOM.giftMessageInput.value.length}/140`;
+    });
+  }
   if (DOM.btnConfirmGift) {
     DOM.btnConfirmGift.addEventListener('click', async () => {
       const friendId = DOM.btnConfirmGift.dataset.friendId;
       if (!friendId) return;
+      const message = DOM.giftMessageInput ? DOM.giftMessageInput.value.trim() : '';
       DOM.btnConfirmGift.disabled = true;
-      const result = await cloud.giftReward(state.myToken, friendId);
+      const result = await cloud.giftReward(state.myToken, friendId, message);
       DOM.btnConfirmGift.disabled = false;
       closeModal(DOM.modalConfirmGift);
 
@@ -5558,6 +5582,8 @@ function openGiftConfirm(friendId, friendName) {
   if (!DOM.modalConfirmGift || !DOM.btnConfirmGift) return;
   DOM.btnConfirmGift.dataset.friendId = friendId;
   if (DOM.confirmGiftText) DOM.confirmGiftText.textContent = t('confirmGiftText', { name: friendName });
+  if (DOM.giftMessageInput) DOM.giftMessageInput.value = '';
+  if (DOM.giftMessageCount) DOM.giftMessageCount.textContent = '0/140';
   openModal(DOM.modalConfirmGift);
 }
 
