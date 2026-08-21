@@ -645,6 +645,15 @@ input { font: inherit; color: inherit; }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* Guaranteed minimum breathing room between the name and the bell —
+     with only justify-content and no gap, a long enough name could
+     flex-shrink down to fill every last pixel of space and end up
+     butted right up against the bell icon with nothing between them,
+     which reads as "overflowing into it" even where it's still
+     technically clipped, not actually overlapping. gap wins over
+     space-between's own spacing whenever the natural gap would be
+     smaller than this. */
+  gap: 12px;
   background: var(--bg-primary);
 }
 /* #view-home no longer scrolls itself — .home-header above and

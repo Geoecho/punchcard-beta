@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v79';
+const APP_BUILD_ID = 'v80';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -2230,6 +2230,36 @@ function stopCloudPolling() {
   }
 }
 
+// The staff Customers list otherwise only ever refreshed on login/PIN
+// unlock/reload — a customer signing up on their own phone while staff
+// were already sitting in the admin panel just never appeared until
+// someone thought to reload, which isn't really an option on an
+// installed PWA the way it is in a normal browser tab. Polls the full
+// list at a slower interval than the single-card 3s poll above (a
+// full-list fetch is heavier, and "a new signup shows up" doesn't need
+// to be as instant as "this customer's own stamp count").
+let adminCustomerPollInterval = null;
+function startAdminCustomerPolling() {
+  stopAdminCustomerPolling();
+  adminCustomerPollInterval = setInterval(async () => {
+    if (!state.isAdmin || !state.staffToken) return;
+    const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
+    if (!cloudCustomers) return; // request failed — reconcileLocalCustomers already no-ops on null, but skip the render too
+    const previousCount = state.customers.length;
+    await reconcileLocalCustomers(cloudCustomers);
+    if (state.customers.length !== previousCount) {
+      renderCustomersList(DOM.customerSearch.value);
+      renderActivityList();
+    }
+  }, 10000);
+}
+function stopAdminCustomerPolling() {
+  if (adminCustomerPollInterval) {
+    clearInterval(adminCustomerPollInterval);
+    adminCustomerPollInterval = null;
+  }
+}
+
 // ==========================================
 // LOCAL DATABASE (Fail-Safe IndexedDB)
 // ==========================================
@@ -3889,6 +3919,8 @@ function setupEventListeners() {
       await updateCardUI();
       renderCustomersList(DOM.customerSearch.value);
       renderActivityList();
+      playUndoSound();
+      hapticPulse(20);
       showToast('Stamp removed', 'info');
     });
   }
@@ -3913,6 +3945,8 @@ function setupEventListeners() {
       await updateCardUI();
       renderCustomersList(DOM.customerSearch.value);
       renderActivityList();
+      playUndoSound();
+      hapticPulse(20);
       showToast(t('voidSuccess'), 'success');
     });
   }
@@ -3954,6 +3988,8 @@ function setupEventListeners() {
       await db.saveCustomer(result.customer);
       state.customers = await db.getAllCustomers();
       await updateCardUI();
+      playConfirmSound();
+      hapticPulse(25);
       showToast('Reward saved to Wallet! Stamp card reset.', 'success');
     }
     closeModal(DOM.rewardOverlay);
@@ -3999,7 +4035,7 @@ function setupEventListeners() {
 
     closeModal(DOM.rewardOverlay);
     await updateCardUI();
-    playRewardSound();
+    playRedeemSound();
     hapticPulse([30, 40, 30, 40, 60]);
     showToast('Reward redeemed! Enjoy your free coffee!', 'success');
     renderCustomersList(DOM.customerSearch.value);
@@ -4133,6 +4169,7 @@ function setupEventListeners() {
       btn.disabled = true;
       const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
       if (ok && acceptBtn) {
+        playConfirmSound();
         hapticPulse([20, 30, 20]);
         showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName || '' }), 'success');
       }
@@ -4235,6 +4272,7 @@ function setupEventListeners() {
       btn.disabled = true;
       const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
       if (ok && acceptBtn) {
+        playConfirmSound();
         hapticPulse([20, 30, 20]);
         showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName }), 'success');
         const me = state.myCustomerId ? await db.getCustomer(state.myCustomerId) : null;
@@ -4310,6 +4348,7 @@ function setupEventListeners() {
       await db.saveCustomer(result.customer);
       state.customers = await db.getAllCustomers();
       await updateCardUI();
+      playConfirmSound();
       hapticPulse([20, 30, 20]);
       showToast(t('toastGiftSent'), 'success');
     });
@@ -4772,11 +4811,13 @@ function toggleAdminMode(isActive) {
       DOM.adminEmptyState.classList.add('hidden');
       DOM.adminActions.classList.remove('hidden');
     }
+    startAdminCustomerPolling();
   } else {
     document.getElementById('customer-actions').classList.remove('hidden');
     DOM.punchcard.classList.remove('hidden');
     DOM.adminEmptyState.classList.add('hidden');
     DOM.adminActions.classList.add('hidden');
+    stopAdminCustomerPolling();
   }
 }
 
@@ -5060,7 +5101,6 @@ async function updateCardUI() {
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
-  updateGreetingMarquee();
 
   // Render Customer 2D Monochrome Avatar
   if (DOM.userAvatarDisplay) {
@@ -5193,6 +5233,14 @@ async function updateCardUI() {
     }
   }
 
+  // Measured here, after the notification bell's own visibility is
+  // finally settled a few lines up — not right after setting the name
+  // above. That toggle can shrink .header-text's available width (a
+  // guest becoming a logged-in customer reveals the bell), and measuring
+  // before it settled meant a long name could be sized for more room
+  // than the header actually had left once the bell appeared, visually
+  // overlapping it instead of scrolling clear of it.
+  updateGreetingMarquee();
   nudgeActiveViewScroll();
 }
 
@@ -5899,12 +5947,62 @@ function playStampSound() {
   playTone(1318.5, now + 0.07, 0.16, ctx);
 }
 
+// Reward BANKED — the card just filled up (10th stamp). The big one:
+// a 4-note ascending arpeggio, distinct from every other cue below both
+// in note count and in starting where playStampSound ends.
 function playRewardSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
   const now = ctx.currentTime;
   [880, 1108.7, 1318.5, 1760].forEach((freq, i) => {
     playTone(freq, now + i * 0.08, 0.2, ctx, 0.16);
+  });
+}
+
+// Reward REDEEMED — actually claiming the free coffee. Used to silently
+// reuse playRewardSound(), which meant "you banked a reward" and "you
+// just spent it" sounded identical — a bright, high two-note "cha-ching"
+// instead, clearly a different moment from earning one.
+function playRedeemSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(1567.98, now, 0.1, ctx, 0.2);
+  playTone(2093, now + 0.06, 0.22, ctx, 0.2);
+}
+
+// Lighter positive confirmations that aren't the "big" moment above:
+// banking a reward to the wallet instead of redeeming now, a friend
+// request accepted, a gift sent. One quick bright pop, quieter and
+// shorter than every other cue here on purpose — these happen often
+// enough that a loud sound would get annoying fast.
+function playConfirmSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(1046.5, now, 0.08, ctx, 0.12);
+  playTone(1396.9, now + 0.05, 0.12, ctx, 0.12);
+}
+
+// Corrective/undo actions — removing a mistaken stamp, voiding a
+// redemption. A single short, lower, quiet tone: "noted," not a
+// celebration and not an alarm either.
+function playUndoSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(523.25, now, 0.14, ctx, 0.1);
+}
+
+// Tier milestone (Gold/Platinum) — rarer and bigger than a reward bank,
+// so it gets the biggest cue: a 5-note ascending fanfare, paired with
+// the existing confetti in showMilestoneCelebration().
+function playMilestoneSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  [659.25, 830.61, 987.77, 1318.5, 1975.5].forEach((freq, i) => {
+    playTone(freq, now + i * 0.09, 0.22, ctx, 0.16);
   });
 }
 
@@ -5968,6 +6066,8 @@ function showMilestoneCelebration(tier, bonus) {
   if (DOM.milestoneSubtitle) DOM.milestoneSubtitle.textContent = t('milestoneSubtitle', { tier: tierLabel, n: bonus });
   openModal(DOM.milestoneOverlay);
   fireConfetti();
+  playMilestoneSound();
+  hapticPulse([30, 40, 30, 40, 30, 40, 60]);
 }
 
 // ==========================================
