@@ -26,6 +26,20 @@ const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 const NETAVILLE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.netcetera.android.netaville.prod&hl=en&gl=US&pli=1';
 const NETAVILLE_IOS_URL = 'https://apps.apple.com/us/app/netaville/id1643904350';
 
+// Same public key as api/send-push.js — the public half is safe client-side
+// by design (it's how the push service knows which server is allowed to
+// send to a subscription it hands out, not a secret).
+const VAPID_PUBLIC_KEY = 'BFab1o_b_UHZufxv0_ITw8avQ880_qs0ANokCv-3PTNWcluiqotxPurRbVCDt8k3iqG1Q1X69ZMHsHgOAiXHN9c';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
 let supabaseClient = null;
 let realtimeChannel = null;
 
@@ -254,6 +268,13 @@ const TRANSLATIONS = {
     timeDaysAgo: "{n}d ago",
     settingsFriends: "Friends",
     settingsFriendsSub: "Gift a free coffee to someone",
+    settingsPush: "Notifications",
+    settingsPushSub: "Rewards, gifts & friend requests",
+    settingsPushSubDenied: "Blocked — enable in your browser/phone settings",
+    toastPushEnabled: "Notifications enabled",
+    toastPushDisabled: "Notifications turned off",
+    toastPushBlocked: "Notifications are blocked — enable them in your browser or phone settings",
+    toastPushUnsupported: "Notifications aren't supported on this device/browser",
     friendsModalTitle: "Friends",
     friendsModalSubtitle: "Send a friend request by their display name. Once they accept, you can gift each other a free coffee.",
     phFriendName: "Friend's display name",
@@ -534,6 +555,13 @@ const TRANSLATIONS = {
     timeDaysAgo: "пред {n}д",
     settingsFriends: "Пријатели",
     settingsFriendsSub: "Подарете бесплатно кафе некому",
+    settingsPush: "Известувања",
+    settingsPushSub: "Награди, подароци и барања за пријателство",
+    settingsPushSubDenied: "Блокирано — овозможете во поставките на прелистувачот/телефонот",
+    toastPushEnabled: "Известувањата се овозможени",
+    toastPushDisabled: "Известувањата се исклучени",
+    toastPushBlocked: "Известувањата се блокирани — овозможете ги во поставките на прелистувачот или телефонот",
+    toastPushUnsupported: "Известувањата не се поддржани на овој уред/прелистувач",
     friendsModalTitle: "Пријатели",
     friendsModalSubtitle: "Испратете барање за пријателство по нивното име за прикажување. Штом прифати, можете да си подарувате бесплатно кафе.",
     phFriendName: "Име за прикажување на пријателот",
@@ -814,6 +842,13 @@ const TRANSLATIONS = {
     timeDaysAgo: "{n}d më parë",
     settingsFriends: "Miqtë",
     settingsFriendsSub: "Dhuro një kafe falas dikujt",
+    settingsPush: "Njoftimet",
+    settingsPushSub: "Shpërblime, dhurata dhe kërkesa miqësie",
+    settingsPushSubDenied: "Bllokuar — aktivizoni në cilësimet e shfletuesit/telefonit",
+    toastPushEnabled: "Njoftimet u aktivizuan",
+    toastPushDisabled: "Njoftimet u çaktivizuan",
+    toastPushBlocked: "Njoftimet janë të bllokuara — aktivizoji në cilësimet e shfletuesit ose telefonit",
+    toastPushUnsupported: "Njoftimet nuk mbështeten në këtë pajisje/shfletues",
     friendsModalTitle: "Miqtë",
     friendsModalSubtitle: "Dërgo një kërkesë miqësie me emrin e tij/saj të shfaqur. Sapo ta pranojë, mund t'i dhuroni njëri-tjetrit një kafe falas.",
     phFriendName: "Emri i shfaqur i mikut",
@@ -931,6 +966,7 @@ function applyLanguage(lang) {
   if (typeof updateCardUI === 'function' && state.selectedCustomerId) updateCardUI();
   if (typeof renderCustomerMenu === 'function') renderCustomerMenu();
   if (typeof renderLeaderboard === 'function' && state.currentView === 'view-leaderboard') renderLeaderboard();
+  if (typeof refreshPushToggleState === 'function' && state.currentView === 'view-settings') refreshPushToggleState();
 }
 
 // Password strength rules for new signups — matched server-side in
@@ -1467,6 +1503,39 @@ const cloud = {
       return await res.json();
     } catch (e) {
       return { sent: 0 };
+    }
+  },
+
+  async savePushSubscription(token, sub) {
+    if (!supabaseClient) return false;
+    try {
+      const key = sub.getKey ? sub.getKey('p256dh') : null;
+      const authSecret = sub.getKey ? sub.getKey('auth') : null;
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_save_push_subscription', {
+          p_token: token || null,
+          p_endpoint: sub.endpoint,
+          p_p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : sub.p256dh,
+          p_auth: authSecret ? btoa(String.fromCharCode(...new Uint8Array(authSecret))) : sub.auth
+        }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async removePushSubscription(token, endpoint) {
+    if (!supabaseClient) return false;
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('customer_remove_push_subscription', { p_token: token || null, p_endpoint: endpoint }),
+        4000
+      );
+      return !res.error;
+    } catch (e) {
+      return false;
     }
   },
 
@@ -2565,6 +2634,9 @@ const DOM = {
   btnSetDisplayNameSkip: document.getElementById('btn-set-displayname-skip'),
   btnSetDisplayNameSave: document.getElementById('btn-set-displayname-save'),
   btnOpenFriends: document.getElementById('btn-open-friends'),
+  settingsPushRow: document.getElementById('settings-push-row'),
+  settingsPushSublabel: document.getElementById('settings-push-sublabel'),
+  pushToggle: document.getElementById('push-toggle'),
   btnOpenFriendsHome: document.getElementById('btn-open-friends-home'),
   btnOpenNotifications: document.getElementById('btn-open-notifications'),
   notifBellBadge: document.getElementById('notif-bell-badge'),
@@ -4292,6 +4364,7 @@ function setupEventListeners() {
   };
   if (DOM.btnOpenFriends) DOM.btnOpenFriends.addEventListener('click', openFriendsModal);
   if (DOM.btnOpenFriendsHome) DOM.btnOpenFriendsHome.addEventListener('click', openFriendsModal);
+  if (DOM.pushToggle) DOM.pushToggle.addEventListener('change', handlePushToggleChange);
   if (DOM.btnCloseFriends) DOM.btnCloseFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
   if (DOM.overlayFriends) DOM.overlayFriends.addEventListener('click', () => closeModal(DOM.modalFriends));
 
@@ -4796,6 +4869,7 @@ function switchView(viewId) {
     updateSettingsStats();
     if (!state.isAdmin && state.selectedCustomerId) {
       db.getCustomer(state.selectedCustomerId).then(c => refreshStudentPromoVisibility(c));
+      refreshPushToggleState();
     }
   }
   if (viewId === 'view-activity') renderActivityList();
@@ -5156,6 +5230,81 @@ function refreshStudentPromoVisibility(customer) {
   if (DOM.settingsStudentSection && DOM.settingsStudentLink) {
     DOM.settingsStudentLink.href = storeUrl || '#';
     DOM.settingsStudentSection.classList.toggle('hidden', !showPromo);
+  }
+}
+
+// iOS Safari only exposes Notification/PushManager to a PWA that's already
+// been added to the home screen (not the in-browser tab), so this check is
+// the real "can this device even do push" gate — a plain feature check,
+// not a permission check.
+function pushIsSupported() {
+  return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+}
+
+async function refreshPushToggleState() {
+  if (!DOM.settingsPushRow || !DOM.pushToggle) return;
+  if (!pushIsSupported()) {
+    DOM.settingsPushRow.classList.add('hidden');
+    return;
+  }
+  DOM.settingsPushRow.classList.remove('hidden');
+  const permission = Notification.permission;
+  DOM.pushToggle.disabled = permission === 'denied';
+  if (DOM.settingsPushSublabel) {
+    DOM.settingsPushSublabel.textContent = permission === 'denied' ? t('settingsPushSubDenied') : t('settingsPushSub');
+  }
+  if (permission === 'denied') {
+    DOM.pushToggle.checked = false;
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    DOM.pushToggle.checked = !!sub;
+  } catch (e) {
+    DOM.pushToggle.checked = false;
+  }
+}
+
+async function handlePushToggleChange() {
+  if (!DOM.pushToggle) return;
+  const wantOn = DOM.pushToggle.checked;
+  DOM.pushToggle.disabled = true;
+  try {
+    if (wantOn) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        showToast(permission === 'denied' ? t('toastPushBlocked') : t('toastPushDisabled'), 'error');
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      const saved = await cloud.savePushSubscription(state.myToken, sub);
+      if (!saved) {
+        showToast(t('toastPushDisabled'), 'error');
+        return;
+      }
+      showToast(t('toastPushEnabled'), 'success');
+    } else {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await cloud.removePushSubscription(state.myToken, sub.endpoint);
+        await sub.unsubscribe();
+      }
+      showToast(t('toastPushDisabled'), 'success');
+    }
+  } catch (e) {
+    showToast(t('toastPushUnsupported'), 'error');
+  } finally {
+    DOM.pushToggle.disabled = false;
+    refreshPushToggleState();
   }
 }
 
