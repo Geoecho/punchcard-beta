@@ -1602,16 +1602,16 @@ input { font: inherit; color: inherit; }
    the text from growing right up against the arrow with no breathing
    room, the same class of bug already fixed on .home-header. */
 .settings-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
-/* align-items: flex-start (not center) — with a longer translation
-   (Macedonian's studentPromoSubtitle routinely wraps to 2-3 lines
-   where English fits on one), centering pushed the icon down to the
-   middle of that now-taller text block instead of staying level with
-   the title, the same class of misalignment already fixed on the
-   leaderboard header logo. This only affects the icon/text pairing —
-   .settings-item's own align-items: center (the outer row) is
-   untouched, so the chevron stays vertically centered against the
-   whole row regardless of how many lines the text takes. */
-.settings-item-left { display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0; }
+.settings-item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+/* Promo row only: align-items: flex-start (not center) — with a longer
+   translation (Macedonian's studentPromoSubtitle routinely wraps to
+   2-3 lines where English fits on one), centering pushed the icon down
+   to the middle of that now-taller text block instead of staying level
+   with the title. Scoped to .settings-item-promo only — every other
+   settings row has a short single-line label where centering is
+   correct, and applying this globally pushed those icons out of line
+   with their text. */
+.settings-item-promo .settings-item-left { align-items: flex-start; }
 /* The label+sublabel wrapper (icon's sibling) needs its own min-width:0
    too — flex's default min-width:auto on this child would otherwise
    still force .settings-item-left wide enough to fit the text

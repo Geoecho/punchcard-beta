@@ -63,19 +63,6 @@
   }
   ::-webkit-scrollbar { display: none; }
 
-  .tv-glow {
-    position: fixed;
-    top: -20vh;
-    left: 50%;
-    width: 160vw;
-    max-width: 1400px;
-    aspect-ratio: 1;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
   /* ---------- Header ---------- */
   .tv-header {
     position: relative;
@@ -338,35 +325,9 @@
   }
   .tv-empty { color: var(--text-muted); font-size: clamp(13px, 2.2vw, 17px); text-align: center; padding: 6vh 0; }
 
-  /* ---------- Join QR card — normal document flow, never overlaps
-     content (it used to float fixed over the bottom of the page,
-     which could sit on top of the last menu items). ---------- */
-  .tv-join {
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(14px, 2.6vw, 20px);
-    background: var(--bg-card);
-    border: 1px solid var(--border-glass-strong);
-    border-radius: var(--radius-xl);
-    padding: clamp(14px, 2.6vw, 20px) clamp(18px, 3.2vw, 26px);
-    box-shadow: var(--shadow-lg);
-    margin-top: clamp(28px, 5vw, 44px);
-  }
-  .tv-join-qr { line-height: 0; flex-shrink: 0; }
-  .tv-join-qr img, .tv-join-qr canvas { display: block; width: clamp(64px, 11vw, 84px); height: clamp(64px, 11vw, 84px); }
-  .tv-join-text { display: flex; flex-direction: column; gap: 2px; }
-  .tv-join-title { font-size: clamp(14px, 2.6vw, 18px); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-  .tv-join-sub { font-size: clamp(11px, 2vw, 14px); color: var(--text-secondary); max-width: 26ch; }
-
 </style>
 </head>
 <body>
-  <div class="tv-glow" aria-hidden="true"></div>
-
   <div id="fit-wrapper">
   <header class="tv-header">
     <div class="tv-brand">
@@ -387,7 +348,7 @@
   <main class="split-main">
     <section class="split-panel">
       <div class="lb-panel-header">
-        <div class="lb-panel-title">🏆 Top Regulars</div>
+        <div class="lb-panel-title">Top Regulars</div>
         <div class="lb-panel-period-wrap">
           <div class="lb-panel-period" id="lb-period-label">This Month</div>
           <div class="lb-panel-progress"><div class="lb-panel-progress-fill" id="lb-progress-fill"></div></div>
@@ -407,18 +368,9 @@
       </div>
     </section>
   </main>
-
-  <div class="tv-join">
-    <div class="tv-join-qr" id="tv-join-qr"></div>
-    <div class="tv-join-text">
-      <div class="tv-join-title">Scan to Join</div>
-      <div class="tv-join-sub">Earn a stamp per order — free coffee at 10</div>
-    </div>
-  </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./lib/qrcode.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
@@ -427,16 +379,6 @@
     function avatarUrl(seed) {
       return `https://api.dicebear.com/10.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed || 'person')}&backgroundColor=ffffff`;
     }
-
-    // ---- Join QR ----
-    new QRCode(document.getElementById('tv-join-qr'), {
-      text: window.location.origin + '/index.html#signup',
-      width: 200,
-      height: 200,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
-    });
 
     // ==========================================
     // STATIC FIT — no scrolling. #fit-wrapper is measured against the
@@ -509,7 +451,7 @@
 
         const rankEl = document.createElement('div');
         rankEl.className = 'lb-panel-rank' + (rank <= 3 ? ' lb-panel-medal' : '');
-        rankEl.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
+        rankEl.textContent = String(rank);
         row.appendChild(rankEl);
 
         const avatar = document.createElement('div');
@@ -528,7 +470,7 @@
 
         const stamps = document.createElement('div');
         stamps.className = 'lb-panel-stamps';
-        stamps.textContent = `${entry.stamps} ☕`;
+        stamps.textContent = `${entry.stamps} stamps`;
         row.appendChild(stamps);
 
         list.appendChild(row);
@@ -564,6 +506,14 @@
         list.style.opacity = '1';
         list.style.transform = 'translateY(0)';
         label.style.opacity = '1';
+        // Was called from the setInterval callback alongside
+        // rotateLeaderboardPeriod() — that fired 350ms BEFORE this
+        // fade-in actually swaps the label text (the fade-out delay
+        // above), so the rail was already resetting to 0% and counting
+        // a fresh 12s for the *new* period while the words above it
+        // still showed the *old* one for that last 350ms of each
+        // cycle. Moved here so both change at the exact same instant.
+        restartProgressRail();
       }, 350);
     }
 
@@ -677,7 +627,7 @@
           autoFit();
           return;
         }
-        el.textContent = `✨ ${data[0].label || 'Double Stamps'} — ${data[0].multiplier}x stamps on every order!`;
+        el.textContent = `${data[0].label || 'Double Stamps'} — ${data[0].multiplier}x stamps on every order!`;
         el.classList.add('show');
         autoFit();
       } catch (e) {}
@@ -700,7 +650,10 @@
     setInterval(fetchLeaderboards, 60000);
     setInterval(fetchMenu, 60000);
     setInterval(fetchCampaign, 60000);
-    setInterval(() => { rotateLeaderboardPeriod(); restartProgressRail(); }, 12000);
+    // restartProgressRail() now happens inside rotateLeaderboardPeriod()'s
+    // own fade-in callback (see above) instead of here, so both the rail
+    // and the label swap at exactly the same instant.
+    setInterval(rotateLeaderboardPeriod, 12000);
 
     // An always-on TV/tablet tab can accumulate memory/stale-connection
     // issues over days — a clean reload once every 6 hours keeps it healthy.
