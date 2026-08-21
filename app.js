@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v87';
+const APP_BUILD_ID = 'v88';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -50,6 +50,20 @@ const DICEBEAR_STYLE = 'croodles-neutral';
 const AVATAR_SEEDS = ['Milo', 'Nova', 'Kai', 'Zara', 'Leo', 'Luna', 'Remy', 'Sage', 'Ivy', 'Finn', 'Coco', 'Ash', 'Rio', 'Wren', 'Blue', 'Juno'];
 function avatarUrl(seed) {
   return `https://api.dicebear.com/10.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=ffffff`;
+}
+
+// Menu item name/sub are staff-editable free text stored in the cloud and
+// rendered via innerHTML (for the price-badge/edit-icon markup alongside
+// them) — without escaping, a malicious or compromised staff account could
+// persist HTML/JS in a menu item that runs in every customer's and every
+// other staff member's session.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 const MONOCHROME_AVATARS = AVATAR_SEEDS.reduce((acc, seed) => {
   acc[seed] = `<img src="${avatarUrl(seed)}" alt="" loading="lazy">`;
@@ -6630,8 +6644,8 @@ function renderCustomerMenu() {
         priceHtml = `<span class="menu-item-price">${regularVal} MKD</span>`;
       }
 
-      let html = `<span class="menu-item-name">${item.name}</span>
-                  <span class="menu-item-sub">${item.sub || ''}</span>
+      let html = `<span class="menu-item-name">${escapeHtml(item.name)}</span>
+                  <span class="menu-item-sub">${escapeHtml(item.sub || '')}</span>
                   <span class="menu-item-price-group">${priceHtml}`;
 
       if (item.stamps > 0) {
@@ -6853,7 +6867,7 @@ function renderAdminMenu() {
 
       const priceVal = parseFloat(item.price).toString();
 
-      let html = `<span class="menu-item-name">${item.name} <span style="font-size: 10px; color: var(--text-muted);">✎ Edit</span></span>
+      let html = `<span class="menu-item-name">${escapeHtml(item.name)} <span style="font-size: 10px; color: var(--text-muted);">Edit</span></span>
                   <span class="menu-item-price">${priceVal} MKD</span>`;
 
       itemDiv.innerHTML = html;
