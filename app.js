@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v81';
+const APP_BUILD_ID = 'v82';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -3216,7 +3216,15 @@ function setupEventListeners() {
 
   // Navigation
   DOM.navItems.forEach(item => {
-    item.addEventListener('click', () => switchView(item.dataset.target));
+    item.addEventListener('click', () => {
+      // Only on an actual tab change — tapping the tab you're already on
+      // shouldn't make noise, there's nothing happening to confirm.
+      if (item.dataset.target !== state.currentView) {
+        playTapSound();
+        hapticPulse(10);
+      }
+      switchView(item.dataset.target);
+    });
   });
 
   // Secret staff/admin entry point: tap the welcome-screen logo 5 times
@@ -5963,6 +5971,16 @@ function playTone(freq, startTime, duration, ctx, gainPeak = 0.18) {
   gain.connect(ctx.destination);
   osc.start(startTime);
   osc.stop(startTime + duration);
+}
+
+// Bottom-nav tab switches — deliberately the quietest, shortest cue in
+// the app. This fires on every single tab tap, the highest-frequency
+// interaction there is, so anything louder or longer than a stamp/
+// reward sound would get old fast. One tone, low gain, ~40ms.
+function playTapSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  playTone(1200, ctx.currentTime, 0.05, ctx, 0.05);
 }
 
 function playStampSound() {
