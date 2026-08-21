@@ -1935,13 +1935,9 @@ input { font: inherit; color: inherit; }
 .update-banner:active { transform: scale(0.97); }
 
 /* ── QR Display ────────────────────────────────────────────── */
-/* White code, no background box — app.js renders this one's modules
-   colorDark:#fff / colorLight:transparent (unlike the printable poster
-   QR, which stays black-on-white since it needs to work on paper). The
-   modal it lives in is already near-black (--bg-secondary), so a plain
-   white code reads perfectly without a white card behind it. */
 #qrcode-display {
-  display: inline-block;
+  background: white; padding: 20px; border-radius: 16px; display: inline-block;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
   margin-bottom: 24px;
 }
 

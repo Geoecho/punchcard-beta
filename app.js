@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v78';
+const APP_BUILD_ID = 'v79';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -1327,6 +1327,13 @@ const cloud = {
     }
   },
 
+  // Returns false (not null) specifically when the request succeeded and
+  // confirmed the id doesn't exist — as opposed to null, which means the
+  // request itself failed and nothing was actually confirmed either way.
+  // Both are falsy so every existing `if (!customer)` caller is unaffected;
+  // only code that specifically checks `=== false` (see the boot-time
+  // session restore below) can tell "this account is genuinely gone" from
+  // "couldn't reach the server right now" and react differently.
   async pullCustomer(id) {
     if (!supabaseClient || !id) return null;
     try {
@@ -1334,10 +1341,14 @@ const cloud = {
         supabaseClient.rpc('get_customer_by_id', { p_id: id }),
         4000
       );
-      if (res.error || !res.data || !res.data.length) return null;
+      if (res.error) {
+        console.error('pullCustomer failed:', res.error.message);
+        return null;
+      }
+      if (!res.data || !res.data.length) return false;
       return mapDbRowToCustomer(res.data[0]);
     } catch (e) {
-      console.error('Supabase call failed:', e && e.message);
+      console.error('pullCustomer threw:', e && e.message);
       return null;
     }
   },
@@ -1558,17 +1569,27 @@ const cloud = {
     }
   },
 
+  // Returns null (not []) when the request itself failed — distinct from
+  // a genuinely empty cloud list, e.g. right after a full account reset.
+  // Conflating those used to mean reconcileLocalCustomers() couldn't
+  // tell "the cloud really has nothing" from "couldn't reach the cloud"
+  // and had no safe choice but to trust every local record forever,
+  // including ones deleted server-side ages ago.
   async pullAllCustomers(staffToken) {
-    if (!supabaseClient || !staffToken) return [];
+    if (!supabaseClient || !staffToken) return null;
     try {
       const res = await withTimeout(
         supabaseClient.rpc('staff_list_customers', { p_token: staffToken }),
         2000
       );
-      if (res.error || !res.data) return [];
-      return res.data.map(mapDbRowToCustomer);
+      if (res.error) {
+        console.error('pullAllCustomers failed:', res.error.message);
+        return null;
+      }
+      return (res.data || []).map(mapDbRowToCustomer);
     } catch (e) {
-      return [];
+      console.error('pullAllCustomers threw:', e && e.message);
+      return null;
     }
   },
 
@@ -2107,6 +2128,33 @@ const cloud = {
   }
 };
 
+// Staff's local IndexedDB cache used to only ever gain records from a
+// cloud sync (save/update each customer returned) and never lose them —
+// a customer deleted server-side (e.g. via supabase-reset-customers.sql)
+// stayed cached on every staff device that had ever seen it, forever.
+// Any interaction with that ghost record (selecting it, adding a stamp)
+// then hit "customer not found" on every single request, which several
+// call sites show as "Could not reach the server" since that's a much
+// more common day-to-day cause than a real customer row vanishing.
+// Also runs when cloudCustomers is empty — the exact state right after
+// a full reset — since the previous `if (cloudCustomers.length > 0)`
+// guard skipped reconciliation completely in that case, the one time
+// it mattered most. cloudCustomers is null (not []) when pullAllCustomers
+// itself failed — a real empty cloud list and a failed request used to
+// look identical, which would have made this delete every local record
+// on a transient network blip. Bail out on null instead of trusting []
+// enough to wipe local data over it.
+async function reconcileLocalCustomers(cloudCustomers) {
+  if (!cloudCustomers) return;
+  for (const c of cloudCustomers) await db.saveCustomer(c);
+  const cloudIds = new Set(cloudCustomers.map(c => c.id));
+  const localCustomers = await db.getAllCustomers();
+  for (const local of localCustomers) {
+    if (!cloudIds.has(local.id)) await db.deleteCustomer(local.id);
+  }
+  state.customers = await db.getAllCustomers();
+}
+
 let pollInterval = null;
 function startCloudPolling() {
   stopCloudPolling();
@@ -2116,6 +2164,23 @@ function startCloudPolling() {
 
     try {
       const cloudCustomer = await cloud.pullCustomer(targetId);
+      if (cloudCustomer === false) {
+        // Confirmed gone server-side, not just an unreachable poll —
+        // same recovery as the boot-time check above: a stale account
+        // left behind here would otherwise keep silently failing this
+        // exact request every 3s forever.
+        console.warn('Polling found this account no longer exists — clearing it:', targetId);
+        cloud.unsubscribe();
+        stopCloudPolling();
+        localStorage.removeItem('86_user_session');
+        await db.deleteCustomer(targetId);
+        state.myCustomerId = null;
+        state.myToken = null;
+        state.selectedCustomerId = null;
+        switchView('view-signup');
+        showToast('This account no longer exists — please sign up or log in again', 'info');
+        return;
+      }
       if (!cloudCustomer) return;
 
       const localCustomer = await db.getCustomer(targetId);
@@ -2836,12 +2901,9 @@ async function initApp() {
         renderStaffProfile();
         try {
           const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
-          if (cloudCustomers.length > 0) {
-            for (const c of cloudCustomers) await db.saveCustomer(c);
-            state.customers = await db.getAllCustomers();
-            renderCustomersList();
-            renderActivityList();
-          }
+          await reconcileLocalCustomers(cloudCustomers);
+          renderCustomersList();
+          renderActivityList();
         } catch (e) {}
       } else {
         targetView = 'view-admin-login';
@@ -2890,12 +2952,29 @@ async function initApp() {
 
         if (needsCloudRefresh) {
           cloud.pullCustomer(me.id).then(async (fresh) => {
-            if (fresh && state.selectedCustomerId === fresh.id) {
+            if (state.selectedCustomerId !== me.id) return; // switched away before this resolved
+            if (fresh) {
               const avatar = localStorage.getItem(`86_user_avatar_${fresh.id}`);
               if (avatar) fresh.avatar = avatar;
               await db.saveCustomer(fresh);
               await updateCardUI();
               renderActivityList();
+            } else if (fresh === false) {
+              // Confirmed gone server-side (e.g. supabase-reset-customers.sql),
+              // not just unreachable — this device was showing a phantom
+              // stamps:0 card rebuilt from a stale cached session, and every
+              // action against it would have kept failing forever otherwise.
+              // Clear the stale session/local copy and drop back to signup
+              // instead of leaving a broken account behind.
+              console.warn('Saved session pointed at a deleted account — clearing it:', me.id);
+              cloud.unsubscribe();
+              localStorage.removeItem('86_user_session');
+              await db.deleteCustomer(me.id);
+              state.myCustomerId = null;
+              state.myToken = null;
+              state.selectedCustomerId = null;
+              switchView('view-signup');
+              showToast('This account no longer exists — please sign up or log in again', 'info');
             }
           }).catch(() => {});
         }
@@ -3252,16 +3331,12 @@ function setupEventListeners() {
 
       const renderQr = (text) => {
         DOM.qrcodeDisplay.innerHTML = '';
-        // White-on-transparent — this is the in-app "Show My QR Code"
-        // modal (dark background), not the printable poster, which
-        // stays black-on-white further down since it needs to scan off
-        // paper. Canvas fillStyle accepts "transparent" directly.
         new QRCode(DOM.qrcodeDisplay, {
           text,
           width: 200,
           height: 200,
-          colorDark: "#ffffff",
-          colorLight: "transparent",
+          colorDark: "#000000",
+          colorLight: "#ffffff",
           correctLevel: QRCode.CorrectLevel.H
         });
       };
@@ -3377,12 +3452,9 @@ function setupEventListeners() {
         renderStaffProfile();
         try {
           const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
-          if (cloudCustomers.length > 0) {
-            for (const c of cloudCustomers) await db.saveCustomer(c);
-            state.customers = await db.getAllCustomers();
-            renderCustomersList();
-            renderActivityList();
-          }
+          await reconcileLocalCustomers(cloudCustomers);
+          renderCustomersList();
+          renderActivityList();
         } catch (e) {}
       } else {
         // Whitelisted staff who are already signed in on this device with
@@ -4631,12 +4703,9 @@ async function finishStaffLogin(result) {
 
   try {
     const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
-    if (cloudCustomers.length > 0) {
-      for (const c of cloudCustomers) await db.saveCustomer(c);
-      state.customers = await db.getAllCustomers();
-      renderCustomersList();
-      renderActivityList();
-    }
+    await reconcileLocalCustomers(cloudCustomers);
+    renderCustomersList();
+    renderActivityList();
   } catch (e) {}
 
   switchView('view-customers');
