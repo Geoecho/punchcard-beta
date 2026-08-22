@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v96';
+const APP_BUILD_ID = 'v97';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -111,6 +111,7 @@ const TRANSLATIONS = {
     errSignupGeneric: "Something went wrong. Please try again.",
     errEnterUsernamePassword: "Please enter your username and password",
     errIncorrectLogin: "Incorrect username or password",
+    errRateLimited: "Too many attempts. Please try again in a few minutes.",
     toastWelcomeNew: "Welcome to Eightysix°!",
     toastWelcomeBack: "Welcome back, {name}!",
     toastLoggedOut: "Logged out of card",
@@ -423,6 +424,7 @@ const TRANSLATIONS = {
     errSignupGeneric: "Нешто тргна наопаку. Обидете се повторно.",
     errEnterUsernamePassword: "Внесете ги вашето корисничко име и лозинка",
     errIncorrectLogin: "Погрешно корисничко име или лозинка",
+    errRateLimited: "Премногу обиди. Обидете се повторно за неколку минути.",
     toastWelcomeNew: "Добредојдовте во Eightysix°!",
     toastWelcomeBack: "Добредојдовте назад, {name}!",
     toastLoggedOut: "Одјавени сте од картичката",
@@ -735,6 +737,7 @@ const TRANSLATIONS = {
     errSignupGeneric: "Diçka shkoi keq. Provo përsëri.",
     errEnterUsernamePassword: "Vendos emrin e përdoruesit dhe fjalëkalimin",
     errIncorrectLogin: "Emër përdoruesi ose fjalëkalim i gabuar",
+    errRateLimited: "Shumë përpjekje. Provo përsëri pas pak minutash.",
     toastWelcomeNew: "Mirë se erdhe në Eightysix°!",
     toastWelcomeBack: "Mirë se u ktheve, {name}!",
     toastLoggedOut: "U çkyçe nga karta",
@@ -1393,6 +1396,7 @@ const cloud = {
         if (msg.includes('weak_password')) return { error: 'weak_password' };
         if (msg.includes('inappropriate_name')) return { error: 'inappropriate_name' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
+        if (msg.includes('rate_limited')) return { error: 'rate_limited' };
         console.error('Supabase call failed:', msg);
         return { error: 'unknown' };
       }
@@ -1412,7 +1416,13 @@ const cloud = {
         supabaseClient.rpc('login_customer', { p_username: username, p_password: password }),
         4000
       );
-      if (res.error || !res.data || !res.data.length) return null;
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('rate_limited')) return { error: 'rate_limited' };
+        console.error('Supabase call failed:', msg);
+        return null;
+      }
+      if (!res.data || !res.data.length) return null;
       const d = res.data[0];
       return { customer: mapDbRowToCustomer(d), token: d.token };
     } catch (e) {
@@ -1695,7 +1705,12 @@ const cloud = {
         supabaseClient.rpc('staff_login', { p_email: email, p_password: password }),
         4000
       );
-      if (res.error || !res.data || !res.data.length) return { error: 'invalid' };
+      if (res.error) {
+        const msg = res.error.message || '';
+        if (msg.includes('rate_limited')) return { error: 'rate_limited' };
+        return { error: 'invalid' };
+      }
+      if (!res.data || !res.data.length) return { error: 'invalid' };
       const d = res.data[0];
       return { token: d.token, staffId: d.staff_id, name: d.name, email: d.email };
     } catch (e) {
@@ -3564,6 +3579,10 @@ function setupEventListeners() {
         DOM.staffLoginError.textContent = 'Could not reach the server. Check your connection.';
         return;
       }
+      if (result.error === 'rate_limited') {
+        DOM.staffLoginError.textContent = 'Too many attempts. Please try again in a few minutes.';
+        return;
+      }
       if (result.error) {
         state.pinFailedAttempts++;
         if (state.pinFailedAttempts >= 5) {
@@ -3648,6 +3667,10 @@ function setupEventListeners() {
 
       const result = await cloud.signupCustomer(username, password, '');
 
+      if (result.error === 'rate_limited') {
+        showToast(t('errRateLimited'), 'error');
+        return;
+      }
       if (result.error === 'username_taken') {
         showToast(t('errUsernameTaken'), 'error');
         return;
@@ -3698,6 +3721,10 @@ function setupEventListeners() {
     DOM.btnLoginSubmit.disabled = true;
     try {
       const loginResult = await cloud.loginCustomer(username, password);
+      if (loginResult && loginResult.error === 'rate_limited') {
+        showToast(t('errRateLimited'), 'error');
+        return;
+      }
       if (!loginResult) {
         showToast(t('errIncorrectLogin'), 'error');
         return;
