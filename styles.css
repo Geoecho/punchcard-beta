@@ -1629,18 +1629,22 @@ input { font: inherit; color: inherit; }
 .pin-dot.error { border-color: var(--error); background: var(--error); animation: shake 0.4s var(--ease-in-out); }
 .pin-error { color: var(--error); font-size: 13px; min-height: 20px; text-align: center; }
 
-.password-requirements { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: -6px 0 14px; }
-.pw-req { position: relative; padding-left: 15px; font-size: 11px; color: var(--text-muted); transition: color 0.2s var(--ease-out); }
-.pw-req::before {
-  content: '';
-  position: absolute; left: 0; top: 50%;
-  width: 6px; height: 6px; border-radius: 50%;
-  transform: translateY(-50%);
-  background: var(--text-muted);
-  transition: background 0.2s var(--ease-out);
+.password-requirements { margin: -2px 0 14px; }
+.pw-strength-track {
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--bg-glass);
+  overflow: hidden;
+  margin-bottom: 6px;
 }
-.pw-req.met { color: var(--text-secondary); }
-.pw-req.met::before { background: var(--success); }
+.pw-strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+  transition: width 0.2s var(--ease-out), background 0.2s var(--ease-out);
+}
+.pw-strength-caption { font-size: 11px; color: var(--text-muted); }
 .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 360px; margin: 0 auto; }
 .pin-key { height: 64px; border-radius: var(--radius-lg); background: var(--bg-glass); border: 1px solid var(--border-glass-strong); font-family: var(--font-heading); font-size: 24px; font-weight: 600; color: var(--text-primary); transition: all 0.15s var(--ease-out); display: flex; align-items: center; justify-content: center; }
 .pin-key:active { background: rgba(255, 255, 255, 0.15); transform: scale(0.94); }

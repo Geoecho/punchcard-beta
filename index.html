@@ -143,10 +143,8 @@
             </button>
           </div>
           <div class="password-requirements" id="signup-password-requirements">
-            <span class="pw-req" data-rule="length" data-i18n="pwReqLength">8+ characters</span>
-            <span class="pw-req" data-rule="upper" data-i18n="pwReqUpper">Uppercase letter</span>
-            <span class="pw-req" data-rule="lower" data-i18n="pwReqLower">Lowercase letter</span>
-            <span class="pw-req" data-rule="number" data-i18n="pwReqNumber">Number</span>
+            <div class="pw-strength-track"><div class="pw-strength-fill"></div></div>
+            <div class="pw-strength-caption" data-i18n="pwRequirementsHint">8+ characters, upper &amp; lowercase, a number</div>
           </div>
           <div class="form-group form-group-password">
             <input type="password" id="signup-password-confirm" class="form-input" placeholder="Confirm Password" autocomplete="new-password" enterkeyhint="done" data-i18n-placeholder="phPasswordConfirm">
@@ -157,7 +155,7 @@
           </div>
           <div class="form-group-checkbox">
             <label class="checkbox-label">
-              <input type="checkbox" id="signup-tos-check" checked class="custom-checkbox">
+              <input type="checkbox" id="signup-tos-check" class="custom-checkbox">
               <span class="checkbox-text">I agree to the <a href="#" id="link-tos">Terms of Service</a> & <a href="#" id="link-privacy">Privacy Policy</a></span>
             </label>
           </div>
@@ -1251,10 +1249,8 @@
           <input type="password" id="edit-customer-new-password" class="form-input" placeholder="New Password (8+ chars)" autocomplete="new-password" enterkeyhint="done">
         </div>
         <div class="password-requirements" id="edit-customer-password-requirements">
-          <span class="pw-req" data-rule="length" data-i18n="pwReqLength">8+ characters</span>
-          <span class="pw-req" data-rule="upper" data-i18n="pwReqUpper">Uppercase letter</span>
-          <span class="pw-req" data-rule="lower" data-i18n="pwReqLower">Lowercase letter</span>
-          <span class="pw-req" data-rule="number" data-i18n="pwReqNumber">Number</span>
+          <div class="pw-strength-track"><div class="pw-strength-fill"></div></div>
+          <div class="pw-strength-caption" data-i18n="pwRequirementsHint">8+ characters, upper &amp; lowercase, a number</div>
         </div>
         <p class="pin-error" id="edit-customer-password-error"></p>
 

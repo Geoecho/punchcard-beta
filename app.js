@@ -91,10 +91,7 @@ const TRANSLATIONS = {
     phUsername: "Username (Used to log in)",
     phPassword: "Password (8+ chars)",
     phPasswordConfirm: "Confirm Password",
-    pwReqLength: "8+ characters",
-    pwReqUpper: "Uppercase letter",
-    pwReqLower: "Lowercase letter",
-    pwReqNumber: "Number",
+    pwRequirementsHint: "8+ characters, upper & lowercase, a number",
     errPasswordMismatch: "Passwords don't match",
     errChooseUsername: "Please choose a username",
     errChooseDisplayName: "Please enter a display name",
@@ -412,10 +409,7 @@ const TRANSLATIONS = {
     phUsername: "Корисничко име (за најава)",
     phPassword: "Лозинка (8+ карактери)",
     phPasswordConfirm: "Потврди лозинка",
-    pwReqLength: "8+ карактери",
-    pwReqUpper: "Голема буква",
-    pwReqLower: "Мала буква",
-    pwReqNumber: "Број",
+    pwRequirementsHint: "8+ карактери, голема и мала буква, број",
     errPasswordMismatch: "Лозинките не се совпаѓаат",
     errChooseUsername: "Ве молиме изберете корисничко име",
     errChooseDisplayName: "Ве молиме внесете име за прикажување",
@@ -733,10 +727,7 @@ const TRANSLATIONS = {
     phUsername: "Emri i përdoruesit (për identifikim)",
     phPassword: "Fjalëkalimi (8+ shkronja)",
     phPasswordConfirm: "Konfirmo Fjalëkalimin",
-    pwReqLength: "8+ shkronja",
-    pwReqUpper: "Shkronjë e madhe",
-    pwReqLower: "Shkronjë e vogël",
-    pwReqNumber: "Numër",
+    pwRequirementsHint: "8+ karaktere, shkronjë e madhe & e vogël, numër",
     errPasswordMismatch: "Fjalëkalimet nuk përputhen",
     errChooseUsername: "Ju lutemi zgjidhni një emër përdoruesi",
     errChooseDisplayName: "Ju lutemi vendosni një emër shfaqjeje",
@@ -3382,14 +3373,16 @@ function setupEventListeners() {
     });
   });
 
+  const PW_STRENGTH_SHADES = ['var(--text-muted)', 'var(--text-muted)', 'var(--text-secondary)', 'var(--accent-secondary)', 'var(--accent-main)'];
   const wirePasswordChecklist = (inputEl, requirementsContainerId) => {
     if (!inputEl) return;
+    const fill = document.querySelector(`#${requirementsContainerId} .pw-strength-fill`);
+    if (!fill) return;
     inputEl.addEventListener('input', () => {
       const checks = getPasswordChecks(inputEl.value);
-      Object.entries(checks).forEach(([rule, met]) => {
-        const el = document.querySelector(`#${requirementsContainerId} .pw-req[data-rule="${rule}"]`);
-        if (el) el.classList.toggle('met', met);
-      });
+      const count = Object.values(checks).filter(Boolean).length;
+      fill.style.width = inputEl.value ? `${(count / 4) * 100}%` : '0%';
+      fill.style.background = PW_STRENGTH_SHADES[count];
     });
   };
   wirePasswordChecklist(DOM.signupPassword, 'signup-password-requirements');
@@ -5886,7 +5879,8 @@ function renderCustomersList(searchTerm = '') {
         if (DOM.editCustomerPhone) DOM.editCustomerPhone.value = customer.phone || '';
         if (DOM.editCustomerNewPassword) DOM.editCustomerNewPassword.value = '';
         if (DOM.editCustomerPasswordError) DOM.editCustomerPasswordError.textContent = '';
-        document.querySelectorAll('#edit-customer-password-requirements .pw-req').forEach(el => el.classList.remove('met'));
+        const editPwFill = document.querySelector('#edit-customer-password-requirements .pw-strength-fill');
+        if (editPwFill) editPwFill.style.width = '0%';
         openModal(DOM.modalEditCustomer);
       });
       el.appendChild(editBtn);
