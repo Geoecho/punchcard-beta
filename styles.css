@@ -1138,7 +1138,7 @@ input { font: inherit; color: inherit; }
   40% { transform: scale(1.22); }
   100% { transform: scale(1); }
 }
-.nav-label { font-size: 11px; font-weight: 500; text-align: center; }
+.nav-label { font-size: 11px; font-weight: 500; text-align: center; white-space: nowrap; }
 
 .customers-header { padding: 24px 24px 16px; display: flex; justify-content: space-between; align-items: center; }
 .customer-count-badge { background: var(--bg-glass); border: 1px solid var(--border-glass); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: var(--radius-full); }
@@ -1311,6 +1311,7 @@ input { font: inherit; color: inherit; }
 }
 
 .settings-section { padding: 0 24px; margin-bottom: 24px; }
+.settings-section-logout { margin-top: 8px; }
 .settings-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 
 .settings-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 8px; cursor: pointer; color: inherit; text-decoration: none; }
@@ -2842,7 +2843,7 @@ input { font: inherit; color: inherit; }
   .menu-category { margin-bottom: 8px; }
   .admin-promo-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 4px 32px;
     align-content: start;
   }
@@ -2868,6 +2869,14 @@ input { font: inherit; color: inherit; }
      insights) the full-width treatment instead of just the top one,
      so they don't get squeezed into a masonry column at 1/3 width. */
   #view-settings .settings-section:has(.quick-stats) {
+    grid-column: 1 / -1;
+    max-width: 640px;
+  }
+
+  /* Log out is a one-off, low-frequency action, not another settings
+     card competing for column space — give it its own full-width row
+     at the very bottom, same footer treatment as .app-info below it. */
+  .settings-section-logout {
     grid-column: 1 / -1;
     max-width: 640px;
   }

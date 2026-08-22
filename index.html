@@ -580,21 +580,6 @@
         <h2 id="settings-title" style="cursor: pointer;" data-i18n="dashboardTitle">Dashboard</h2>
       </header>
 
-      <div class="quick-stats admin-only" style="margin-top: 16px;">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-stamps-today">0</div>
-          <div class="stat-label" data-i18n="statStampsToday">Stamps Today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-rewards-given">0</div>
-          <div class="stat-label" data-i18n="statRewardsGiven">Rewards Given</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-active-cards">0</div>
-          <div class="stat-label" data-i18n="statActiveCards">Active Cards</div>
-        </div>
-      </div>
-
       <div class="settings-section">
         <div class="settings-section-title" data-i18n="settingsLanguage">Language</div>
         <div class="lang-switcher" id="lang-switcher-settings">
@@ -602,6 +587,38 @@
           <button class="lang-btn" data-lang="mk">МК</button>
           <button class="lang-btn" data-lang="sq">SQ</button>
         </div>
+      </div>
+
+      <div class="settings-section admin-only">
+        <div class="settings-section-title" data-i18n="settingsStoreOverview">Store Overview</div>
+        <div class="quick-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-stamps-today">0</div>
+            <div class="stat-label" data-i18n="statStampsToday">Stamps Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-rewards-given">0</div>
+            <div class="stat-label" data-i18n="statRewardsGiven">Rewards Given</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-active-cards">0</div>
+            <div class="stat-label" data-i18n="statActiveCards">Active Cards</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-stamps-week">0</div>
+            <div class="stat-label" data-i18n="statStampsWeek">Stamps This Week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-stamps-month">0</div>
+            <div class="stat-label" data-i18n="statStampsMonth">Stamps This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-redemptions-month">0</div>
+            <div class="stat-label" data-i18n="statRedemptionsMonth">Redeemed This Month</div>
+          </div>
+        </div>
+        <div class="settings-item-sublabel" style="margin: 14px 20px 6px;" data-i18n="statTopDrinksLabel">Top Drinks — Last 30 Days</div>
+        <div class="staff-team-stats" id="top-drinks-list"></div>
       </div>
 
       <div class="settings-section admin-only">
@@ -631,35 +648,6 @@
           </div>
         </div>
         <div class="staff-team-stats" id="staff-team-stats-list"></div>
-        <div class="settings-item" id="btn-staff-logout">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            </div>
-            <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
-      </div>
-
-      <div class="settings-section admin-only">
-        <div class="settings-section-title" data-i18n="settingsStoreInsights">Store Insights</div>
-        <div class="quick-stats">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-stamps-week">0</div>
-            <div class="stat-label" data-i18n="statStampsWeek">Stamps This Week</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-stamps-month">0</div>
-            <div class="stat-label" data-i18n="statStampsMonth">Stamps This Month</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-redemptions-month">0</div>
-            <div class="stat-label" data-i18n="statRedemptionsMonth">Redeemed This Month</div>
-          </div>
-        </div>
-        <div class="settings-item-sublabel" style="margin: 14px 20px 6px;" data-i18n="statTopDrinksLabel">Top Drinks — Last 30 Days</div>
-        <div class="staff-team-stats" id="top-drinks-list"></div>
       </div>
 
       <div class="settings-section customer-only hidden" id="settings-student-section">
@@ -725,18 +713,6 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
-        <div class="settings-item" id="btn-logout-user">
-          <div class="settings-item-left">
-            <div class="settings-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            </div>
-            <div>
-              <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
-              <div class="settings-item-sublabel" id="user-account-label"></div>
-            </div>
-          </div>
-          <div class="settings-item-chevron">›</div>
-        </div>
       </div>
 
       <div class="settings-section">
@@ -783,6 +759,30 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+        </div>
+      </div>
+
+      <div class="settings-section settings-section-logout">
+        <div class="settings-item admin-only" id="btn-staff-logout">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+            <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
+          </div>
+          <div class="settings-item-chevron">›</div>
+        </div>
+        <div class="settings-item customer-only" id="btn-logout-user">
+          <div class="settings-item-left">
+            <div class="settings-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </div>
+            <div>
+              <div class="settings-item-label" data-i18n="settingsLogOut">Log Out</div>
+              <div class="settings-item-sublabel" id="user-account-label"></div>
+            </div>
+          </div>
+          <div class="settings-item-chevron">›</div>
         </div>
       </div>
 
