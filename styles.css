@@ -2266,6 +2266,109 @@ input { font: inherit; color: inherit; }
   padding: 4px 2px 12px;
 }
 
+/* ---------- Staff Drinks tab (Admin, desktop) — a drink picker beside
+   a shared log, side by side on desktop where this view is only ever
+   shown (admin requires desktop width already); stacks on anything
+   narrower so it never breaks, just gets less efficient. ---------- */
+.staff-drinks-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 16px 20px 100px;
+  align-items: flex-start;
+}
+.staff-drinks-picker {
+  flex: 1.3 1 360px;
+  min-width: 0;
+}
+.staff-drinks-picker-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.staff-drinks-category {
+  margin-bottom: 20px;
+}
+.staff-drinks-category-title {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-glass);
+  margin-bottom: 10px;
+}
+.staff-drinks-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.staff-drinks-chip {
+  background: var(--bg-glass);
+}
+.staff-drinks-chip:active {
+  transform: scale(0.96);
+  background: var(--bg-glass-hover);
+}
+.staff-drinks-log-panel {
+  flex: 1 1 280px;
+  min-width: 0;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.staff-drinks-log-title {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.staff-drinks-log-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.staff-drinks-log-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.staff-drinks-log-row:last-child {
+  border-bottom: none;
+}
+.staff-drinks-log-main {
+  min-width: 0;
+  font-size: 13px;
+}
+.staff-drinks-log-staff {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.staff-drinks-log-item {
+  color: var(--text-secondary);
+}
+.staff-drinks-log-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.staff-drinks-log-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
 .promo-banner-picker {
   position: relative;
   width: 100%;
@@ -2702,6 +2805,12 @@ input { font: inherit; color: inherit; }
   }
   .menu-stamp-note { grid-column: 1 / -1; }
   .menu-category { margin-bottom: 8px; }
+  .admin-promo-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 4px 32px;
+    align-content: start;
+  }
 
   .lb-scroll-area { width: 100%; max-width: calc(100% - 120px); margin-left: auto; margin-right: auto; box-sizing: border-box; }
   .lb-your-rank { width: 100%; }

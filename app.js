@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v97';
+const APP_BUILD_ID = 'v98';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -163,6 +163,11 @@ const TRANSLATIONS = {
     navCustomers: "Customers",
     navEditMenu: "Edit Menu",
     navActivity: "Activity",
+    navStaffDrinks: "Staff Drinks",
+    staffDrinksPickerHint: "Tap a drink to log one for yourself",
+    staffDrinksLogTitle: "Recent",
+    staffDrinksLogEmpty: "No drinks logged yet.",
+    toastDrinkLogged: "Logged: {name}",
     navSettings: "Settings",
     btnAddItem: "+ Add Item",
     navPromoBanners: "Promo Banners",
@@ -476,6 +481,11 @@ const TRANSLATIONS = {
     navCustomers: "Клиенти",
     navEditMenu: "Уреди мени",
     navActivity: "Активност",
+    navStaffDrinks: "Пијалаци за вработени",
+    staffDrinksPickerHint: "Допрете пијалак за да го евидентирате за себе",
+    staffDrinksLogTitle: "Неодамна",
+    staffDrinksLogEmpty: "Сè уште нема евидентирани пијалаци.",
+    toastDrinkLogged: "Евидентирано: {name}",
     navSettings: "Поставки",
     btnAddItem: "+ Додади ставка",
     navPromoBanners: "Промо банери",
@@ -789,6 +799,11 @@ const TRANSLATIONS = {
     navCustomers: "Klientët",
     navEditMenu: "Ndrysho Menynë",
     navActivity: "Aktiviteti",
+    navStaffDrinks: "Pije për Stafin",
+    staffDrinksPickerHint: "Prek një pije për ta regjistruar për vete",
+    staffDrinksLogTitle: "Të fundit",
+    staffDrinksLogEmpty: "Ende nuk ka pije të regjistruara.",
+    toastDrinkLogged: "U regjistrua: {name}",
     navSettings: "Cilësimet",
     btnAddItem: "+ Shto Artikull",
     navPromoBanners: "Banderolat Promo",
@@ -1739,6 +1754,27 @@ const cloud = {
     } catch (e) {}
   },
 
+  async staffLogDrink(token, itemName) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_log_drink', { p_token: token, p_item_name: itemName }), 4000);
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async staffListDrinkLog(token, limit = 100) {
+    if (!supabaseClient || !token) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_list_drink_log', { p_token: token, p_limit: limit }), 4000);
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ id: d.id, staffName: d.staff_name, itemName: d.item_name, loggedAt: d.logged_at }));
+    } catch (e) {
+      return null;
+    }
+  },
+
   async staffGetSelf(token) {
     if (!supabaseClient || !token) return null;
     try {
@@ -2674,6 +2710,10 @@ const DOM = {
   totalActivityBadge: document.getElementById('total-activity-badge'),
   activityFilterChips: document.querySelectorAll('#activity-filter-chips .chip'),
   customerSortChips: document.querySelectorAll('#customer-sort-chips .chip'),
+
+  staffDrinksTodayBadge: document.getElementById('staff-drinks-today-badge'),
+  staffDrinksPickerList: document.getElementById('staff-drinks-picker-list'),
+  staffDrinksLogList: document.getElementById('staff-drinks-log-list'),
 
   btnLogoutUser: document.getElementById('btn-logout-user'),
   userAccountLabel: document.getElementById('user-account-label'),
@@ -4683,6 +4723,10 @@ function switchView(viewId) {
     }
   }
   if (viewId === 'view-activity') renderActivityList();
+  if (viewId === 'view-staff-drinks') {
+    renderStaffDrinksPicker();
+    loadAndRenderStaffDrinkLog();
+  }
   if (viewId === 'view-leaderboard') renderLeaderboard();
 
   if (viewId === 'view-menu' || viewId === 'view-admin-menu') { syncMenuFromCloud(); syncPromoBannersFromCloud(); }
@@ -6639,6 +6683,106 @@ if (DOM.btnDeletePromoBanner) {
     await syncPromoBannersFromCloud();
     closeModal(DOM.modalEditPromoBanner);
     showToast(t('toastPromoBannerDeleted'), 'success');
+  });
+}
+
+// ==========================================
+// STAFF DRINKS (Admin, desktop) — a quick picker off the existing menu
+// so staff can log a drink they made for themselves, plus a shared log
+// for accountability.
+// ==========================================
+function renderStaffDrinksPicker() {
+  if (!DOM.staffDrinksPickerList) return;
+  DOM.staffDrinksPickerList.innerHTML = '';
+
+  const grouped = groupAdminMenuByCategory(state.menuItems);
+  grouped.forEach(([catName, items]) => {
+    if (!items.length) return;
+    const section = document.createElement('div');
+    section.className = 'staff-drinks-category';
+
+    const title = document.createElement('div');
+    title.className = 'staff-drinks-category-title';
+    title.textContent = translateCategoryName(catName);
+    section.appendChild(title);
+
+    const chips = document.createElement('div');
+    chips.className = 'staff-drinks-chips';
+    items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip staff-drinks-chip';
+      btn.textContent = item.name;
+      btn.addEventListener('click', () => logStaffDrink(item.name, btn));
+      chips.appendChild(btn);
+    });
+    section.appendChild(chips);
+
+    DOM.staffDrinksPickerList.appendChild(section);
+  });
+}
+
+async function logStaffDrink(itemName, btn) {
+  if (btn) btn.disabled = true;
+  const ok = await cloud.staffLogDrink(state.staffToken, itemName);
+  if (btn) btn.disabled = false;
+
+  if (!ok) {
+    showToast(t('errServerConnection'), 'error');
+    return;
+  }
+  playTapSound();
+  showToast(t('toastDrinkLogged', { name: itemName }), 'success');
+  await loadAndRenderStaffDrinkLog();
+}
+
+async function loadAndRenderStaffDrinkLog() {
+  if (!DOM.staffDrinksLogList) return;
+  const log = await cloud.staffListDrinkLog(state.staffToken, 100);
+  renderStaffDrinkLog(log || []);
+}
+
+function renderStaffDrinkLog(log) {
+  if (!DOM.staffDrinksLogList) return;
+  DOM.staffDrinksLogList.innerHTML = '';
+
+  if (DOM.staffDrinksTodayBadge) {
+    const today = new Date().toDateString();
+    const todayCount = log.filter(l => new Date(l.loggedAt).toDateString() === today).length;
+    DOM.staffDrinksTodayBadge.textContent = todayCount;
+  }
+
+  if (!log.length) {
+    const empty = document.createElement('div');
+    empty.className = 'staff-drinks-log-empty';
+    empty.textContent = t('staffDrinksLogEmpty');
+    DOM.staffDrinksLogList.appendChild(empty);
+    return;
+  }
+
+  log.forEach(l => {
+    const row = document.createElement('div');
+    row.className = 'staff-drinks-log-row';
+
+    const main = document.createElement('div');
+    main.className = 'staff-drinks-log-main';
+    const staffEl = document.createElement('span');
+    staffEl.className = 'staff-drinks-log-staff';
+    staffEl.textContent = l.staffName;
+    main.appendChild(staffEl);
+    main.appendChild(document.createTextNode(' — '));
+    const itemEl = document.createElement('span');
+    itemEl.className = 'staff-drinks-log-item';
+    itemEl.textContent = l.itemName;
+    main.appendChild(itemEl);
+    row.appendChild(main);
+
+    const time = document.createElement('div');
+    time.className = 'staff-drinks-log-time';
+    time.textContent = formatNotifTime(l.loggedAt);
+    row.appendChild(time);
+
+    DOM.staffDrinksLogList.appendChild(row);
   });
 }
 

@@ -549,6 +549,28 @@
       </div>
     </div>
 
+    <div id="view-staff-drinks" class="view">
+      <header class="customers-header">
+        <h2 data-i18n="navStaffDrinks">Staff Drinks</h2>
+        <div class="customer-count-badge" id="staff-drinks-today-badge">0</div>
+      </header>
+
+      <div class="staff-drinks-layout">
+        <div class="staff-drinks-picker">
+          <div class="staff-drinks-picker-hint" data-i18n="staffDrinksPickerHint">Tap a drink to log one for yourself</div>
+          <div id="staff-drinks-picker-list">
+
+          </div>
+        </div>
+        <div class="staff-drinks-log-panel">
+          <div class="staff-drinks-log-title" data-i18n="staffDrinksLogTitle">Recent</div>
+          <div class="staff-drinks-log-list" id="staff-drinks-log-list">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="view-settings" class="view">
       <header class="settings-header">
         <h2 id="settings-title" style="cursor: pointer;" data-i18n="dashboardTitle">Dashboard</h2>
@@ -820,6 +842,15 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
         <span class="nav-label" data-i18n="navActivity">Activity</span>
+      </button>
+      <button type="button" class="nav-item admin-nav-item hidden" data-target="view-staff-drinks">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"></path>
+          <line x1="6" y1="2" x2="6" y2="4"></line>
+          <line x1="10" y1="2" x2="10" y2="4"></line>
+          <line x1="14" y1="2" x2="14" y2="4"></line>
+        </svg>
+        <span class="nav-label" data-i18n="navStaffDrinks">Staff Drinks</span>
       </button>
       <button type="button" class="nav-item" data-target="view-settings">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
