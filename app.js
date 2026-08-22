@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v94';
+const APP_BUILD_ID = 'v95';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -6315,28 +6315,35 @@ function renderPromoBanners() {
     img.alt = b.title || '';
     card.appendChild(img);
 
-    if (b.price) {
-      const priceEl = document.createElement('div');
-      priceEl.className = 'promo-banner-card-price';
-      priceEl.textContent = b.price;
-      card.appendChild(priceEl);
-    }
-
-    if (b.title || b.description) {
+    if (b.title || b.description || b.price) {
       const textWrap = document.createElement('div');
       textWrap.className = 'promo-banner-card-text';
-      if (b.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'promo-banner-card-title';
-        titleEl.textContent = b.title;
-        textWrap.appendChild(titleEl);
+
+      if (b.title || b.description) {
+        const info = document.createElement('div');
+        info.className = 'promo-banner-card-info';
+        if (b.title) {
+          const titleEl = document.createElement('div');
+          titleEl.className = 'promo-banner-card-title';
+          titleEl.textContent = b.title;
+          info.appendChild(titleEl);
+        }
+        if (b.description) {
+          const descEl = document.createElement('div');
+          descEl.className = 'promo-banner-card-desc';
+          descEl.textContent = b.description;
+          info.appendChild(descEl);
+        }
+        textWrap.appendChild(info);
       }
-      if (b.description) {
-        const descEl = document.createElement('div');
-        descEl.className = 'promo-banner-card-desc';
-        descEl.textContent = b.description;
-        textWrap.appendChild(descEl);
+
+      if (b.price) {
+        const priceEl = document.createElement('div');
+        priceEl.className = 'promo-banner-card-price';
+        priceEl.textContent = b.price;
+        textWrap.appendChild(priceEl);
       }
+
       card.appendChild(textWrap);
     }
 

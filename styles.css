@@ -2135,8 +2135,8 @@ input { font: inherit; color: inherit; }
   overflow-y: visible;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 20px;
-  padding: 4px 20px 2px;
-  margin-top: 4px;
+  padding: 4px 20px 20px;
+  margin-top: 8px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -2164,9 +2164,15 @@ input { font: inherit; color: inherit; }
 .promo-banner-card-text {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  padding: 26px 14px 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 26px 14px 12px;
   background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
   color: #fff;
+}
+.promo-banner-card-info {
+  min-width: 0;
 }
 .promo-banner-card-title {
   font-size: 14px;
@@ -2179,16 +2185,20 @@ input { font: inherit; color: inherit; }
   margin-top: 2px;
 }
 .promo-banner-card-price {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  flex-shrink: 0;
+  align-self: flex-end;
   font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
-  background: var(--accent-main);
-  color: var(--bg-primary);
+  padding: 5px 11px;
+  margin-left: 10px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #fff;
   border-radius: var(--radius-full);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .admin-promo-section {
@@ -2215,21 +2225,18 @@ input { font: inherit; color: inherit; }
 .admin-promo-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 .admin-promo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-sm);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .admin-promo-row-thumb {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-xs);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   flex-shrink: 0;
   background: var(--bg-secondary);
@@ -2237,7 +2244,7 @@ input { font: inherit; color: inherit; }
 .admin-promo-row-title {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
