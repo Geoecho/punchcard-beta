@@ -81,6 +81,15 @@ const TRANSLATIONS = {
     posterFeature1: "Stamp per Coffee",
     posterFeature2: "Double Dose = 2 Stamps",
     posterFeature3: "Stamps = Free Coffee",
+    onboardingSkip: "Skip",
+    onboardingNext: "Next",
+    onboardingGetStarted: "Get Started",
+    onboarding1Title: "Sign In, Your Way",
+    onboarding1Desc: "Continue with Google for instant access, or create a card with just a username and password — whichever's easier for you.",
+    onboarding2Title: "Get the Student Discount",
+    onboarding2Desc: "Download the Netaville app and sign up with your student email. Once verified, show it to staff to unlock student pricing on every drink.",
+    onboarding3Title: "Treat a Friend",
+    onboarding3Desc: "Add friends by username and gift them a free coffee straight from your rewards wallet — perfect for treating someone.",
     signupTitle: "Welcome",
     signupSubtitle: "Get your virtual card or find an existing one.",
     signupSubtitleNew: "Get your virtual card in seconds.",
@@ -399,6 +408,15 @@ const TRANSLATIONS = {
     posterFeature1: "печат по кафе",
     posterFeature2: "Двојна доза = 2 печати",
     posterFeature3: "печати = бесплатно кафе",
+    onboardingSkip: "Прескокни",
+    onboardingNext: "Следно",
+    onboardingGetStarted: "Започни",
+    onboarding1Title: "Најавете се на ваш начин",
+    onboarding1Desc: "Продолжете со Google за инстант пристап, или направете картичка само со корисничко име и лозинка — што ви е полесно.",
+    onboarding2Title: "Добијте попуст за студенти",
+    onboarding2Desc: "Преземете ја апликацијата Netaville и регистрирајте се со вашата студентска е-пошта. Откако ќе бидете потврдени, покажете им на вработените за да ја отклучите студентската цена на секој пијалак.",
+    onboarding3Title: "Почестете пријател",
+    onboarding3Desc: "Додајте пријатели по корисничко име и подарете им бесплатно кафе директно од вашиот паричник со награди — совршено за да почестите некого.",
     signupTitle: "Добредојде",
     signupSubtitle: "Направете виртуелна картичка или пронајдете постоечка.",
     signupSubtitleNew: "Направете ја вашата виртуелна картичка за неколку секунди.",
@@ -717,6 +735,15 @@ const TRANSLATIONS = {
     posterFeature1: "vulë për kafe",
     posterFeature2: "Dozë e Dyfishtë = 2 vula",
     posterFeature3: "vula = kafe falas",
+    onboardingSkip: "Kalo",
+    onboardingNext: "Tjetër",
+    onboardingGetStarted: "Fillo",
+    onboarding1Title: "Hyr, Si të Duash",
+    onboarding1Desc: "Vazhdo me Google për qasje të menjëhershme, ose krijo një kartë vetëm me emër përdoruesi dhe fjalëkalim — çfarë të duket më e lehtë.",
+    onboarding2Title: "Merr Zbritjen për Studentë",
+    onboarding2Desc: "Shkarko aplikacionin Netaville dhe regjistrohu me email-in tënd studentor. Sapo të verifikohesh, tregoja stafit për të zhbllokuar çmimin studentor në çdo pije.",
+    onboarding3Title: "Qerase një Mik",
+    onboarding3Desc: "Shto miq sipas emrit të përdoruesit dhe fali atyre një kafe falas direkt nga portofoli yt i shpërblimeve — perfekte për të qeraser dikë.",
     signupTitle: "Mirë se vini",
     signupSubtitle: "Merrni kartën tuaj virtuale ose gjeni një ekzistuese.",
     signupSubtitleNew: "Merrni kartën tuaj virtuale brenda pak sekondash.",
@@ -2610,6 +2637,10 @@ const DOM = {
   viewHome: document.getElementById('view-home'),
   viewSplash: document.getElementById('view-splash'),
   viewSignup: document.getElementById('view-signup'),
+  onboardingTrack: document.getElementById('onboarding-track'),
+  onboardingDots: document.getElementById('onboarding-dots'),
+  btnOnboardingNext: document.getElementById('btn-onboarding-next'),
+  btnOnboardingSkip: document.getElementById('btn-onboarding-skip'),
   viewAdminLogin: document.getElementById('view-admin-login'),
   viewMenu: document.getElementById('view-menu'),
   viewAdminMenu: document.getElementById('view-admin-menu'),
@@ -3174,6 +3205,10 @@ async function initApp() {
       }
     }
 
+    if (targetView === 'view-signup' && !localStorage.getItem('86_onboarding_seen')) {
+      targetView = 'view-onboarding';
+    }
+
     setTimeout(() => dismissSplash(targetView), 400);
 
   } catch (err) {
@@ -3394,6 +3429,33 @@ function setupEventListeners() {
   };
   wirePasswordChecklist(DOM.signupPassword, 'signup-password-requirements');
   wirePasswordChecklist(DOM.editCustomerNewPassword, 'edit-customer-password-requirements');
+
+  const ONBOARDING_SLIDE_COUNT = 3;
+  let onboardingIndex = 0;
+  const renderOnboardingSlide = () => {
+    if (DOM.onboardingTrack) DOM.onboardingTrack.style.transform = `translateX(-${onboardingIndex * 100}%)`;
+    if (DOM.onboardingDots) {
+      Array.from(DOM.onboardingDots.children).forEach((dot, i) => dot.classList.toggle('active', i === onboardingIndex));
+    }
+    if (DOM.btnOnboardingNext) {
+      DOM.btnOnboardingNext.textContent = onboardingIndex === ONBOARDING_SLIDE_COUNT - 1 ? t('onboardingGetStarted') : t('onboardingNext');
+    }
+  };
+  const completeOnboarding = () => {
+    localStorage.setItem('86_onboarding_seen', '1');
+    switchView('view-signup');
+  };
+  if (DOM.btnOnboardingNext) {
+    DOM.btnOnboardingNext.addEventListener('click', () => {
+      if (onboardingIndex < ONBOARDING_SLIDE_COUNT - 1) {
+        onboardingIndex++;
+        renderOnboardingSlide();
+      } else {
+        completeOnboarding();
+      }
+    });
+  }
+  if (DOM.btnOnboardingSkip) DOM.btnOnboardingSkip.addEventListener('click', completeOnboarding);
 
   if (DOM.btnChangeAvatar) {
     DOM.btnChangeAvatar.addEventListener('click', async () => {
