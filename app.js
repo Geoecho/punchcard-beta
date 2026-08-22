@@ -3045,7 +3045,7 @@ async function initApp() {
     const returningFromOAuth = /[#&?](access_token|error|code)=/.test(window.location.hash + window.location.search);
     if (!state.myCustomerId && supabaseClient && returningFromOAuth) {
       try {
-        const { data } = await withTimeout(supabaseClient.auth.getSession(), 4000);
+        const { data, error: sessionError } = await withTimeout(supabaseClient.auth.getSession(), 4000);
         if (data && data.session) {
 
           const staffResult = await cloud.staffLoginGoogle();
@@ -3062,8 +3062,15 @@ async function initApp() {
               await supabaseClient.auth.signOut().catch(() => {});
             }
           }
-        } else if (/[#&?]error=/.test(window.location.hash + window.location.search)) {
-          console.error('Google sign-in: OAuth redirect returned an error', window.location.hash || window.location.search);
+        } else {
+          // No session came back from the redirect at all — this covers
+          // both an explicit ?error= from the provider AND a silent
+          // failure (e.g. a PKCE code exchange that didn't go through),
+          // which previously fell through with no message and no log.
+          console.error('Google sign-in: no session after OAuth redirect', {
+            url: window.location.hash || window.location.search,
+            sessionError: sessionError && sessionError.message
+          });
           showToast('Google sign-in failed — please try again', 'error');
         }
       } catch (e) {
