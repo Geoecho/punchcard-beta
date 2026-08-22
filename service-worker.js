@@ -1,5 +1,5 @@
 
-const CACHE_NAME = '86-punchcard-v91';
+const CACHE_NAME = '86-punchcard-v92';
 const APP_SHELL = [
   './',
   './index.html',

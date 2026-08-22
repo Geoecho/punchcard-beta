@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v91';
+const APP_BUILD_ID = 'v92';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -147,6 +147,11 @@ const TRANSLATIONS = {
     promoBannerChooseImage: "Choose Image",
     labelBannerTitle: "Title (Optional)",
     labelBannerActive: "Active (visible to customers)",
+    labelBannerDescription: "Description (Optional)",
+    labelBannerHeight: "Banner Height",
+    bannerHeightSmall: "Small",
+    bannerHeightMedium: "Medium",
+    bannerHeightLarge: "Large",
     promoBannerEmpty: "No promo banners yet — add one to show it above the menu.",
     promoBannerUntitled: "(Untitled banner)",
     errImageUploadFailed: "Image upload failed — please try again.",
@@ -452,6 +457,11 @@ const TRANSLATIONS = {
     promoBannerChooseImage: "Избери слика",
     labelBannerTitle: "Наслов (опционално)",
     labelBannerActive: "Активно (видливо за клиенти)",
+    labelBannerDescription: "Опис (опционално)",
+    labelBannerHeight: "Висина на банерот",
+    bannerHeightSmall: "Мала",
+    bannerHeightMedium: "Средна",
+    bannerHeightLarge: "Голема",
     promoBannerEmpty: "Сè уште нема промо банери — додади еден за да се прикаже над менито.",
     promoBannerUntitled: "(Банер без наслов)",
     errImageUploadFailed: "Прикачувањето на сликата не успеа — обидете се повторно.",
@@ -757,6 +767,11 @@ const TRANSLATIONS = {
     promoBannerChooseImage: "Zgjidh Imazhin",
     labelBannerTitle: "Titulli (Opsional)",
     labelBannerActive: "Aktive (e dukshme për klientët)",
+    labelBannerDescription: "Përshkrimi (Opsional)",
+    labelBannerHeight: "Lartësia e Banderolës",
+    bannerHeightSmall: "Vogël",
+    bannerHeightMedium: "Mesatare",
+    bannerHeightLarge: "E Madhe",
     promoBannerEmpty: "Ende s'ka banderola promo — shto një për ta shfaqur mbi meny.",
     promoBannerUntitled: "(Banderolë pa titull)",
     errImageUploadFailed: "Ngarkimi i imazhit dështoi — provo përsëri.",
@@ -2061,7 +2076,7 @@ const cloud = {
         4000
       );
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active }));
+      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return null;
@@ -2073,7 +2088,7 @@ const cloud = {
     try {
       const res = await withTimeout(supabaseClient.rpc('staff_list_promo_banners', { p_token: token }), 4000);
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active }));
+      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return null;
@@ -2088,14 +2103,16 @@ const cloud = {
           p_token: token,
           p_id: banner.id || null,
           p_title: banner.title || '',
+          p_description: banner.description || '',
           p_image_url: banner.imageUrl,
+          p_height_preset: banner.heightPreset || 'medium',
           p_active: banner.active !== false
         }),
         4000
       );
       if (res.error || !res.data) return { error: 'unknown' };
       const d = res.data;
-      return { banner: { id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active } };
+      return { banner: { id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active } };
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
@@ -2764,6 +2781,8 @@ const DOM = {
   promoBannerPickerPlaceholder: document.getElementById('promo-banner-picker-placeholder'),
   promoBannerUploadError: document.getElementById('promo-banner-upload-error'),
   promoBannerTitleInput: document.getElementById('promo-banner-title'),
+  promoBannerDescriptionInput: document.getElementById('promo-banner-description'),
+  promoBannerHeightChips: document.querySelectorAll('#promo-banner-height-chips .chip'),
   promoBannerActive: document.getElementById('promo-banner-active'),
   btnSavePromoBanner: document.getElementById('btn-save-promo-banner'),
   btnCancelPromoBanner: document.getElementById('btn-cancel-promo-banner'),
@@ -6279,18 +6298,29 @@ function renderPromoBanners() {
 
   banners.forEach(b => {
     const card = document.createElement('div');
-    card.className = 'promo-banner-card';
+    card.className = 'promo-banner-card promo-banner-h-' + (['small', 'medium', 'large'].includes(b.heightPreset) ? b.heightPreset : 'medium');
 
     const img = document.createElement('img');
     img.src = b.imageUrl;
     img.alt = b.title || '';
     card.appendChild(img);
 
-    if (b.title) {
-      const titleEl = document.createElement('div');
-      titleEl.className = 'promo-banner-card-title';
-      titleEl.textContent = b.title;
-      card.appendChild(titleEl);
+    if (b.title || b.description) {
+      const textWrap = document.createElement('div');
+      textWrap.className = 'promo-banner-card-text';
+      if (b.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'promo-banner-card-title';
+        titleEl.textContent = b.title;
+        textWrap.appendChild(titleEl);
+      }
+      if (b.description) {
+        const descEl = document.createElement('div');
+        descEl.className = 'promo-banner-card-desc';
+        descEl.textContent = b.description;
+        textWrap.appendChild(descEl);
+      }
+      card.appendChild(textWrap);
     }
 
     DOM.promoBannerScroll.appendChild(card);
@@ -6385,6 +6415,18 @@ function showPromoBannerPreview(url) {
   }
 }
 
+function setPromoBannerHeightChip(heightPreset) {
+  if (!DOM.promoBannerHeightChips) return;
+  const target = ['small', 'medium', 'large'].includes(heightPreset) ? heightPreset : 'medium';
+  DOM.promoBannerHeightChips.forEach(c => c.classList.toggle('active', c.dataset.height === target));
+}
+
+function getPromoBannerHeightChip() {
+  if (!DOM.promoBannerHeightChips) return 'medium';
+  const active = Array.from(DOM.promoBannerHeightChips).find(c => c.classList.contains('active'));
+  return (active && active.dataset.height) || 'medium';
+}
+
 function openPromoBannerModal(banner = null) {
   pendingPromoBannerImageUrl = banner ? banner.imageUrl : null;
   if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = '';
@@ -6394,17 +6436,27 @@ function openPromoBannerModal(banner = null) {
     if (DOM.promoBannerModalTitle) DOM.promoBannerModalTitle.textContent = t('promoBannerModalEdit');
     DOM.promoBannerId.value = banner.id;
     DOM.promoBannerTitleInput.value = banner.title || '';
+    if (DOM.promoBannerDescriptionInput) DOM.promoBannerDescriptionInput.value = banner.description || '';
+    setPromoBannerHeightChip(banner.heightPreset);
     DOM.promoBannerActive.checked = banner.active !== false;
     if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'block';
   } else {
     if (DOM.promoBannerModalTitle) DOM.promoBannerModalTitle.textContent = t('promoBannerModalAdd');
     DOM.promoBannerId.value = '';
     DOM.promoBannerTitleInput.value = '';
+    if (DOM.promoBannerDescriptionInput) DOM.promoBannerDescriptionInput.value = '';
+    setPromoBannerHeightChip('medium');
     DOM.promoBannerActive.checked = true;
     if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'none';
   }
   showPromoBannerPreview(pendingPromoBannerImageUrl);
   openModal(DOM.modalEditPromoBanner);
+}
+
+if (DOM.promoBannerHeightChips) {
+  DOM.promoBannerHeightChips.forEach(chip => {
+    chip.addEventListener('click', () => setPromoBannerHeightChip(chip.dataset.height));
+  });
 }
 
 if (DOM.btnAddPromoBanner) DOM.btnAddPromoBanner.addEventListener('click', () => openPromoBannerModal());
@@ -6449,7 +6501,9 @@ if (DOM.btnSavePromoBanner) {
     const result = await cloud.staffUpsertPromoBanner(state.staffToken, {
       id: DOM.promoBannerId.value || null,
       title: DOM.promoBannerTitleInput.value.trim(),
+      description: DOM.promoBannerDescriptionInput ? DOM.promoBannerDescriptionInput.value.trim() : '',
       imageUrl: pendingPromoBannerImageUrl,
+      heightPreset: getPromoBannerHeightChip(),
       active: DOM.promoBannerActive.checked
     });
     DOM.btnSavePromoBanner.disabled = false;
