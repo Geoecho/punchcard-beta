@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v89';
+const APP_BUILD_ID = 'v90';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -169,6 +169,20 @@ const TRANSLATIONS = {
     navActivity: "Activity",
     navSettings: "Settings",
     btnAddItem: "+ Add Item",
+    navPromoBanners: "Promo Banners",
+    btnAddBanner: "+ Add Banner",
+    promoBannerModalAdd: "Add Promo Banner",
+    promoBannerModalEdit: "Edit Promo Banner",
+    labelBannerImage: "Image",
+    promoBannerChooseImage: "Choose Image",
+    labelBannerTitle: "Title (Optional)",
+    labelBannerActive: "Active (visible to customers)",
+    promoBannerEmpty: "No promo banners yet — add one to show it above the menu.",
+    promoBannerUntitled: "(Untitled banner)",
+    errImageUploadFailed: "Image upload failed — please try again.",
+    errImageRequired: "Choose an image first.",
+    toastPromoBannerSaved: "Promo banner saved",
+    toastPromoBannerDeleted: "Promo banner deleted",
     phSearchCustomers: "Search name or phone...",
     phSearchActivity: "Search customer ID or action...",
     filterAll: "All",
@@ -460,6 +474,20 @@ const TRANSLATIONS = {
     navActivity: "Активност",
     navSettings: "Поставки",
     btnAddItem: "+ Додади ставка",
+    navPromoBanners: "Промо банери",
+    btnAddBanner: "+ Додади банер",
+    promoBannerModalAdd: "Додади промо банер",
+    promoBannerModalEdit: "Уреди промо банер",
+    labelBannerImage: "Слика",
+    promoBannerChooseImage: "Избери слика",
+    labelBannerTitle: "Наслов (опционално)",
+    labelBannerActive: "Активно (видливо за клиенти)",
+    promoBannerEmpty: "Сè уште нема промо банери — додади еден за да се прикаже над менито.",
+    promoBannerUntitled: "(Банер без наслов)",
+    errImageUploadFailed: "Прикачувањето на сликата не успеа — обидете се повторно.",
+    errImageRequired: "Прво изберете слика.",
+    toastPromoBannerSaved: "Промо банерот е зачуван",
+    toastPromoBannerDeleted: "Промо банерот е избришан",
     phSearchCustomers: "Пребарувај име или телефон...",
     phSearchActivity: "Пребарувај ID на клиент или дејство...",
     filterAll: "Сите",
@@ -751,6 +779,20 @@ const TRANSLATIONS = {
     navActivity: "Aktiviteti",
     navSettings: "Cilësimet",
     btnAddItem: "+ Shto Artikull",
+    navPromoBanners: "Banderolat Promo",
+    btnAddBanner: "+ Shto Banderolë",
+    promoBannerModalAdd: "Shto Banderolë Promo",
+    promoBannerModalEdit: "Ndrysho Banderolën Promo",
+    labelBannerImage: "Imazhi",
+    promoBannerChooseImage: "Zgjidh Imazhin",
+    labelBannerTitle: "Titulli (Opsional)",
+    labelBannerActive: "Aktive (e dukshme për klientët)",
+    promoBannerEmpty: "Ende s'ka banderola promo — shto një për ta shfaqur mbi meny.",
+    promoBannerUntitled: "(Banderolë pa titull)",
+    errImageUploadFailed: "Ngarkimi i imazhit dështoi — provo përsëri.",
+    errImageRequired: "Zgjidh një imazh më parë.",
+    toastPromoBannerSaved: "Banderola promo u ruajt",
+    toastPromoBannerDeleted: "Banderola promo u fshi",
     phSearchCustomers: "Kërko emrin ose telefonin...",
     phSearchActivity: "Kërko ID e klientit ose veprimin...",
     filterAll: "Të gjitha",
@@ -1073,7 +1115,9 @@ const state = {
     activeCards: 0
   },
   menuItems: [],
-  menuCategories: [] // [{ name, sortOrder }], defines section order everywhere the menu renders
+  menuCategories: [], // [{ name, sortOrder }], defines section order everywhere the menu renders
+  promoBanners: [], // active-only, for the customer-facing carousel
+  adminPromoBanners: [] // all banners incl. inactive, for the staff management list
 };
 
 const defaultMenu = [
@@ -1130,6 +1174,26 @@ async function syncMenuFromCloud() {
   }
   renderCustomerMenu();
   renderAdminMenu();
+}
+
+// Promo banner carousel — folded into the same realtime channel/polling
+// lifecycle as the menu (see cloud.subscribeToMenu, the 45s fallback
+// interval, and the view-menu/view-admin-menu switchView hook) rather
+// than getting its own, since it lives on the same screen and should
+// never be more stale than the menu itself.
+async function syncPromoBannersFromCloud() {
+  const cloudBanners = await cloud.getPromoBanners();
+  if (cloudBanners) {
+    state.promoBanners = cloudBanners;
+    renderPromoBanners();
+  }
+  if (state.isAdmin && state.staffToken) {
+    const adminBanners = await cloud.staffListPromoBanners(state.staffToken);
+    if (adminBanners) {
+      state.adminPromoBanners = adminBanners;
+      renderAdminPromoBanners();
+    }
+  }
 }
 
 function saveCategoriesCache() {
@@ -2146,7 +2210,105 @@ const cloud = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_categories' }, () => {
         syncMenuFromCloud();
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promo_banners' }, () => {
+        syncPromoBannersFromCloud();
+      })
       .subscribe();
+  },
+
+  // ---- Promo banners (public — no auth needed to read active ones,
+  // staff token to manage) ----
+  async getPromoBanners() {
+    if (!supabaseClient) return null;
+    try {
+      const res = await withTimeout(
+        supabaseClient.from('promo_banners').select('*').eq('active', true).order('sort_order', { ascending: true }),
+        4000
+      );
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active }));
+    } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
+      return null;
+    }
+  },
+
+  async staffListPromoBanners(token) {
+    if (!supabaseClient || !token) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_list_promo_banners', { p_token: token }), 4000);
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active }));
+    } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
+      return null;
+    }
+  },
+
+  async staffUpsertPromoBanner(token, banner) {
+    if (!supabaseClient || !token) return { error: 'offline' };
+    try {
+      const res = await withTimeout(
+        supabaseClient.rpc('staff_upsert_promo_banner', {
+          p_token: token,
+          p_id: banner.id || null,
+          p_title: banner.title || '',
+          p_image_url: banner.imageUrl,
+          p_active: banner.active !== false
+        }),
+        4000
+      );
+      if (res.error || !res.data) return { error: 'unknown' };
+      const d = res.data;
+      return { banner: { id: d.id, title: d.title || '', imageUrl: d.image_url, sortOrder: d.sort_order, active: d.active } };
+    } catch (e) {
+      console.error('Supabase call failed:', e && e.message);
+      return { error: 'offline' };
+    }
+  },
+
+  async staffDeletePromoBanner(token, id) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_delete_promo_banner', { p_token: token, p_id: id }), 4000);
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // ids is the full banner id list in the order it should display.
+  async staffReorderPromoBanners(token, ids) {
+    if (!supabaseClient || !token) return false;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_reorder_promo_banners', { p_token: token, p_ids: ids }), 4000);
+      return !res.error;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Uploads a banner image straight from the admin's device and returns
+  // its public URL. Filename is randomized (not the original name) to
+  // avoid collisions between staff and to sidestep any character-encoding
+  // weirdness in device-supplied filenames.
+  async uploadPromoBannerImage(file) {
+    if (!supabaseClient || !file) return { error: 'offline' };
+    try {
+      const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') : 'jpg';
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext || 'jpg'}`;
+      const res = await withTimeout(
+        supabaseClient.storage.from('promo-banners').upload(path, file, { upsert: false, contentType: file.type || 'image/jpeg' }),
+        15000
+      );
+      if (res.error) return { error: 'upload_failed' };
+      const { data } = supabaseClient.storage.from('promo-banners').getPublicUrl(path);
+      if (!data || !data.publicUrl) return { error: 'upload_failed' };
+      return { url: data.publicUrl };
+    } catch (e) {
+      console.error('Promo banner upload failed:', e && e.message);
+      return { error: 'offline' };
+    }
   },
 
   subscribeToCustomer(customerId) {
@@ -2821,7 +2983,26 @@ const DOM = {
   menuItemDiscountPreview: document.getElementById('menu-item-discount-preview'),
   btnSaveMenuItem: document.getElementById('btn-save-menu-item'),
   btnCancelMenuItem: document.getElementById('btn-cancel-menu-item'),
-  btnDeleteMenuItem: document.getElementById('btn-delete-menu-item')
+  btnDeleteMenuItem: document.getElementById('btn-delete-menu-item'),
+
+  // Promo Banner Carousel (Customer Menu tab) + Admin management
+  promoBannerScroll: document.getElementById('promo-banner-scroll'),
+  adminPromoBannerList: document.getElementById('admin-promo-banner-list'),
+  btnAddPromoBanner: document.getElementById('btn-add-promo-banner'),
+  modalEditPromoBanner: document.getElementById('modal-edit-promo-banner'),
+  overlayEditPromoBanner: document.getElementById('overlay-edit-promo-banner'),
+  promoBannerModalTitle: document.getElementById('promo-banner-modal-title'),
+  promoBannerId: document.getElementById('promo-banner-id'),
+  promoBannerFileInput: document.getElementById('promo-banner-file-input'),
+  promoBannerPicker: document.getElementById('promo-banner-picker'),
+  promoBannerPreviewImg: document.getElementById('promo-banner-preview-img'),
+  promoBannerPickerPlaceholder: document.getElementById('promo-banner-picker-placeholder'),
+  promoBannerUploadError: document.getElementById('promo-banner-upload-error'),
+  promoBannerTitleInput: document.getElementById('promo-banner-title'),
+  promoBannerActive: document.getElementById('promo-banner-active'),
+  btnSavePromoBanner: document.getElementById('btn-save-promo-banner'),
+  btnCancelPromoBanner: document.getElementById('btn-cancel-promo-banner'),
+  btnDeletePromoBanner: document.getElementById('btn-delete-promo-banner')
 };
 
 // ==========================================
@@ -2958,6 +3139,7 @@ async function initApp() {
     renderCustomerMenu();
     renderAdminMenu();
     syncMenuFromCloud();
+    syncPromoBannersFromCloud();
     cloud.subscribeToMenu();
     // Realtime should push edits instantly, but websockets can silently
     // drop (backgrounded app, flaky connection) without an obvious
@@ -4940,7 +5122,7 @@ function switchView(viewId) {
   // menu — don't rely solely on realtime having stayed connected since
   // boot (a backgrounded app, a dropped websocket, etc. shouldn't be able
   // to leave a stale price on screen at the moment it matters most).
-  if (viewId === 'view-menu' || viewId === 'view-admin-menu') syncMenuFromCloud();
+  if (viewId === 'view-menu' || viewId === 'view-admin-menu') { syncMenuFromCloud(); syncPromoBannersFromCloud(); }
   if (viewId === 'view-menu' && !state.isAdmin && !state.menuPriceViewInitialized && state.selectedCustomerId) {
     state.menuPriceViewInitialized = true;
     db.getCustomer(state.selectedCustomerId).then(c => {
@@ -6870,6 +7052,233 @@ async function renderLeaderboard() {
 const ICON_CHEVRON_UP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
 const ICON_CHEVRON_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 const ICON_TRASH_SM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+
+// ==========================================
+// PROMO BANNER CAROUSEL (customer Menu tab) + admin management
+// ==========================================
+function renderPromoBanners() {
+  if (!DOM.promoBannerScroll) return;
+  const banners = state.promoBanners || [];
+  DOM.promoBannerScroll.classList.toggle('hidden', banners.length === 0);
+  DOM.promoBannerScroll.innerHTML = '';
+
+  banners.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'promo-banner-card';
+
+    const img = document.createElement('img');
+    img.src = b.imageUrl;
+    img.alt = b.title || '';
+    card.appendChild(img);
+
+    if (b.title) {
+      const titleEl = document.createElement('div');
+      titleEl.className = 'promo-banner-card-title';
+      titleEl.textContent = b.title;
+      card.appendChild(titleEl);
+    }
+
+    DOM.promoBannerScroll.appendChild(card);
+  });
+}
+
+function renderAdminPromoBanners() {
+  if (!DOM.adminPromoBannerList) return;
+  DOM.adminPromoBannerList.innerHTML = '';
+  const banners = state.adminPromoBanners || [];
+
+  if (!banners.length) {
+    const empty = document.createElement('div');
+    empty.className = 'admin-promo-empty';
+    empty.textContent = t('promoBannerEmpty');
+    DOM.adminPromoBannerList.appendChild(empty);
+    return;
+  }
+
+  const orderedIds = banners.map(b => b.id);
+
+  banners.forEach((b, index) => {
+    const row = document.createElement('div');
+    row.className = 'admin-promo-row' + (b.active ? '' : ' inactive');
+
+    const thumb = document.createElement('img');
+    thumb.className = 'admin-promo-row-thumb';
+    thumb.src = b.imageUrl;
+    thumb.alt = '';
+    thumb.addEventListener('click', () => openPromoBannerModal(b));
+    row.appendChild(thumb);
+
+    const title = document.createElement('div');
+    title.className = 'admin-promo-row-title';
+    title.textContent = b.title || t('promoBannerUntitled');
+    title.addEventListener('click', () => openPromoBannerModal(b));
+    row.appendChild(title);
+
+    const controls = document.createElement('div');
+    controls.className = 'admin-promo-row-controls';
+
+    const btnUp = document.createElement('button');
+    btnUp.className = 'menu-section-btn';
+    btnUp.type = 'button';
+    btnUp.setAttribute('aria-label', 'Move banner up');
+    btnUp.innerHTML = ICON_CHEVRON_UP;
+    btnUp.disabled = index === 0;
+    btnUp.addEventListener('click', () => reorderPromoBanner(orderedIds, b.id, -1));
+    controls.appendChild(btnUp);
+
+    const btnDown = document.createElement('button');
+    btnDown.className = 'menu-section-btn';
+    btnDown.type = 'button';
+    btnDown.setAttribute('aria-label', 'Move banner down');
+    btnDown.innerHTML = ICON_CHEVRON_DOWN;
+    btnDown.disabled = index === banners.length - 1;
+    btnDown.addEventListener('click', () => reorderPromoBanner(orderedIds, b.id, 1));
+    controls.appendChild(btnDown);
+
+    row.appendChild(controls);
+    DOM.adminPromoBannerList.appendChild(row);
+  });
+}
+
+// Optimistically reorders locally so the UI responds instantly, then
+// persists the full new order — mirrors reorderMenuCategory() above.
+async function reorderPromoBanner(orderedIds, id, direction) {
+  const i = orderedIds.indexOf(id);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= orderedIds.length) return;
+  const newOrder = orderedIds.slice();
+  [newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]];
+
+  state.adminPromoBanners = newOrder.map(bid => state.adminPromoBanners.find(b => b.id === bid));
+  renderAdminPromoBanners();
+
+  const ok = await cloud.staffReorderPromoBanners(state.staffToken, newOrder);
+  if (!ok) showToast(t('errServerConnection'), 'error');
+  syncPromoBannersFromCloud();
+}
+
+// Holds whichever image URL should be saved: the existing banner's URL
+// (unchanged), or a freshly-uploaded one once cloud.uploadPromoBannerImage
+// resolves. Kept outside the modal-open function since it's set async,
+// after the file input's change event, not at open time.
+let pendingPromoBannerImageUrl = null;
+
+function showPromoBannerPreview(url) {
+  if (!DOM.promoBannerPreviewImg || !DOM.promoBannerPickerPlaceholder) return;
+  if (url) {
+    DOM.promoBannerPreviewImg.src = url;
+    DOM.promoBannerPreviewImg.classList.remove('hidden');
+    DOM.promoBannerPickerPlaceholder.classList.add('hidden');
+  } else {
+    DOM.promoBannerPreviewImg.removeAttribute('src');
+    DOM.promoBannerPreviewImg.classList.add('hidden');
+    DOM.promoBannerPickerPlaceholder.classList.remove('hidden');
+  }
+}
+
+function openPromoBannerModal(banner = null) {
+  pendingPromoBannerImageUrl = banner ? banner.imageUrl : null;
+  if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = '';
+  if (DOM.promoBannerFileInput) DOM.promoBannerFileInput.value = '';
+
+  if (banner) {
+    if (DOM.promoBannerModalTitle) DOM.promoBannerModalTitle.textContent = t('promoBannerModalEdit');
+    DOM.promoBannerId.value = banner.id;
+    DOM.promoBannerTitleInput.value = banner.title || '';
+    DOM.promoBannerActive.checked = banner.active !== false;
+    if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'block';
+  } else {
+    if (DOM.promoBannerModalTitle) DOM.promoBannerModalTitle.textContent = t('promoBannerModalAdd');
+    DOM.promoBannerId.value = '';
+    DOM.promoBannerTitleInput.value = '';
+    DOM.promoBannerActive.checked = true;
+    if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'none';
+  }
+  showPromoBannerPreview(pendingPromoBannerImageUrl);
+  openModal(DOM.modalEditPromoBanner);
+}
+
+if (DOM.btnAddPromoBanner) DOM.btnAddPromoBanner.addEventListener('click', () => openPromoBannerModal());
+if (DOM.btnCancelPromoBanner) DOM.btnCancelPromoBanner.addEventListener('click', () => closeModal(DOM.modalEditPromoBanner));
+if (DOM.overlayEditPromoBanner) DOM.overlayEditPromoBanner.addEventListener('click', () => closeModal(DOM.modalEditPromoBanner));
+
+if (DOM.promoBannerPicker) {
+  DOM.promoBannerPicker.addEventListener('click', () => {
+    if (DOM.promoBannerFileInput) DOM.promoBannerFileInput.click();
+  });
+}
+
+if (DOM.promoBannerFileInput) {
+  DOM.promoBannerFileInput.addEventListener('change', async () => {
+    const file = DOM.promoBannerFileInput.files && DOM.promoBannerFileInput.files[0];
+    if (!file) return;
+    if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = '';
+
+    // Instant local preview while the real upload happens in the
+    // background — this object URL is only ever shown, never saved;
+    // pendingPromoBannerImageUrl (and what actually gets persisted)
+    // only changes once the real storage upload succeeds below.
+    const localPreviewUrl = URL.createObjectURL(file);
+    showPromoBannerPreview(localPreviewUrl);
+    if (DOM.btnSavePromoBanner) DOM.btnSavePromoBanner.disabled = true;
+
+    const result = await cloud.uploadPromoBannerImage(file);
+    if (DOM.btnSavePromoBanner) DOM.btnSavePromoBanner.disabled = false;
+
+    if (result.error) {
+      if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = t('errImageUploadFailed');
+      showPromoBannerPreview(pendingPromoBannerImageUrl);
+      return;
+    }
+    pendingPromoBannerImageUrl = result.url;
+  });
+}
+
+if (DOM.btnSavePromoBanner) {
+  DOM.btnSavePromoBanner.addEventListener('click', async () => {
+    if (!pendingPromoBannerImageUrl) {
+      if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = t('errImageRequired');
+      return;
+    }
+    DOM.btnSavePromoBanner.disabled = true;
+    const result = await cloud.staffUpsertPromoBanner(state.staffToken, {
+      id: DOM.promoBannerId.value || null,
+      title: DOM.promoBannerTitleInput.value.trim(),
+      imageUrl: pendingPromoBannerImageUrl,
+      active: DOM.promoBannerActive.checked
+    });
+    DOM.btnSavePromoBanner.disabled = false;
+
+    if (result.error) {
+      showToast(t('errServerConnection'), 'error');
+      return;
+    }
+
+    await syncPromoBannersFromCloud();
+    closeModal(DOM.modalEditPromoBanner);
+    showToast(t('toastPromoBannerSaved'), 'success');
+  });
+}
+
+if (DOM.btnDeletePromoBanner) {
+  DOM.btnDeletePromoBanner.addEventListener('click', async () => {
+    const id = DOM.promoBannerId.value;
+    if (!id) return;
+
+    DOM.btnDeletePromoBanner.disabled = true;
+    const ok = await cloud.staffDeletePromoBanner(state.staffToken, id);
+    DOM.btnDeletePromoBanner.disabled = false;
+
+    if (!ok) {
+      showToast(t('errServerConnection'), 'error');
+      return;
+    }
+
+    await syncPromoBannersFromCloud();
+    closeModal(DOM.modalEditPromoBanner);
+    showToast(t('toastPromoBannerDeleted'), 'success');
+  });
+}
 
 function renderAdminMenu() {
   if (!DOM.adminMenuContainer) return;

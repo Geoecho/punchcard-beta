@@ -502,6 +502,10 @@
         <h2 style="margin: 0;" data-i18n="navMenu">Menu</h2>
       </header>
 
+      <div class="promo-banner-scroll hidden" id="promo-banner-scroll">
+        <!-- Dynamically rendered promo banner cards go here -->
+      </div>
+
       <div class="segmented-toggle" id="menu-price-view-chips" style="margin: 4px 20px 16px;">
         <button class="chip active" data-price-view="regular" data-i18n="menuViewRegular">Regular</button>
         <button class="chip" data-price-view="student" data-i18n="menuViewStudent">Student</button>
@@ -551,6 +555,16 @@
         </div>
         <button class="btn-primary btn-small" id="btn-add-menu-item" data-i18n="btnAddItem">+ Add Item</button>
       </header>
+
+      <div class="admin-promo-section">
+        <div class="admin-promo-section-header">
+          <h3 data-i18n="navPromoBanners">Promo Banners</h3>
+          <button class="btn-secondary btn-small" id="btn-add-promo-banner" data-i18n="btnAddBanner">+ Add Banner</button>
+        </div>
+        <div class="admin-promo-list" id="admin-promo-banner-list">
+          <!-- Dynamically rendered admin banner rows go here -->
+        </div>
+      </div>
 
       <div class="menu-scroll-area" id="admin-menu-container">
         <!-- Dynamically rendered admin menu items go here -->
@@ -1026,7 +1040,47 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Add/Edit Promo Banner Modal (Staff Only) -->
+    <div class="modal" id="modal-edit-promo-banner">
+      <div class="modal-overlay" id="overlay-edit-promo-banner"></div>
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title" id="promo-banner-modal-title" data-i18n="promoBannerModalAdd">Add Promo Banner</h3>
+
+        <input type="hidden" id="promo-banner-id">
+        <div class="form-group">
+          <label class="form-label" data-i18n="labelBannerImage">Image</label>
+          <input type="file" id="promo-banner-file-input" accept="image/*" class="hidden">
+          <div class="promo-banner-picker" id="promo-banner-picker">
+            <img id="promo-banner-preview-img" class="hidden" alt="">
+            <div class="promo-banner-picker-placeholder" id="promo-banner-picker-placeholder">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+              <span data-i18n="promoBannerChooseImage">Choose Image</span>
+            </div>
+          </div>
+          <p class="pin-error" id="promo-banner-upload-error"></p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="promo-banner-title" data-i18n="labelBannerTitle">Title (Optional)</label>
+          <input type="text" id="promo-banner-title" class="form-input" placeholder="e.g. New: Iced Matcha" enterkeyhint="done">
+        </div>
+        <div class="settings-item" style="cursor: default;">
+          <span class="settings-item-label" data-i18n="labelBannerActive">Active (visible to customers)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="promo-banner-active" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn-danger" id="btn-delete-promo-banner" style="display: none;" data-i18n="btnDelete">Delete</button>
+          <button class="btn-secondary" id="btn-cancel-promo-banner" data-i18n="btnCancel">Cancel</button>
+          <button class="btn-primary" id="btn-save-promo-banner" data-i18n="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Set/Change Display Name Modal (from Settings > Account) -->
     <div class="modal" id="modal-set-displayname">
       <div class="modal-overlay" id="overlay-set-displayname"></div>
