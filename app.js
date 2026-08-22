@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v93';
+const APP_BUILD_ID = 'v94';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -148,6 +148,8 @@ const TRANSLATIONS = {
     labelBannerTitle: "Title (Optional)",
     labelBannerActive: "Active (visible to customers)",
     labelBannerDescription: "Description (Optional)",
+    labelBannerPrice: "Price (Optional)",
+    promoSectionLabel: "Promotions",
     labelBannerHeight: "Banner Height",
     bannerHeightSmall: "Small",
     bannerHeightMedium: "Medium",
@@ -458,6 +460,8 @@ const TRANSLATIONS = {
     labelBannerTitle: "Наслов (опционално)",
     labelBannerActive: "Активно (видливо за клиенти)",
     labelBannerDescription: "Опис (опционално)",
+    labelBannerPrice: "Цена (опционално)",
+    promoSectionLabel: "Промоции",
     labelBannerHeight: "Висина на банерот",
     bannerHeightSmall: "Мала",
     bannerHeightMedium: "Средна",
@@ -768,6 +772,8 @@ const TRANSLATIONS = {
     labelBannerTitle: "Titulli (Opsional)",
     labelBannerActive: "Aktive (e dukshme për klientët)",
     labelBannerDescription: "Përshkrimi (Opsional)",
+    labelBannerPrice: "Çmimi (Opsional)",
+    promoSectionLabel: "Promocione",
     labelBannerHeight: "Lartësia e Banderolës",
     bannerHeightSmall: "Vogël",
     bannerHeightMedium: "Mesatare",
@@ -2076,7 +2082,7 @@ const cloud = {
         4000
       );
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
+      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', price: d.price || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return null;
@@ -2088,7 +2094,7 @@ const cloud = {
     try {
       const res = await withTimeout(supabaseClient.rpc('staff_list_promo_banners', { p_token: token }), 4000);
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
+      return res.data.map(d => ({ id: d.id, title: d.title || '', description: d.description || '', price: d.price || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active }));
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return null;
@@ -2104,6 +2110,7 @@ const cloud = {
           p_id: banner.id || null,
           p_title: banner.title || '',
           p_description: banner.description || '',
+          p_price: banner.price || '',
           p_image_url: banner.imageUrl,
           p_height_preset: banner.heightPreset || 'medium',
           p_active: banner.active !== false
@@ -2112,7 +2119,7 @@ const cloud = {
       );
       if (res.error || !res.data) return { error: 'unknown' };
       const d = res.data;
-      return { banner: { id: d.id, title: d.title || '', description: d.description || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active } };
+      return { banner: { id: d.id, title: d.title || '', description: d.description || '', price: d.price || '', imageUrl: d.image_url, heightPreset: d.height_preset || 'medium', sortOrder: d.sort_order, active: d.active } };
     } catch (e) {
       console.error('Supabase call failed:', e && e.message);
       return { error: 'offline' };
@@ -2768,6 +2775,7 @@ const DOM = {
   btnCancelMenuItem: document.getElementById('btn-cancel-menu-item'),
   btnDeleteMenuItem: document.getElementById('btn-delete-menu-item'),
 
+  promoSectionLabel: document.getElementById('promo-section-label'),
   promoBannerScroll: document.getElementById('promo-banner-scroll'),
   adminPromoBannerList: document.getElementById('admin-promo-banner-list'),
   btnAddPromoBanner: document.getElementById('btn-add-promo-banner'),
@@ -2782,6 +2790,7 @@ const DOM = {
   promoBannerUploadError: document.getElementById('promo-banner-upload-error'),
   promoBannerTitleInput: document.getElementById('promo-banner-title'),
   promoBannerDescriptionInput: document.getElementById('promo-banner-description'),
+  promoBannerPriceInput: document.getElementById('promo-banner-price'),
   promoBannerHeightChips: document.querySelectorAll('#promo-banner-height-chips .chip'),
   promoBannerActive: document.getElementById('promo-banner-active'),
   btnSavePromoBanner: document.getElementById('btn-save-promo-banner'),
@@ -4567,7 +4576,7 @@ function setupScrollDiagnostic() {
 }
 
 function getScrollableEl(view) {
-  return view.querySelector('.home-scroll') || view;
+  return view.querySelector('.home-scroll, .menu-view-scroll') || view;
 }
 
 function switchView(viewId) {
@@ -6294,6 +6303,7 @@ function renderPromoBanners() {
   if (!DOM.promoBannerScroll) return;
   const banners = state.promoBanners || [];
   DOM.promoBannerScroll.classList.toggle('hidden', banners.length === 0);
+  if (DOM.promoSectionLabel) DOM.promoSectionLabel.classList.toggle('hidden', banners.length === 0);
   DOM.promoBannerScroll.innerHTML = '';
 
   banners.forEach(b => {
@@ -6304,6 +6314,13 @@ function renderPromoBanners() {
     img.src = b.imageUrl;
     img.alt = b.title || '';
     card.appendChild(img);
+
+    if (b.price) {
+      const priceEl = document.createElement('div');
+      priceEl.className = 'promo-banner-card-price';
+      priceEl.textContent = b.price;
+      card.appendChild(priceEl);
+    }
 
     if (b.title || b.description) {
       const textWrap = document.createElement('div');
@@ -6325,6 +6342,14 @@ function renderPromoBanners() {
 
     DOM.promoBannerScroll.appendChild(card);
   });
+
+  // scroll-snap + the container's own left padding can leave the strip
+  // pre-scrolled a few px in once there's more than one card (a browser
+  // snap-point quirk), which crops the first card's left inset and makes
+  // it look shoved against the edge, misaligned with the toggle/menu
+  // below. Forcing back to the true start on every render is a cheap,
+  // reliable fix regardless of the underlying cause.
+  DOM.promoBannerScroll.scrollLeft = 0;
 }
 
 function renderAdminPromoBanners() {
@@ -6437,6 +6462,7 @@ function openPromoBannerModal(banner = null) {
     DOM.promoBannerId.value = banner.id;
     DOM.promoBannerTitleInput.value = banner.title || '';
     if (DOM.promoBannerDescriptionInput) DOM.promoBannerDescriptionInput.value = banner.description || '';
+    if (DOM.promoBannerPriceInput) DOM.promoBannerPriceInput.value = banner.price || '';
     setPromoBannerHeightChip(banner.heightPreset);
     DOM.promoBannerActive.checked = banner.active !== false;
     if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'block';
@@ -6445,6 +6471,7 @@ function openPromoBannerModal(banner = null) {
     DOM.promoBannerId.value = '';
     DOM.promoBannerTitleInput.value = '';
     if (DOM.promoBannerDescriptionInput) DOM.promoBannerDescriptionInput.value = '';
+    if (DOM.promoBannerPriceInput) DOM.promoBannerPriceInput.value = '';
     setPromoBannerHeightChip('medium');
     DOM.promoBannerActive.checked = true;
     if (DOM.btnDeletePromoBanner) DOM.btnDeletePromoBanner.style.display = 'none';
@@ -6502,6 +6529,7 @@ if (DOM.btnSavePromoBanner) {
       id: DOM.promoBannerId.value || null,
       title: DOM.promoBannerTitleInput.value.trim(),
       description: DOM.promoBannerDescriptionInput ? DOM.promoBannerDescriptionInput.value.trim() : '',
+      price: DOM.promoBannerPriceInput ? DOM.promoBannerPriceInput.value.trim() : '',
       imageUrl: pendingPromoBannerImageUrl,
       heightPreset: getPromoBannerHeightChip(),
       active: DOM.promoBannerActive.checked
