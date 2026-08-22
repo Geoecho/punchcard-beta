@@ -2214,6 +2214,7 @@ input { font: inherit; color: inherit; }
 
 .admin-promo-section {
   margin-bottom: 20px;
+  padding: 0 20px;
 }
 .admin-promo-section-header {
   display: flex;
