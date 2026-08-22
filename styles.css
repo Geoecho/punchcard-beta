@@ -2286,6 +2286,36 @@ input { font: inherit; color: inherit; }
   color: var(--text-muted);
   margin-bottom: 14px;
 }
+.staff-drinks-recipient-row {
+  margin-bottom: 20px;
+}
+.staff-drinks-recipient-hint {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-glass);
+  margin-bottom: 10px;
+}
+.staff-drinks-recipient-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.staff-drinks-recipient-chip {
+  padding-left: 10px;
+  gap: 7px;
+}
+.staff-drinks-recipient-chip-avatar {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+}
+.staff-drinks-recipient-chip-avatar img { width: 100%; height: 100%; border-radius: 50%; }
 .staff-drinks-category {
   margin-bottom: 20px;
 }
@@ -2344,6 +2374,9 @@ input { font: inherit; color: inherit; }
   gap: 10px;
   padding: 9px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.staff-drinks-log-recipient {
+  color: var(--text-muted);
 }
 .staff-drinks-log-row:last-child {
   border-bottom: none;
@@ -2824,6 +2857,20 @@ input { font: inherit; color: inherit; }
     transform: scale(0.95);
   }
   .modal.active .modal-content { transform: scale(1); }
+
+  /* Scanning a customer's QR needs a phone camera; on desktop staff
+     already have the search box in this same view, so the fab is
+     just dead weight. */
+  .customers-actions { display: none; }
+
+  /* Stats need to read as numbers that matter, not settings rows —
+     give every quick-stats block (dashboard, my profile, store
+     insights) the full-width treatment instead of just the top one,
+     so they don't get squeezed into a masonry column at 1/3 width. */
+  #view-settings .settings-section:has(.quick-stats) {
+    grid-column: 1 / -1;
+    max-width: 640px;
+  }
 }
 #qr-reader__header_message, #qr-reader__dashboard, #qr-reader__status_span { display: none !important; }
 

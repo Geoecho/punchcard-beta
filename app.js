@@ -164,7 +164,10 @@ const TRANSLATIONS = {
     navEditMenu: "Edit Menu",
     navActivity: "Activity",
     navStaffDrinks: "Staff Drinks",
-    staffDrinksPickerHint: "Tap a drink to log one for yourself",
+    staffDrinksPickerHint: "Tap a drink to log it",
+    staffDrinksRecipientHint: "Who's this for?",
+    staffDrinksRecipientMe: "Me",
+    staffDrinksLogForSuffix: " for {name}",
     staffDrinksLogTitle: "Recent",
     staffDrinksLogEmpty: "No drinks logged yet.",
     toastDrinkLogged: "Logged: {name}",
@@ -482,7 +485,10 @@ const TRANSLATIONS = {
     navEditMenu: "Уреди мени",
     navActivity: "Активност",
     navStaffDrinks: "Пијалаци за вработени",
-    staffDrinksPickerHint: "Допрете пијалак за да го евидентирате за себе",
+    staffDrinksPickerHint: "Допрете пијалак за да го евидентирате",
+    staffDrinksRecipientHint: "За кого е ова?",
+    staffDrinksRecipientMe: "Јас",
+    staffDrinksLogForSuffix: " за {name}",
     staffDrinksLogTitle: "Неодамна",
     staffDrinksLogEmpty: "Сè уште нема евидентирани пијалаци.",
     toastDrinkLogged: "Евидентирано: {name}",
@@ -800,7 +806,10 @@ const TRANSLATIONS = {
     navEditMenu: "Ndrysho Menynë",
     navActivity: "Aktiviteti",
     navStaffDrinks: "Pije për Stafin",
-    staffDrinksPickerHint: "Prek një pije për ta regjistruar për vete",
+    staffDrinksPickerHint: "Prek një pije për ta regjistruar",
+    staffDrinksRecipientHint: "Për kë është kjo?",
+    staffDrinksRecipientMe: "Unë",
+    staffDrinksLogForSuffix: " për {name}",
     staffDrinksLogTitle: "Të fundit",
     staffDrinksLogEmpty: "Ende nuk ka pije të regjistruara.",
     toastDrinkLogged: "U regjistrua: {name}",
@@ -1121,8 +1130,11 @@ const state = {
   myCustomerId: null,
   myToken: null,
   staffToken: null,
+  staffId: null,
   staffName: null,
   staffAvatar: 'person',
+  staffTeam: [],
+  staffDrinksRecipientId: null,
   editingStaffAvatar: false,
   mandatoryDisplayNamePrompt: false,
   pinFailedAttempts: 0,
@@ -1754,10 +1766,10 @@ const cloud = {
     } catch (e) {}
   },
 
-  async staffLogDrink(token, itemName) {
+  async staffLogDrink(token, itemName, recipientStaffId) {
     if (!supabaseClient || !token) return false;
     try {
-      const res = await withTimeout(supabaseClient.rpc('staff_log_drink', { p_token: token, p_item_name: itemName }), 4000);
+      const res = await withTimeout(supabaseClient.rpc('staff_log_drink', { p_token: token, p_item_name: itemName, p_recipient_staff_id: recipientStaffId || null }), 4000);
       return !res.error;
     } catch (e) {
       return false;
@@ -1769,7 +1781,18 @@ const cloud = {
     try {
       const res = await withTimeout(supabaseClient.rpc('staff_list_drink_log', { p_token: token, p_limit: limit }), 4000);
       if (res.error || !res.data) return null;
-      return res.data.map(d => ({ id: d.id, staffName: d.staff_name, itemName: d.item_name, loggedAt: d.logged_at }));
+      return res.data.map(d => ({ id: d.id, staffName: d.staff_name, itemName: d.item_name, loggedAt: d.logged_at, recipientName: d.recipient_staff_name }));
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async staffListTeam(token) {
+    if (!supabaseClient || !token) return null;
+    try {
+      const res = await withTimeout(supabaseClient.rpc('staff_list_team', { p_token: token }), 4000);
+      if (res.error || !res.data) return null;
+      return res.data.map(d => ({ id: d.id, name: d.name, avatar: d.avatar || 'person' }));
     } catch (e) {
       return null;
     }
@@ -2712,6 +2735,7 @@ const DOM = {
   customerSortChips: document.querySelectorAll('#customer-sort-chips .chip'),
 
   staffDrinksTodayBadge: document.getElementById('staff-drinks-today-badge'),
+  staffDrinksRecipientChips: document.getElementById('staff-drinks-recipient-chips'),
   staffDrinksPickerList: document.getElementById('staff-drinks-picker-list'),
   staffDrinksLogList: document.getElementById('staff-drinks-log-list'),
 
@@ -3065,6 +3089,7 @@ async function initApp() {
         const staffSession = JSON.parse(savedStaffJson);
         if (staffSession && staffSession.token) {
           state.staffToken = staffSession.token;
+          state.staffId = staffSession.staffId || null;
           state.staffName = staffSession.name;
           state.staffAvatar = staffSession.avatar || 'person';
         }
@@ -4725,6 +4750,7 @@ function switchView(viewId) {
   if (viewId === 'view-activity') renderActivityList();
   if (viewId === 'view-staff-drinks') {
     renderStaffDrinksPicker();
+    renderStaffDrinksRecipientPicker();
     loadAndRenderStaffDrinkLog();
   }
   if (viewId === 'view-leaderboard') renderLeaderboard();
@@ -4760,6 +4786,7 @@ function renderPosterQr() {
 
 async function finishStaffLogin(result) {
   state.staffToken = result.token;
+  state.staffId = result.staffId;
   state.staffName = result.name;
   toggleAdminMode(true);
 
@@ -4767,7 +4794,7 @@ async function finishStaffLogin(result) {
     const self = await cloud.staffGetSelf(result.token);
     if (self) state.staffAvatar = self.avatar;
   } catch (e) {}
-  localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, name: result.name, email: result.email, avatar: state.staffAvatar }));
+  localStorage.setItem('86_staff_session', JSON.stringify({ token: result.token, staffId: state.staffId, name: result.name, email: result.email, avatar: state.staffAvatar }));
   if (DOM.staffLoginError) DOM.staffLoginError.textContent = '';
   renderStaffProfile();
 
@@ -6722,9 +6749,44 @@ function renderStaffDrinksPicker() {
   });
 }
 
+async function renderStaffDrinksRecipientPicker() {
+  if (!DOM.staffDrinksRecipientChips) return;
+
+  if (!state.staffTeam.length) {
+    const team = await cloud.staffListTeam(state.staffToken);
+    if (team) state.staffTeam = team;
+  }
+
+  DOM.staffDrinksRecipientChips.innerHTML = '';
+
+  const others = state.staffTeam.filter(s => s.id !== state.staffId);
+  const roster = [{ id: state.staffId, name: t('staffDrinksRecipientMe'), avatar: state.staffAvatar }, ...others];
+
+  roster.forEach(person => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip staff-drinks-recipient-chip';
+    if ((state.staffDrinksRecipientId || state.staffId) === person.id) btn.classList.add('active');
+
+    const avatar = document.createElement('span');
+    avatar.className = 'staff-drinks-recipient-chip-avatar';
+    avatar.innerHTML = MONOCHROME_AVATARS[person.avatar] || MONOCHROME_AVATARS.person;
+    btn.appendChild(avatar);
+    btn.appendChild(document.createTextNode(person.name));
+
+    btn.addEventListener('click', () => {
+      state.staffDrinksRecipientId = person.id;
+      DOM.staffDrinksRecipientChips.querySelectorAll('.staff-drinks-recipient-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    DOM.staffDrinksRecipientChips.appendChild(btn);
+  });
+}
+
 async function logStaffDrink(itemName, btn) {
   if (btn) btn.disabled = true;
-  const ok = await cloud.staffLogDrink(state.staffToken, itemName);
+  const recipientId = state.staffDrinksRecipientId && state.staffDrinksRecipientId !== state.staffId ? state.staffDrinksRecipientId : null;
+  const ok = await cloud.staffLogDrink(state.staffToken, itemName, recipientId);
   if (btn) btn.disabled = false;
 
   if (!ok) {
@@ -6775,6 +6837,13 @@ function renderStaffDrinkLog(log) {
     itemEl.className = 'staff-drinks-log-item';
     itemEl.textContent = l.itemName;
     main.appendChild(itemEl);
+
+    if (l.recipientName && l.recipientName !== l.staffName) {
+      const recipientEl = document.createElement('span');
+      recipientEl.className = 'staff-drinks-log-recipient';
+      recipientEl.textContent = t('staffDrinksLogForSuffix', { name: l.recipientName });
+      main.appendChild(recipientEl);
+    }
     row.appendChild(main);
 
     const time = document.createElement('div');
