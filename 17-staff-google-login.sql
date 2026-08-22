@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — staff login with Google
 -- ============================================================
--- Run this AFTER supabase-security-fixes.sql on the same project.
+-- Run this AFTER 12-security-fixes.sql on the same project.
 --
 -- WHAT THIS ADDS:
 --   - The 5-tap "Settings" gesture that opens the Staff Portal now skips
@@ -16,7 +16,7 @@
 --     caller's verified JWT after they've actually completed Google
 --     sign-in. The client can't claim to be a different Google user
 --     (same pattern as customer_login_google in
---     supabase-customer-google-login.sql).
+--     10-customer-google-login.sql).
 --   - It only matches against a per-staff google_email column that YOU
 --     set below — a Google account is never enough on its own, it has
 --     to be one of the addresses you explicitly whitelisted.

@@ -68,7 +68,7 @@ end;
 $$;
 grant execute on function public.customer_set_display_name(text, text) to anon, authenticated;
 
--- Identical to the version in supabase-notifications-panel.sql except
+-- Identical to the version in 28-notifications-panel.sql except
 -- the lookup now matches display name instead of the login-only phone
 -- column.
 create or replace function public.customer_send_friend_request(p_token text, p_friend_username text)

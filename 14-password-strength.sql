@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — stronger signup password requirement
 -- ============================================================
--- Run this AFTER supabase-staff-upgrade.sql on the same project:
+-- Run this AFTER 04-staff-upgrade.sql on the same project:
 -- https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS CHANGES:

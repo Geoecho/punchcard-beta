@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — in-app notification panel
 -- ============================================================
--- Run this AFTER supabase-friends-gifting.sql, supabase-student-status.sql
+-- Run this AFTER 27-friends-gifting.sql, 23-student-status.sql
 -- on the same project: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS ADDS:
@@ -31,10 +31,10 @@
 --     what happened: a new friend request, a friend request accepted,
 --     a gift received, and a reward banked (card full). Each of these
 --     three friends/gifting functions is a straight create-or-replace
---     of the version already in supabase-friends-gifting.sql (same
+--     of the version already in 27-friends-gifting.sql (same
 --     signature, so no DROP needed) — copied here with one added
 --     notify_customer(...) call apiece, not a redesign. staff_add_stamp
---     is re-copied from supabase-student-status.sql (the file that most
+--     is re-copied from 23-student-status.sql (the file that most
 --     recently owns its definition) the same way, with a defensive
 --     DROP first since — unlike the other three — this file didn't
 --     originally define it, so there's more room for signature drift.
@@ -164,8 +164,8 @@ grant execute on function public.customer_clear_all_notifications(text) to anon,
 -- ============================================================
 -- Re-copies of the four event-generating functions, each with one
 -- added notify_customer(...) call. Everything else is identical to
--- the version currently live from supabase-friends-gifting.sql /
--- supabase-student-status.sql.
+-- the version currently live from 27-friends-gifting.sql /
+-- 23-student-status.sql.
 -- ============================================================
 
 create or replace function public.customer_send_friend_request(p_token text, p_friend_username text)

@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — per-item student prices
 -- ============================================================
--- Run this AFTER supabase-menu-sync.sql on the same project.
+-- Run this AFTER 15-menu-sync.sql on the same project.
 --
 -- WHAT THIS ADDS:
 --   - menu_items.student_price: optional. Staff type the actual student

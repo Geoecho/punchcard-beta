@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — real password authentication
 -- ============================================================
--- Run this AFTER supabase-new-project-setup.sql / supabase-security-
+-- Run this AFTER 01-new-project-setup.sql / supabase-security-
 -- lockdown.sql (whichever you already ran) on the same project:
 -- https://edunsrtcdhnpbsipalhc.supabase.co
 --

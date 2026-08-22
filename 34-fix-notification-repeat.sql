@@ -4,7 +4,7 @@
 -- Run this on: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- BUG: customer_respond_friend_request() (latest version was in
--- supabase-remove-emoji-titles.sql) updates customer_friend_requests.status
+-- 31-remove-emoji-titles.sql) updates customer_friend_requests.status
 -- but never removes the originating 'friend_request' row from
 -- customer_notifications. The notifications panel (app.js) only ever
 -- deletes that row on an explicit "X" click (customer_delete_notification) —
@@ -18,7 +18,7 @@
 --
 -- FIX: after recording accept/decline, delete the notification row that
 -- represents this specific pending request. Straight copy of the version
--- in supabase-remove-emoji-titles.sql — no signature/return-type change,
+-- in 31-remove-emoji-titles.sql — no signature/return-type change,
 -- so no DROP needed — with one delete statement added at the end.
 -- ============================================================
 

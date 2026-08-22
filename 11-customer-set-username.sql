@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — let a customer set their own username
 -- ============================================================
--- Run this AFTER supabase-customer-google-login.sql on the same
+-- Run this AFTER 10-customer-google-login.sql on the same
 -- project: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS ADDS:

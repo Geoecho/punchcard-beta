@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — strip colored emoji from notification titles
 -- ============================================================
--- Run this AFTER supabase-referrals-milestones.sql on the same
+-- Run this AFTER 30-referrals-milestones.sql on the same
 -- project: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS CHANGES:
@@ -13,10 +13,10 @@
 -- live version (verified via git log which file most recently touched
 -- each one, not just filename) with only the title strings edited.
 --
---   customer_send_friend_request  — was in supabase-friend-search-by-name.sql
+--   customer_send_friend_request  — was in 29-friend-search-by-name.sql
 --   customer_respond_friend_request, staff_add_stamp
---                                  — were in supabase-referrals-milestones.sql
---   customer_gift_reward          — was in supabase-gift-message.sql
+--                                  — were in 30-referrals-milestones.sql
+--   customer_gift_reward          — was in 32-gift-message.sql
 -- ============================================================
 
 create or replace function public.customer_send_friend_request(p_token text, p_friend_username text)

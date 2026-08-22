@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — customer-changeable display name
 -- ============================================================
--- Run this AFTER supabase-security-fixes.sql on the same project.
+-- Run this AFTER 12-security-fixes.sql on the same project.
 --
 -- WHAT THIS ADDS:
 --   - A way for a customer to change their DISPLAY name (customers.name

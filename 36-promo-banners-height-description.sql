@@ -1,6 +1,6 @@
 -- Adds a description field and a staff-selectable height preset to promo
 -- banners. Run this on: https://edunsrtcdhnpbsipalhc.supabase.co
--- (needs supabase-promo-banners.sql to already have been run)
+-- (needs 35-promo-banners.sql to already have been run)
 
 alter table public.promo_banners add column if not exists description text not null default '';
 alter table public.promo_banners add column if not exists height_preset text not null default 'medium';

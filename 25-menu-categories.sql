@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — manageable, orderable menu sections
 -- ============================================================
--- Run this AFTER supabase-menu-sync.sql (and supabase-student-price.sql
+-- Run this AFTER 15-menu-sync.sql (and 24-student-price.sql
 -- if you've run that one) on the same project.
 --
 -- WHY: menu item "category" was just a free-text field typed per item —

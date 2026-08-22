@@ -133,7 +133,7 @@ $$;
 
 -- ============================================================
 -- login_customer — straight copy of the version in
--- supabase-student-status.sql (true latest, verified via git log),
+-- 23-student-status.sql (true latest, verified via git log),
 -- with the rate-limit gate added at the top and a reset on success.
 -- Signature unchanged, no DROP needed.
 -- ============================================================
@@ -174,7 +174,7 @@ $$;
 grant execute on function public.login_customer(text, text) to anon;
 
 -- ============================================================
--- signup_customer — same source (supabase-profanity-filter.sql, true
+-- signup_customer — same source (33-profanity-filter.sql, true
 -- latest). Its "username already exists" branch silently re-checks
 -- the password (raising username_taken on a mismatch), which makes it
 -- a second password-guessing endpoint against the same account — so
@@ -248,7 +248,7 @@ $$;
 grant execute on function public.signup_customer(text, text, text) to anon;
 
 -- ============================================================
--- staff_login — same source (supabase-staff-upgrade.sql, sole/latest
+-- staff_login — same source (04-staff-upgrade.sql, sole/latest
 -- definition), same treatment. Slightly stricter thresholds than the
 -- customer side since this endpoint sees far less legitimate traffic.
 -- Signature unchanged, no DROP needed.

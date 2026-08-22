@@ -19,7 +19,7 @@
 -- low-stakes plumbing. Storage uploads follow that same model: the
 -- 'promo-banners' bucket accepts uploads from anyone holding the public
 -- anon key (matching this app's existing security posture — see
--- supabase-security-fixes.sql), but uploading a file alone does
+-- 12-security-fixes.sql), but uploading a file alone does
 -- nothing — a file only ever becomes a visible banner once
 -- staff_upsert_promo_banner() (which DOES verify a real staff token)
 -- is called to reference it. Worst case for an anon-only upload is an

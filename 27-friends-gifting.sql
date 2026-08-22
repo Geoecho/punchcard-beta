@@ -18,7 +18,7 @@
 --     (no cooldown) because it's zero-sum — it only moves a reward that
 --     was already legitimately earned, it can never create one. The
 --     abuse this app actually has to guard against is FORGING new
---     stamps/rewards (see supabase-security-fixes.sql), not customers
+--     stamps/rewards (see 12-security-fixes.sql), not customers
 --     moving their own already-real rewards to each other.
 --   - Every gift writes a history entry on both accounts so it's
 --     visible in the activity feed same as any other transaction.

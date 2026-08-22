@@ -1,11 +1,11 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — carry the staff avatar on stamp entries
 -- ============================================================
--- Run this AFTER supabase-staff-profile.sql on the same project.
+-- Run this AFTER 20-staff-profile.sql on the same project.
 --
 -- WHAT THIS ADDS:
 --   - staff_add_stamp's history entry now also records staffAvatar
---     (from staff_users.avatar, set on supabase-staff-profile.sql),
+--     (from staff_users.avatar, set on 20-staff-profile.sql),
 --     the same way it already records staffName. The customer-facing
 --     "New Stamp from X!" toast can then show that staff member's
 --     avatar without a separate lookup/RPC — it just rides along in

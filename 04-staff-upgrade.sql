@@ -61,7 +61,7 @@ alter table public.campaigns enable row level security;
 -- Seed the 3 staff accounts. Passwords are hashed with bcrypt — the
 -- plain password is never stored in this file (this project has since
 -- moved to Google-only admin login anyway; see
--- supabase-staff-google-login.sql / supabase-block-staff-customer-login.sql
+-- 17-staff-google-login.sql / 19-block-staff-customer-login.sql
 -- — password login is disabled for all staff accounts via a rotated,
 -- unknown password_hash). If you ever need a new password-login staff
 -- account, set REPLACE_WITH_YOUR_OWN_PASSWORD to a real value before

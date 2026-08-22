@@ -1,7 +1,7 @@
 -- Adds an optional price badge field to promo banners. Run this on:
 -- https://edunsrtcdhnpbsipalhc.supabase.co
--- (needs supabase-promo-banners.sql and
--- supabase-promo-banners-height-description.sql to already have been run)
+-- (needs 35-promo-banners.sql and
+-- 36-promo-banners-height-description.sql to already have been run)
 
 alter table public.promo_banners add column if not exists price text not null default '';
 

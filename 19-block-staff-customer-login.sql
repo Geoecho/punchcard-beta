@@ -1,14 +1,14 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — keep staff Google accounts admin-only
 -- ============================================================
--- Run this AFTER supabase-staff-google-login.sql on the same project.
+-- Run this AFTER 17-staff-google-login.sql on the same project.
 --
 -- WHY: app.js now checks staff_login_google() before customer_login_google()
 -- on a fresh "Continue with Google" return, so the 3 whitelisted staff
 -- Gmail accounts land in the Staff Portal, not a customer card. This is
 -- the server-side backstop for that rule — customer_login_google() itself
 -- now refuses to run for any email on the staff google_email allowlist
--- (see supabase-staff-google-login.sql), no matter what calls it or in
+-- (see 17-staff-google-login.sql), no matter what calls it or in
 -- what order, so a customer card can never be created/attached for a
 -- staff account by accident.
 -- ============================================================

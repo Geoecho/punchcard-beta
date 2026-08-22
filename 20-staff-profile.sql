@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — staff profile (avatar + self lookup)
 -- ============================================================
--- Run this AFTER supabase-staff-upgrade.sql on the same project.
+-- Run this AFTER 04-staff-upgrade.sql on the same project.
 --
 -- WHAT THIS ADDS:
 --   - staff_users gets the same "avatar" concept customers already

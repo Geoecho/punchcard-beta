@@ -2,6 +2,14 @@
 -- Eightysixdegrees Punchcard — new Supabase project setup
 -- Project: https://edunsrtcdhnpbsipalhc.supabase.co
 -- ============================================================
+-- NUMBERING: the 01-40 prefixes across these root-level *.sql files
+-- reflect the order they were actually applied to the live project,
+-- reconstructed from each file's own "run this after X" notes (not
+-- just git history, which lumped many of them into one initial
+-- commit out of true order). Some later files replace a function
+-- or policy a numerically-earlier file created (e.g. 12-security-
+-- fixes.sql supersedes 06/07/08's customer-write fix attempts) —
+-- run them in order on a fresh project rather than cherry-picking.
 -- This is for a FRESH/empty project. It creates the `customers` table
 -- and locks it down the secure way from the start (no retrofitting):
 --   - Reads only go through 3 narrow functions (single-row lookups,

@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — one-time verified student status
 -- ============================================================
--- Run this AFTER supabase-stamp-staff-avatar.sql (the latest migration
+-- Run this AFTER 22-stamp-staff-avatar.sql (the latest migration
 -- so far) on the same project: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS ADDS:

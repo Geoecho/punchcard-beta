@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — block swear words in usernames/names
 -- ============================================================
--- Run this AFTER supabase-friend-search-by-name.sql on the same
+-- Run this AFTER 29-friend-search-by-name.sql on the same
 -- project: https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- If you already tried an earlier version of this file and got
@@ -88,7 +88,7 @@ end;
 $$;
 
 -- ---- signup_customer: verified-current body from
--- supabase-student-status.sql (auto-login session token, is_student,
+-- 23-student-status.sql (auto-login session token, is_student,
 -- 8+/upper/lower/number password rule) — only the profanity check
 -- and the DROP are new here. ----
 drop function if exists public.signup_customer(text, text, text);
@@ -150,7 +150,7 @@ $$;
 grant execute on function public.signup_customer(text, text, text) to anon;
 
 -- ---- customer_set_username: verified-current body from
--- supabase-student-status.sql. Not currently called from app.js, but
+-- 23-student-status.sql. Not currently called from app.js, but
 -- it's a live, directly-callable RPC — guarded anyway. ----
 drop function if exists public.customer_set_username(text, text);
 create or replace function public.customer_set_username(p_token text, p_username text)
@@ -185,7 +185,7 @@ $$;
 grant execute on function public.customer_set_username(text, text) to anon, authenticated;
 
 -- ---- customer_set_display_name: verified-current body from
--- supabase-friend-search-by-name.sql (is_student, plus the case-
+-- 29-friend-search-by-name.sql (is_student, plus the case-
 -- insensitive name_taken uniqueness check now that this doubles as
 -- the friend-search key) — only the profanity check is new here. ----
 drop function if exists public.customer_set_display_name(text, text);

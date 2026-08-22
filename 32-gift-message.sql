@@ -1,7 +1,7 @@
 -- ============================================================
 -- Eightysixdegrees Punchcard — optional message on a gifted reward
 -- ============================================================
--- Run this AFTER supabase-notifications-panel.sql on the same project:
+-- Run this AFTER 28-notifications-panel.sql on the same project:
 -- https://edunsrtcdhnpbsipalhc.supabase.co
 --
 -- WHAT THIS ADDS:
