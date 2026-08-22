@@ -1,7 +1,5 @@
-// 86° Punchcard — Service Worker
-// Network-first for API, Stale-While-Revalidate for app shell
 
-const CACHE_NAME = '86-punchcard-v90';
+const CACHE_NAME = '86-punchcard-v91';
 const APP_SHELL = [
   './',
   './index.html',
@@ -15,7 +13,6 @@ const APP_SHELL = [
   './lib/html5-qrcode.min.js'
 ];
 
-// Pre-cache app shell on install
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -27,7 +24,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
@@ -43,18 +39,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch strategy: Network-first for API and app-shell code, Stale-While-
-// Revalidate for static assets that rarely change.
-//
-// The app shell (HTML/JS/CSS) used to be Stale-While-Revalidate too, which
-// meant every deploy landed invisibly: the very next launch after a fix
-// shipped, users still got the OLD cached app.js/index.html immediately
-// (the fresh copy only replaced it in the background, for the launch
-// *after* that one). On a loyalty-card PWA that's often opened once, left
-// running, and reopened from the home screen days later, that lag reads
-// as "the fix didn't work." Network-first means a fix is live the moment
-// someone opens the app with any connectivity at all; the cache is now
-// purely an offline fallback, not the default answer.
 const APP_SHELL_PATHS = ['/', '/index.html', '/app.js', '/styles.css', '/menu.html', '/leaderboard.html', '/poster.html'];
 
 self.addEventListener('fetch', (event) => {
@@ -62,13 +46,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = event.request.url;
 
-  // The Cache API only supports http(s) requests — a browser extension's
-  // own chrome-extension:// (or moz-extension://, etc.) requests can end
-  // up passing through here on some setups, and cache.put() throws for
-  // any other scheme. Let the browser handle those directly.
   if (!url.startsWith('http:') && !url.startsWith('https:')) return;
 
-  // NEVER cache Supabase API or any external API calls — always go to network
   if (url.includes('supabase.co') || url.includes('cdn.jsdelivr.net')) {
     event.respondWith(
       fetch(event.request).catch(() => null)
@@ -94,9 +73,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else (icons, third-party libs): Stale-While-Revalidate —
-  // these change rarely, so serving the cached copy instantly and
-  // refreshing it in the background is the right tradeoff.
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       const fetchPromise = fetch(event.request)
@@ -116,9 +92,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ==========================================
-// PUSH NOTIFICATIONS
-// ==========================================
 self.addEventListener('push', (event) => {
   let data = { title: 'Eightysix°', body: '' };
   try {
@@ -137,8 +110,6 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Focus an already-open tab on this origin if there is one, instead of
-// always opening a new one, then navigate it to the notification's target.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = new URL(event.notification.data && event.notification.data.url || './', self.location.origin).href;

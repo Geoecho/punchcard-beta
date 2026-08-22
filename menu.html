@@ -262,7 +262,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ---- Join QR ----
     new QRCode(document.getElementById('tv-join-qr'), {
       text: window.location.origin + '/index.html#signup',
       width: 200,
@@ -272,7 +271,6 @@
       correctLevel: QRCode.CorrectLevel.H
     });
 
-    // ---- Live clock ----
     function tickClock() {
       const now = new Date();
       document.getElementById('tv-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -281,7 +279,6 @@
     tickClock();
     setInterval(tickClock, 1000);
 
-    // ---- Menu rendering ----
     function renderMenu(items) {
       const grid = document.getElementById('tv-grid');
       grid.innerHTML = '';
@@ -344,7 +341,6 @@
       }
     }
 
-    // ---- Cache-first paint (same key the main app uses), then network ----
     try {
       const cached = localStorage.getItem('86_menu');
       if (cached) renderMenu(JSON.parse(cached));
@@ -376,19 +372,14 @@
     fetchMenu();
     fetchCampaign();
 
-    // Realtime — any staff edit to the menu or campaign shows up here
-    // within moments, same as the customer-facing app.
     sb.channel('tv-menu-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, fetchMenu)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, fetchCampaign)
       .subscribe();
 
-    // Polling fallback in case realtime drops on a long-running kiosk tab.
     setInterval(fetchMenu, 60000);
     setInterval(fetchCampaign, 60000);
 
-    // An always-on TV tab can accumulate memory/stale-connection issues
-    // over days — a clean reload once every 6 hours keeps it healthy.
     setTimeout(() => window.location.reload(), 6 * 60 * 60 * 1000);
   </script>
 </body>

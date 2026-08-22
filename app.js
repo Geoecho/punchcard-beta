@@ -1,34 +1,18 @@
-/**
- * 86° PUNCHCARD — Application Logic
- * Vanilla JS with Supabase Realtime & Security Hardening
- */
 
-// ==========================================
-// CONFIGURATION & CONSTANTS
-// ==========================================
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
-// Bumped alongside service-worker.js's CACHE_NAME on every deploy — lets
-// a deployed build be confirmed (e.g. curl the live app.js and grep for
-// this) independent of whatever a given browser/service-worker cache is
-// actually serving a specific device.
-const APP_BUILD_ID = 'v90';
+
+const APP_BUILD_ID = 'v91';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
 
-// Supabase Cloud Configuration
 const SUPABASE_URL = 'https://edunsrtcdhnpbsipalhc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBMuMX2di-IB74UsVk9rTQ_lcvNyPCv';
 
-// Netaville app store links — the "student discount" promo banner stays
-// hidden until these are filled in, so it can't ever point somewhere broken.
 const NETAVILLE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.netcetera.android.netaville.prod&hl=en&gl=US&pli=1';
 const NETAVILLE_IOS_URL = 'https://apps.apple.com/us/app/netaville/id1643904350';
 
-// Same public key as api/send-push.js — the public half is safe client-side
-// by design (it's how the push service knows which server is allowed to
-// send to a subscription it hands out, not a secret).
 const VAPID_PUBLIC_KEY = 'BFab1o_b_UHZufxv0_ITw8avQ880_qs0ANokCv-3PTNWcluiqotxPurRbVCDt8k3iqG1Q1X69ZMHsHgOAiXHN9c';
 
 function urlBase64ToUint8Array(base64String) {
@@ -43,20 +27,12 @@ function urlBase64ToUint8Array(base64String) {
 let supabaseClient = null;
 let realtimeChannel = null;
 
-// 16 Curated DiceBear Avatars (croodles-neutral) — the avatar picker
-// stores one of these seed keys on the customer record; the actual
-// artwork is fetched live from DiceBear's HTTP API, not baked in here.
 const DICEBEAR_STYLE = 'croodles-neutral';
 const AVATAR_SEEDS = ['Milo', 'Nova', 'Kai', 'Zara', 'Leo', 'Luna', 'Remy', 'Sage', 'Ivy', 'Finn', 'Coco', 'Ash', 'Rio', 'Wren', 'Blue', 'Juno'];
 function avatarUrl(seed) {
   return `https://api.dicebear.com/10.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=ffffff`;
 }
 
-// Menu item name/sub are staff-editable free text stored in the cloud and
-// rendered via innerHTML (for the price-badge/edit-icon markup alongside
-// them) — without escaping, a malicious or compromised staff account could
-// persist HTML/JS in a menu item that runs in every customer's and every
-// other staff member's session.
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -71,12 +47,6 @@ const MONOCHROME_AVATARS = AVATAR_SEEDS.reduce((acc, seed) => {
 }, {});
 MONOCHROME_AVATARS.person = MONOCHROME_AVATARS[AVATAR_SEEDS[0]];
 
-// ==========================================
-// TRANSLATIONS (EN / MK / SQ)
-// Covers app chrome — nav, buttons, labels, modal copy. Legal text
-// (Terms/Privacy body), toast messages, menu items, and activity log
-// entries stay in English (out of scope for a first pass).
-// ==========================================
 const TRANSLATIONS = {
   en: {
     posterBadge: "OFFICIAL LOYALTY CARD",
@@ -1023,8 +993,6 @@ function applyLanguage(lang) {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
 
-  // Re-apply dynamic strings that get overwritten by JS at runtime, so a
-  // language switch doesn't revert them to a stale static default.
   try {
     const session = JSON.parse(localStorage.getItem('86_user_session') || 'null');
     if (session && session.name && DOM.userAccountLabel && !state.isAdmin) {
@@ -1037,9 +1005,6 @@ function applyLanguage(lang) {
   if (typeof refreshPushToggleState === 'function' && state.currentView === 'view-settings') refreshPushToggleState();
 }
 
-// Password strength rules for new signups — matched server-side in
-// signup_customer() so the requirement can't be bypassed by calling the
-// RPC directly.
 function getPasswordChecks(pw) {
   pw = pw || '';
   return {
@@ -1054,7 +1019,6 @@ function isPasswordStrong(pw) {
   return c.length && c.upper && c.lower && c.number;
 }
 
-// Timeout helper to ensure network calls never freeze the UI
 function withTimeout(promise, ms = 1500) {
   return Promise.race([
     promise,
@@ -1062,7 +1026,6 @@ function withTimeout(promise, ms = 1500) {
   ]);
 }
 
-// Security Checksum Helper (Anti-Tampering Guard)
 function computeIntegrityHash(c) {
   if (!c) return '';
   const str = `${c.id}:${c.stamps || 0}:${c.rewardsEarned || 0}:${c.phone || ''}:${c.avatar || 'person'}:${INTEGRITY_SALT}`;
@@ -1079,14 +1042,11 @@ function verifyAndCleanCustomer(c) {
   if (!c) return null;
   if (!c.history) c.history = [];
   if (!c.avatar || !MONOCHROME_AVATARS[c.avatar]) c.avatar = 'person';
-  // Ensure signature always matches customer's state
+
   c._sig = computeIntegrityHash(c);
   return c;
 }
 
-// ==========================================
-// STATE MANAGEMENT
-// ==========================================
 const state = {
   isAdmin: false,
   language: 'en',
@@ -1103,21 +1063,21 @@ const state = {
   mandatoryDisplayNamePrompt: false,
   pinFailedAttempts: 0,
   pinLockoutUntil: 0,
-  activityFilter: 'all', // 'all' | 'redemption' | 'stamp'
-  customerSort: 'recent', // 'recent' | 'regulars'
-  menuPriceView: 'regular', // 'regular' | 'student' — defaults to 'student' on entry for verified students
+  activityFilter: 'all',
+  customerSort: 'recent',
+  menuPriceView: 'regular',
   menuPriceViewInitialized: false,
   editingCustomerId: null,
-  campaign: null, // { active, multiplier, label } once fetched
+  campaign: null,
   stats: {
     stampsToday: 0,
     rewardsGiven: 0,
     activeCards: 0
   },
   menuItems: [],
-  menuCategories: [], // [{ name, sortOrder }], defines section order everywhere the menu renders
-  promoBanners: [], // active-only, for the customer-facing carousel
-  adminPromoBanners: [] // all banners incl. inactive, for the staff management list
+  menuCategories: [],
+  promoBanners: [],
+  adminPromoBanners: []
 };
 
 const defaultMenu = [
@@ -1141,12 +1101,6 @@ const defaultMenu = [
   { id: 'm18', name: 'Tea', sub: '', price: '80', category: 'Warm Comfort', stamps: 0 }
 ];
 
-// Instant-boot local cache — the menu now lives in Supabase (see
-// syncMenuFromCloud), but rendering from this cache first means the app
-// doesn't have to wait on a network round-trip just to show the menu,
-// and it still works offline. syncMenuFromCloud() overwrites this with
-// the real data moments later on every load, and realtime keeps it
-// current after that without needing a reload.
 function loadMenu() {
   const saved = localStorage.getItem('86_menu');
   if (saved) {
@@ -1158,10 +1112,6 @@ function loadMenu() {
   }
 }
 
-// Fetches the real menu from Supabase and replaces local state/cache/UI
-// with it. Called on boot and again whenever realtime signals a change,
-// so every device converges on the same menu within a moment of a staff
-// edit — no reload required.
 async function syncMenuFromCloud() {
   const [cloudMenu, cloudCategories] = await Promise.all([cloud.getMenu(), cloud.getCategories()]);
   if (cloudMenu) {
@@ -1176,11 +1126,6 @@ async function syncMenuFromCloud() {
   renderAdminMenu();
 }
 
-// Promo banner carousel — folded into the same realtime channel/polling
-// lifecycle as the menu (see cloud.subscribeToMenu, the 45s fallback
-// interval, and the view-menu/view-admin-menu switchView hook) rather
-// than getting its own, since it lives on the same screen and should
-// never be more stale than the menu itself.
 async function syncPromoBannersFromCloud() {
   const cloudBanners = await cloud.getPromoBanners();
   if (cloudBanners) {
@@ -1200,10 +1145,6 @@ function saveCategoriesCache() {
   localStorage.setItem('86_menu_categories', JSON.stringify(state.menuCategories));
 }
 
-// Instant-boot local cache, same reasoning as loadMenu() above — falls
-// back to deriving an order from whatever categories are already on the
-// cached menu items if this is the very first load before the table
-// backing this exists locally yet.
 function loadCategories() {
   const saved = localStorage.getItem('86_menu_categories');
   if (saved) {
@@ -1223,9 +1164,6 @@ function saveMenu() {
   localStorage.setItem('86_menu', JSON.stringify(state.menuItems));
 }
 
-// ==========================================
-// SUPABASE CLOUD DATABASE
-// ==========================================
 function mapDbRowToCustomer(d) {
   return verifyAndCleanCustomer({
     id: d.id,
@@ -1256,10 +1194,6 @@ const cloud = {
     return false;
   },
 
-  // Self-service avatar change, verified server-side against the
-  // caller's own session token (password customers) or live Google
-  // session (auth.uid()) — the RPC resolves identity itself, it's never
-  // trusted from the client. Can only ever touch the caller's own row.
   async setAvatar(token, avatar) {
     if (!supabaseClient) return null;
     try {
@@ -1275,7 +1209,6 @@ const cloud = {
     }
   },
 
-  // Staff overriding a selected customer's avatar at the counter.
   async staffSetAvatar(staffToken, customerId, avatar) {
     if (!supabaseClient || !staffToken) return null;
     try {
@@ -1291,9 +1224,6 @@ const cloud = {
     }
   },
 
-  // Staff marking a customer as a verified student (or unmarking) — the
-  // one-time flag that lets the customer's own QR/card screen carry the
-  // student badge from then on, so staff never need a second app/QR.
   async staffSetStudentStatus(staffToken, customerId, isStudent) {
     if (!supabaseClient || !staffToken) return null;
     try {
@@ -1309,9 +1239,6 @@ const cloud = {
     }
   },
 
-  // Self-service redeem — server checks the caller's own rewards_earned/
-  // stamps and expiry, then decrements atomically. There's no field the
-  // caller sets directly, so there's nothing to forge.
   async redeemReward(token, method) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1355,8 +1282,6 @@ const cloud = {
     }
   },
 
-  // Self-service "Keep in Wallet & Reset Card" — server requires the
-  // caller's own row to actually have 10 stamps before banking a reward.
   async bankReward(token) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1389,10 +1314,6 @@ const cloud = {
     }
   },
 
-  // Staff onboarding a customer whose card was created locally on their
-  // own device and hasn't synced to the cloud yet (scanned at the
-  // counter for the first time). Only inserts if the id doesn't already
-  // exist — never overwrites an existing customer.
   async staffCreateCustomer(staffToken, customerId, name, phone) {
     if (!supabaseClient || !staffToken) return null;
     try {
@@ -1401,10 +1322,7 @@ const cloud = {
         8000
       );
       if (res.error) {
-        // Log the real reason — a genuine network drop, a slow-mobile
-        // timeout, and an actual server-side rejection (bad RLS, a
-        // constraint violation, etc.) all end up here, and only one of
-        // those is actually "check your connection".
+
         console.error('staffCreateCustomer failed:', res.error.message || res.error);
         return null;
       }
@@ -1416,9 +1334,6 @@ const cloud = {
     }
   },
 
-  // Create a new account, or — if the username is already taken and the
-  // password matches — sign back into that existing account instead of
-  // failing outright (lets returning customers "sign up" again safely).
   async signupCustomer(username, password, name) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1460,13 +1375,6 @@ const cloud = {
     }
   },
 
-  // Returns false (not null) specifically when the request succeeded and
-  // confirmed the id doesn't exist — as opposed to null, which means the
-  // request itself failed and nothing was actually confirmed either way.
-  // Both are falsy so every existing `if (!customer)` caller is unaffected;
-  // only code that specifically checks `=== false` (see the boot-time
-  // session restore below) can tell "this account is genuinely gone" from
-  // "couldn't reach the server right now" and react differently.
   async pullCustomer(id) {
     if (!supabaseClient || !id) return null;
     try {
@@ -1486,11 +1394,6 @@ const cloud = {
     }
   },
 
-  // Display name (customers.name — shown on the card/QR/leaderboard) is
-  // deliberately separate from the login username (customers.phone):
-  // rate-limited to once every 14 days, enforced server-side. On a
-  // cooldown violation the RPC raises 'rate_limited:<ISO timestamp>' —
-  // pull that timestamp out so the UI can say exactly when it unlocks.
   async setDisplayName(token, name) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1517,12 +1420,6 @@ const cloud = {
     }
   },
 
-
-  // ---- In-app notification inbox ----
-  // Separate from Web Push: this is the persistent record a customer
-  // sees inside the app regardless of push permission state, written
-  // server-side by the same trusted functions that already gate the
-  // real underlying event (friend request, gift, reward banked).
   async listNotifications(token) {
     if (!supabaseClient) return [];
     try {
@@ -1575,10 +1472,6 @@ const cloud = {
     }
   },
 
-  // Fire-and-forget: staff calls this after an action that should notify
-  // a customer (reward earned) or everyone (campaign blast). Never blocks
-  // the action it's attached to — a slow or failed push send shouldn't
-  // stop a stamp from registering.
   async sendPush({ staffToken, customerId, broadcast, title, body, url, customerToken, targetCustomerId, context }) {
     try {
       const res = await withTimeout(
@@ -1629,7 +1522,6 @@ const cloud = {
     }
   },
 
-  // ---- Friends & gifting ----
   async sendFriendRequest(token, friendName) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1642,11 +1534,7 @@ const cloud = {
         if (msg.includes('friend_not_found')) return { error: 'not_found' };
         if (msg.includes('cannot_add_self')) return { error: 'self' };
         if (msg.includes('invalid_input')) return { error: 'invalid_input' };
-        // A stale/expired customer_sessions token raises this server-side
-        // (customer_id_from_caller) — surfacing it as a generic "check
-        // your connection" error is actively misleading since the
-        // backend is reachable and responded fine, the caller just isn't
-        // authenticated anymore.
+
         if (msg.includes('unauthorized')) return { error: 'session_expired' };
         return { error: 'unknown' };
       }
@@ -1736,12 +1624,6 @@ const cloud = {
     }
   },
 
-  // Returns null (not []) when the request itself failed — distinct from
-  // a genuinely empty cloud list, e.g. right after a full account reset.
-  // Conflating those used to mean reconcileLocalCustomers() couldn't
-  // tell "the cloud really has nothing" from "couldn't reach the cloud"
-  // and had no safe choice but to trust every local record forever,
-  // including ones deleted server-side ages ago.
   async pullAllCustomers(staffToken) {
     if (!supabaseClient || !staffToken) return null;
     try {
@@ -1760,7 +1642,6 @@ const cloud = {
     }
   },
 
-  // ---- Staff auth ----
   async staffLogin(email, password) {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1777,12 +1658,6 @@ const cloud = {
     }
   },
 
-  // Staff-portal shortcut for the 3 whitelisted personal Gmail accounts —
-  // if the caller already has a live Supabase Auth session from
-  // "Continue with Google" (customer login), this exchanges it for a
-  // staff session with no separate password. Returns null for anyone not
-  // both signed in with Google AND on the google_email allowlist (see
-  // supabase-staff-google-login.sql), so it fails closed for everyone else.
   async staffLoginGoogle() {
     if (!supabaseClient) return null;
     try {
@@ -1829,10 +1704,6 @@ const cloud = {
     }
   },
 
-  // Kicks off the Google OAuth redirect for a customer. Supabase-js sends
-  // the browser to Google and back; the actual customer find-or-create
-  // happens in completeGoogleLogin() once we're back with a Supabase
-  // Auth session.
   async startGoogleLogin() {
     if (!supabaseClient) return { error: 'offline' };
     try {
@@ -1840,10 +1711,7 @@ const cloud = {
         provider: 'google',
         options: {
           redirectTo: window.location.origin + window.location.pathname,
-          // Without this, Google silently reuses whatever Google session is
-          // already active in the browser instead of showing the account
-          // chooser — so logging out in-app and tapping "Continue with
-          // Google" again just signs back into the same old account.
+
           queryParams: { prompt: 'select_account' }
         }
       });
@@ -1855,11 +1723,6 @@ const cloud = {
     }
   },
 
-  // Exchanges an already-established Google/Supabase Auth session for a
-  // customer record — creating one on first sign-in. The RPC derives the
-  // email/identity from the verified JWT server-side (see
-  // customer_login_google in supabase-customer-google-login.sql), so the
-  // client can't claim to be a different Google user.
   async completeGoogleLogin() {
     if (!supabaseClient) return null;
     try {
@@ -1873,13 +1736,6 @@ const cloud = {
     }
   },
 
-  // ---- Staff-attributed writes ----
-  // Returns { customer } on success or { error, customer: null } on
-  // failure — the error reason matters here (see caller) because "check
-  // your connection" is actively misleading for a staff member who was
-  // just online a second ago (an expired 24h session, or a customer
-  // that genuinely never made it to the server, are both much more
-  // likely day-to-day than a real network drop).
   async staffAddStamp(token, customerId, baseStamps, drinkName) {
     if (!supabaseClient) return { error: 'offline' };
     if (!token) return { error: 'session_expired' };
@@ -1892,11 +1748,6 @@ const cloud = {
         const msg = String(res.error.message || '');
         if (msg.includes('unauthorized')) return { error: 'session_expired' };
 
-        // Customer exists locally (e.g. a QR scan whose staff_create_customer
-        // call failed earlier and silently fell back to a local-only record)
-        // but was never actually created server-side. Recreate it from the
-        // local copy and retry once, instead of surfacing a "check your
-        // connection" error for what's really a stale local record.
         if (msg.includes('customer_not_found')) {
           const local = await db.getCustomer(customerId);
           const created = await this.staffCreateCustomer(token, customerId, local ? local.name : 'Customer', local ? local.phone : '');
@@ -1908,9 +1759,7 @@ const cloud = {
           if (retry.error || !retry.data || !retry.data.length) return { error: 'customer_missing' };
           return { customer: mapDbRowToCustomer(retry.data[0]) };
         }
-        // Anything else is a genuine server-side rejection, not a dropped
-        // connection — log the real reason so it's actually diagnosable
-        // instead of every unrecognized error reading as "network error".
+
         console.error('staffAddStamp failed:', msg);
         return { error: 'unknown' };
       }
@@ -1979,9 +1828,6 @@ const cloud = {
     }
   },
 
-  // In-person reset, no email required: staff (already logged in) verify
-  // the customer at the counter and set a new password directly. Same
-  // strength rule as normal signup, enforced server-side too.
   async staffResetCustomerPassword(token, customerId, newPassword) {
     if (!supabaseClient || !token) return { error: 'offline' };
     try {
@@ -2016,8 +1862,6 @@ const cloud = {
     }
   },
 
-  // ---- Stamp campaign ----
-  // period: 'all' (lifetime, default) or 'month' (calendar month to date).
   async getLeaderboard(limit, period) {
     if (!supabaseClient) return [];
     try {
@@ -2079,7 +1923,6 @@ const cloud = {
     }
   },
 
-  // ---- Menu (public — no auth needed to read, staff token to write) ----
   async getMenu() {
     if (!supabaseClient) return null;
     try {
@@ -2148,8 +1991,6 @@ const cloud = {
     }
   },
 
-  // p_old_name null/empty creates a new section; set it to rename one
-  // (the rename cascades onto every item filed under the old name).
   async staffUpsertCategory(token, oldName, newName, sortOrder) {
     if (!supabaseClient || !token) return { error: 'offline' };
     try {
@@ -2183,7 +2024,6 @@ const cloud = {
     }
   },
 
-  // names is the full section list in the order it should display.
   async staffReorderCategories(token, names) {
     if (!supabaseClient || !token) return false;
     try {
@@ -2197,9 +2037,6 @@ const cloud = {
     }
   },
 
-  // Realtime menu sync — any staff edit, on any device, pushes to every
-  // open app within moments. Global (not tied to a customer/staff id),
-  // so this subscribes once at startup rather than on login.
   subscribeToMenu() {
     if (!supabaseClient) return;
     supabaseClient
@@ -2216,8 +2053,6 @@ const cloud = {
       .subscribe();
   },
 
-  // ---- Promo banners (public — no auth needed to read active ones,
-  // staff token to manage) ----
   async getPromoBanners() {
     if (!supabaseClient) return null;
     try {
@@ -2277,7 +2112,6 @@ const cloud = {
     }
   },
 
-  // ids is the full banner id list in the order it should display.
   async staffReorderPromoBanners(token, ids) {
     if (!supabaseClient || !token) return false;
     try {
@@ -2288,10 +2122,6 @@ const cloud = {
     }
   },
 
-  // Uploads a banner image straight from the admin's device and returns
-  // its public URL. Filename is randomized (not the original name) to
-  // avoid collisions between staff and to sidestep any character-encoding
-  // weirdness in device-supplied filenames.
   async uploadPromoBannerImage(file) {
     if (!supabaseClient || !file) return { error: 'offline' };
     try {
@@ -2353,9 +2183,7 @@ const cloud = {
               setTimeout(() => cup.classList.remove('earning'), 600);
             }
             bumpStampCount();
-            // New stamp entries are prepended, so [0] is the one that
-            // just landed — its staffName tells the customer who rang
-            // them up, since "New Stamp Received!" alone didn't.
+
             const latestEntry = updatedCustomer.history && updatedCustomer.history[0];
             const stampedBy = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffName : null;
             const stampedByAvatar = latestEntry && latestEntry.type === 'stamp' ? latestEntry.staffAvatar : null;
@@ -2393,22 +2221,6 @@ const cloud = {
   }
 };
 
-// Staff's local IndexedDB cache used to only ever gain records from a
-// cloud sync (save/update each customer returned) and never lose them —
-// a customer deleted server-side (e.g. via supabase-reset-customers.sql)
-// stayed cached on every staff device that had ever seen it, forever.
-// Any interaction with that ghost record (selecting it, adding a stamp)
-// then hit "customer not found" on every single request, which several
-// call sites show as "Could not reach the server" since that's a much
-// more common day-to-day cause than a real customer row vanishing.
-// Also runs when cloudCustomers is empty — the exact state right after
-// a full reset — since the previous `if (cloudCustomers.length > 0)`
-// guard skipped reconciliation completely in that case, the one time
-// it mattered most. cloudCustomers is null (not []) when pullAllCustomers
-// itself failed — a real empty cloud list and a failed request used to
-// look identical, which would have made this delete every local record
-// on a transient network blip. Bail out on null instead of trusting []
-// enough to wipe local data over it.
 async function reconcileLocalCustomers(cloudCustomers) {
   if (!cloudCustomers) return;
   for (const c of cloudCustomers) await db.saveCustomer(c);
@@ -2430,10 +2242,7 @@ function startCloudPolling() {
     try {
       const cloudCustomer = await cloud.pullCustomer(targetId);
       if (cloudCustomer === false) {
-        // Confirmed gone server-side, not just an unreachable poll —
-        // same recovery as the boot-time check above: a stale account
-        // left behind here would otherwise keep silently failing this
-        // exact request every 3s forever.
+
         console.warn('Polling found this account no longer exists — clearing it:', targetId);
         cloud.unsubscribe();
         stopCloudPolling();
@@ -2473,9 +2282,6 @@ function startCloudPolling() {
           }
         }
 
-        // Gold/Platinum milestone celebration — the bonus stamps
-        // themselves were already granted server-side; this just
-        // surfaces it the moment this device notices the crossing.
         if (!state.isAdmin && cloudCustomer.totalStampsEarned > previousTotalEarned) {
           const prevBadge = getEarnedBadge(previousTotalEarned);
           const newBadge = getEarnedBadge(cloudCustomer.totalStampsEarned);
@@ -2484,11 +2290,6 @@ function startCloudPolling() {
           }
         }
 
-        // Gift-received celebration — a friend's gift bumps rewardsEarned
-        // without touching stamps, which otherwise had zero visual
-        // feedback (just a quietly-larger wallet count). Distinguished
-        // from "card just filled up" (which has its own reward-overlay
-        // above) by history[0].type, not by whether stamps also changed.
         if (!state.isAdmin && cloudCustomer.rewardsEarned > (localCustomer ? localCustomer.rewardsEarned : 0)) {
           const latestEntry = cloudCustomer.history && cloudCustomer.history[0];
           if (latestEntry && latestEntry.type === 'gift_received') {
@@ -2507,21 +2308,13 @@ function stopCloudPolling() {
   }
 }
 
-// The staff Customers list otherwise only ever refreshed on login/PIN
-// unlock/reload — a customer signing up on their own phone while staff
-// were already sitting in the admin panel just never appeared until
-// someone thought to reload, which isn't really an option on an
-// installed PWA the way it is in a normal browser tab. Polls the full
-// list at a slower interval than the single-card 3s poll above (a
-// full-list fetch is heavier, and "a new signup shows up" doesn't need
-// to be as instant as "this customer's own stamp count").
 let adminCustomerPollInterval = null;
 function startAdminCustomerPolling() {
   stopAdminCustomerPolling();
   adminCustomerPollInterval = setInterval(async () => {
     if (!state.isAdmin || !state.staffToken) return;
     const cloudCustomers = await cloud.pullAllCustomers(state.staffToken);
-    if (!cloudCustomers) return; // request failed — reconcileLocalCustomers already no-ops on null, but skip the render too
+    if (!cloudCustomers) return;
     const previousCount = state.customers.length;
     await reconcileLocalCustomers(cloudCustomers);
     if (state.customers.length !== previousCount) {
@@ -2537,9 +2330,6 @@ function stopAdminCustomerPolling() {
   }
 }
 
-// ==========================================
-// LOCAL DATABASE (Fail-Safe IndexedDB)
-// ==========================================
 const db = {
   instance: null,
 
@@ -2689,9 +2479,6 @@ const db = {
   },
 };
 
-// ==========================================
-// DOM ELEMENTS
-// ==========================================
 const DOM = {
   views: document.querySelectorAll('.view'),
   viewHome: document.getElementById('view-home'),
@@ -2708,7 +2495,6 @@ const DOM = {
   customerNavItems: document.querySelectorAll('.customer-nav-item'),
   adminNavItems: document.querySelectorAll('.admin-nav-item'),
 
-  // Sign Up / Login Tabs & Forms
   tabNewCard: document.getElementById('tab-new-card'),
   tabFindCard: document.getElementById('tab-find-card'),
   formNewCard: document.getElementById('form-new-card'),
@@ -2726,7 +2512,6 @@ const DOM = {
   btnLoginSubmit: document.getElementById('btn-login-submit'),
   btnCustomerGoogleLogin: document.getElementById('btn-customer-google-login'),
 
-  // Links for ToS & Privacy Policy
   linkTos: document.getElementById('link-tos'),
   linkPrivacy: document.getElementById('link-privacy'),
   modalTos: document.getElementById('modal-tos'),
@@ -2736,7 +2521,6 @@ const DOM = {
   overlayPrivacy: document.getElementById('overlay-privacy'),
   btnClosePrivacy: document.getElementById('btn-close-privacy'),
 
-  // Staff Login
   staffLoginEmail: document.getElementById('staff-login-email'),
   staffLoginPassword: document.getElementById('staff-login-password'),
   staffLoginError: document.getElementById('staff-login-error'),
@@ -2745,7 +2529,6 @@ const DOM = {
   btnRemoveStamp: document.getElementById('btn-remove-stamp'),
   appVersionText: document.getElementById('app-version-text'),
 
-  // Home View
   stampGrid: document.getElementById('stamp-grid'),
   progressFill: document.getElementById('progress-fill'),
   stampCountText: document.getElementById('stamp-count-text'),
@@ -2779,7 +2562,6 @@ const DOM = {
   settingsStudentLink: document.getElementById('settings-student-link'),
   btnLogoutHeader: document.getElementById('btn-logout-header'),
 
-  // Avatar Picker Elements
   btnChangeAvatar: document.getElementById('btn-change-avatar'),
   userAvatarDisplay: document.getElementById('user-avatar-display'),
   modalAvatarPicker: document.getElementById('modal-avatar-picker'),
@@ -2787,7 +2569,6 @@ const DOM = {
   btnCloseAvatarPicker: document.getElementById('btn-close-avatar-picker'),
   avatarGrid: document.getElementById('avatar-grid'),
 
-  // Rewards Wallet Element
   rewardsWalletCard: document.getElementById('rewards-wallet-card'),
   walletCountText: document.getElementById('wallet-count-text'),
   walletExpiryText: document.getElementById('wallet-expiry-text'),
@@ -2796,14 +2577,12 @@ const DOM = {
   btnAdminRedeemLabel: document.getElementById('btn-admin-redeem-label'),
   btnVoidRedemption: document.getElementById('btn-void-redemption'),
 
-  // Customers View
   customerList: document.getElementById('customer-list'),
   customerSearch: document.getElementById('customer-search'),
   btnNewCustomer: document.getElementById('btn-new-customer'),
   btnScanQr: document.getElementById('btn-scan-qr'),
   totalCustomersBadge: document.getElementById('total-customers-badge'),
 
-  // Staff Edit Customer Modal
   modalEditCustomer: document.getElementById('modal-edit-customer'),
   overlayEditCustomer: document.getElementById('overlay-edit-customer'),
   editCustomerIdText: document.getElementById('edit-customer-id-text'),
@@ -2814,14 +2593,12 @@ const DOM = {
   btnSaveEditCustomer: document.getElementById('btn-save-edit-customer'),
   btnDeleteCustomer: document.getElementById('btn-delete-customer'),
 
-  // Activity Log View
   activityList: document.getElementById('activity-list'),
   activitySearch: document.getElementById('activity-search'),
   totalActivityBadge: document.getElementById('total-activity-badge'),
   activityFilterChips: document.querySelectorAll('#activity-filter-chips .chip'),
   customerSortChips: document.querySelectorAll('#customer-sort-chips .chip'),
 
-  // Settings View
   btnLogoutUser: document.getElementById('btn-logout-user'),
   userAccountLabel: document.getElementById('user-account-label'),
   campaignToggle: document.getElementById('campaign-toggle'),
@@ -2886,7 +2663,6 @@ const DOM = {
   btnPrivacySettings: document.getElementById('btn-privacy-settings'),
   secretAdminLogo: document.getElementById('secret-admin-logo'),
 
-  // Legal Modals
   linkTos: document.getElementById('link-tos'),
   linkPrivacy: document.getElementById('link-privacy'),
   modalTos: document.getElementById('modal-tos'),
@@ -2895,8 +2671,6 @@ const DOM = {
   modalPrivacy: document.getElementById('modal-privacy'),
   overlayPrivacy: document.getElementById('overlay-privacy'),
   btnClosePrivacy: document.getElementById('btn-close-privacy'),
-
-  // Modals
 
   modalConfirmRedeem: document.getElementById('modal-confirm-redeem'),
   overlayConfirmRedeem: document.getElementById('overlay-confirm-redeem'),
@@ -2920,7 +2694,6 @@ const DOM = {
   btnRedeemReward: document.getElementById('btn-redeem-reward'),
   btnCloseReward: document.getElementById('btn-close-reward'),
 
-  // QR Modals
   modalShowQr: document.getElementById('modal-show-qr'),
   overlayShowQr: document.getElementById('overlay-show-qr'),
   btnCloseShowQr: document.getElementById('btn-close-show-qr'),
@@ -2930,21 +2703,17 @@ const DOM = {
   overlayScanQr: document.getElementById('overlay-scan-qr'),
   btnCancelScanQr: document.getElementById('btn-cancel-scan-qr'),
 
-  // Promotional Poster
   posterQrcodeDisplay: document.getElementById('poster-qrcode-display'),
 
-  // Toast
   toast: document.getElementById('toast'),
   toastIcon: document.getElementById('toast-icon'),
   toastMessage: document.getElementById('toast-message'),
 
-  // Drink Selector Elements
   modalDrinkPicker: document.getElementById('modal-drink-picker'),
   overlayDrinkPicker: document.getElementById('overlay-drink-picker'),
   btnCancelDrinkPicker: document.getElementById('btn-cancel-drink-picker'),
   drinkOptionBtns: document.querySelectorAll('.drink-option-btn'),
 
-  // Install Elements
   installBanner: document.getElementById('install-banner'),
   btnInstall: document.getElementById('btn-install'),
   btnCloseInstall: document.getElementById('btn-close-install'),
@@ -2954,18 +2723,15 @@ const DOM = {
   overlayInstallGuide: document.getElementById('overlay-install-guide'),
   btnCloseInstallGuide: document.getElementById('btn-close-install-guide'),
 
-  // Leaderboard Elements
   leaderboardContainer: document.getElementById('leaderboard-container'),
   leaderboardSubtitle: document.getElementById('leaderboard-subtitle'),
   leaderboardPeriodChips: document.querySelectorAll('#leaderboard-period-chips .chip'),
   menuPriceViewChips: document.querySelectorAll('#menu-price-view-chips .chip'),
 
-  // Campaign Banner (Customer View)
   campaignBanner: document.getElementById('campaign-banner'),
   campaignBannerTitle: document.getElementById('campaign-banner-title'),
   campaignBannerSubtitle: document.getElementById('campaign-banner-subtitle'),
 
-  // Menu Elements
   customerMenuContainer: document.getElementById('customer-menu-container'),
   adminMenuContainer: document.getElementById('admin-menu-container'),
   btnAddMenuItem: document.getElementById('btn-add-menu-item'),
@@ -2985,7 +2751,6 @@ const DOM = {
   btnCancelMenuItem: document.getElementById('btn-cancel-menu-item'),
   btnDeleteMenuItem: document.getElementById('btn-delete-menu-item'),
 
-  // Promo Banner Carousel (Customer Menu tab) + Admin management
   promoBannerScroll: document.getElementById('promo-banner-scroll'),
   adminPromoBannerList: document.getElementById('admin-promo-banner-list'),
   btnAddPromoBanner: document.getElementById('btn-add-promo-banner'),
@@ -3005,9 +2770,6 @@ const DOM = {
   btnDeletePromoBanner: document.getElementById('btn-delete-promo-banner')
 };
 
-// ==========================================
-// ROUTING HELPER (#admin URL Hash Listener)
-// ==========================================
 function handleHashRoute() {
   const hash = window.location.hash;
   const search = window.location.search;
@@ -3021,12 +2783,7 @@ function handleHashRoute() {
     switchView('view-poster');
     return true;
   }
-  // Shop-display mode: a TV/monitor showing the live leaderboard, not a
-  // phone-in-hand customer or a logged-in staff member. Reuses the same
-  // view/render function the phone leaderboard uses (no separate data
-  // path to keep in sync) — .tv-mode in styles.css is what actually
-  // makes it look right on a big screen, plus a periodic refresh since
-  // there's nobody here to pull-to-refresh.
+
   if (hash === '#leaderboard-tv') {
     document.documentElement.classList.add('staff-desktop-ok', 'tv-mode');
     state.tvMode = true;
@@ -3051,10 +2808,6 @@ function startLeaderboardTvRefresh() {
 window.addEventListener('hashchange', handleHashRoute);
 window.addEventListener('popstate', handleHashRoute);
 
-// ==========================================
-// CORE LOGIC & INITIALIZATION
-// ==========================================
-
 async function initApp() {
   let splashDismissed = false;
   const dismissSplash = (targetView = 'view-signup') => {
@@ -3075,12 +2828,6 @@ async function initApp() {
     }
   };
 
-  // Hard ceiling: no single await inside init should ever be able to trap
-  // a visitor on the splash screen forever. Everything network-bound
-  // below already has its own timeout, but this is a last-resort net —
-  // if something unexpected still hangs (e.g. indexedDB.open() never
-  // firing, which has no timeout of its own), this fires regardless and
-  // drops the visitor onto the sign-up screen instead of a dead splash.
   setTimeout(() => {
     if (!splashDismissed) {
       console.warn('App init exceeded 8s — forcing splash dismiss');
@@ -3094,9 +2841,6 @@ async function initApp() {
       btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
     });
 
-    // Signup screen's globe-icon language switcher: click to open/close the
-    // popover, click a language to pick it (applyLanguage above already
-    // fires for these buttons since they're plain .lang-btn elements too).
     const langGlobeBtn = document.getElementById('lang-globe-btn-signup');
     const langGlobeMenu = document.getElementById('lang-globe-menu-signup');
     if (langGlobeBtn && langGlobeMenu) {
@@ -3141,35 +2885,16 @@ async function initApp() {
     syncMenuFromCloud();
     syncPromoBannersFromCloud();
     cloud.subscribeToMenu();
-    // Realtime should push edits instantly, but websockets can silently
-    // drop (backgrounded app, flaky connection) without an obvious
-    // reconnect — this bounds how stale a displayed price can ever get
-    // to well under a minute even if that happens.
+
     setInterval(syncMenuFromCloud, 45000);
 
-    // Keeps the notification bell badge current while a customer just
-    // sits on the home screen — a friend request or gift can land at any
-    // time, not just when they happen to reopen the app. This is polling,
-    // not realtime: customer_notifications deliberately has no RLS policy
-    // (see supabase-notifications-panel.sql — only trusted SECURITY
-    // DEFINER functions can touch it), the same reason the customers
-    // table below fell back from realtime to a short poll after
-    // supabase-security-lockdown.sql revoked its direct SELECT grant.
-    // 45s was the original interval and read as "not fast, only on
-    // reload" — 5s matches the same interval already used for stamps
-    // (see startCloudPolling below) instead of inventing a slower one
-    // just for this.
     const refreshNotifIfCustomer = () => { if (state.myCustomerId && !state.isAdmin) refreshNotifBadge(); };
     setInterval(refreshNotifIfCustomer, 5000);
-    // Also check the instant a backgrounded PWA is brought back to the
-    // foreground, rather than waiting up to 5s for the next tick — this
-    // is what actually makes "reopen the app" feel instant instead of
-    // "notifications arrive fast" being true only while it's already open.
+
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') refreshNotifIfCustomer();
     });
 
-    // Load saved user session
     const savedUserJson = localStorage.getItem('86_user_session');
     if (savedUserJson) {
       try {
@@ -3182,29 +2907,12 @@ async function initApp() {
       } catch (e) {}
     }
 
-    // Returning from a Google OAuth redirect ("Continue with Google" on
-    // the customer Welcome screen) — supabase-js parses the tokens out of
-    // the URL as soon as the client is created, and getSession() waits
-    // for that to finish. A successful exchange finds-or-creates the
-    // matching customer row and restores it exactly like a normal saved
-    // session below. Gated on the URL actually carrying OAuth tokens so a
-    // completely ordinary guest visit (the overwhelming majority of page
-    // loads) never pays for this extra network round-trip at all.
-    // Checks both the hash (implicit flow: #access_token=...) and the
-    // query string (PKCE flow: ?code=...) — supabase-js's default flow
-    // can vary by SDK version, and only checking the hash meant a PKCE
-    // return was silently ignored: the SDK had already exchanged the
-    // code and stashed a valid session, but we'd never call getSession()
-    // to notice it, so the app just fell through to the login screen as
-    // if nothing had happened.
     const returningFromOAuth = /[#&?](access_token|error|code)=/.test(window.location.hash + window.location.search);
     if (!state.myCustomerId && supabaseClient && returningFromOAuth) {
       try {
         const { data } = await withTimeout(supabaseClient.auth.getSession(), 4000);
         if (data && data.session) {
-          // Whitelisted staff Gmail accounts are admin-only — check that
-          // first so those 3 emails never fall through to a regular
-          // customer card. Everyone else's Google sign-in is unaffected.
+
           const staffResult = await cloud.staffLoginGoogle();
           if (staffResult) {
             await finishStaffLogin(staffResult);
@@ -3227,14 +2935,10 @@ async function initApp() {
         console.error('Google sign-in: error while completing OAuth redirect', e);
         showToast('Google sign-in failed — please try again', 'error');
       }
-      // Strip the OAuth params from the URL so a page refresh doesn't
-      // re-run this block against a now-consumed/stale code or token.
+
       history.replaceState(null, '', window.location.pathname);
     }
 
-    // Load saved staff session (tokens last 24h server-side; if it's
-    // expired, the first staff action will just fail gracefully and the
-    // person can log back in via Lock App / Settings).
     const savedStaffJson = localStorage.getItem('86_staff_session');
     if (savedStaffJson) {
       try {
@@ -3250,10 +2954,6 @@ async function initApp() {
     let targetView = 'view-signup';
     const isSecretAdminRoute = window.location.hash === '#admin' || window.location.search.includes('admin=true');
 
-    // A saved staff session should restore straight into admin mode on
-    // any reload, not just when the URL happens to include #admin —
-    // otherwise a returning staff member gets bounced to the customer
-    // signup screen every time despite already being logged in.
     if (isSecretAdminRoute || state.staffToken) {
       if (state.staffToken) {
         toggleAdminMode(true);
@@ -3273,13 +2973,7 @@ async function initApp() {
       let me = await db.getCustomer(state.myCustomerId).catch(() => null);
       let needsCloudRefresh = false;
       if (!me) {
-        // No local IndexedDB copy (new device, cleared storage, or the
-        // browser evicted it — common on iOS). Don't let a slow/cold
-        // Supabase round-trip decide whether this reload bounces a
-        // returning customer back to the signup screen: rebuild a minimal
-        // card from the saved session immediately so the reload can never
-        // "reset" a logged-in session, then reconcile with the cloud in
-        // the background once it's reachable.
+
         try {
           const session = JSON.parse(localStorage.getItem('86_user_session') || 'null');
           if (session && session.id === state.myCustomerId) {
@@ -3313,7 +3007,7 @@ async function initApp() {
 
         if (needsCloudRefresh) {
           cloud.pullCustomer(me.id).then(async (fresh) => {
-            if (state.selectedCustomerId !== me.id) return; // switched away before this resolved
+            if (state.selectedCustomerId !== me.id) return;
             if (fresh) {
               const avatar = localStorage.getItem(`86_user_avatar_${fresh.id}`);
               if (avatar) fresh.avatar = avatar;
@@ -3321,12 +3015,7 @@ async function initApp() {
               await updateCardUI();
               renderActivityList();
             } else if (fresh === false) {
-              // Confirmed gone server-side (e.g. supabase-reset-customers.sql),
-              // not just unreachable — this device was showing a phantom
-              // stamps:0 card rebuilt from a stale cached session, and every
-              // action against it would have kept failing forever otherwise.
-              // Clear the stale session/local copy and drop back to signup
-              // instead of leaving a broken account behind.
+
               console.warn('Saved session pointed at a deleted account — clearing it:', me.id);
               cloud.unsubscribe();
               localStorage.removeItem('86_user_session');
@@ -3344,21 +3033,11 @@ async function initApp() {
 
     setTimeout(() => dismissSplash(targetView), 400);
 
-    // NOTE: the full customer list is only fetched once staff unlock admin
-    // mode with the PIN (see toggleAdminMode(true) call sites) — it used to
-    // sync unconditionally for every visitor here, which meant every
-    // customer's browser silently downloaded every other customer's data.
-
   } catch (err) {
     console.error('App init catch:', err);
     setTimeout(() => dismissSplash('view-signup'), 600);
   }
 
-  // Service Worker — plus an update-available prompt. Without this, a
-  // PWA that's just resumed from the background (not a full reload) can
-  // silently keep running JS from before the last deploy indefinitely,
-  // since the new service worker installs in the background but never
-  // takes over an already-running page until it's told to.
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
@@ -3375,9 +3054,6 @@ async function initApp() {
             });
           });
 
-          // Reopening/foregrounding the app is exactly when a stale
-          // background tab is most likely to be sitting on an old
-          // version, so check for updates right then too.
           document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') reg.update().catch(() => {});
           });
@@ -3391,18 +3067,10 @@ function showUpdateBanner() {
   const banner = document.getElementById('update-banner');
   if (!banner || banner.classList.contains('show')) return;
   banner.classList.add('show');
-  // The new service worker already calls skipWaiting()/clients.claim() on
-  // its own, so it's active and in control well before this fires —
-  // reloading is all that's needed to actually re-fetch and re-run the
-  // new app.js instead of continuing on the copy already sitting in memory.
+
   const reload = () => window.location.reload();
   banner.addEventListener('click', reload, { once: true });
 
-  // A banner that just sits there waiting to be tapped is too easy to
-  // miss (an unattended kiosk tablet/TV will never tap it at all) —
-  // auto-apply shortly after, unless someone's actively mid-keystroke in
-  // a form, where losing a half-typed signup would be worse than a
-  // few extra seconds on the old version.
   setTimeout(() => {
     const active = document.activeElement;
     const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
@@ -3410,13 +3078,6 @@ function showUpdateBanner() {
   }, 5000);
 }
 
-
-// token is only passed on an actual login/signup — omit it (e.g. when
-// just refreshing the displayed name/avatar after a local edit) and the
-// previously-stored session token is kept as-is. Google-login customers
-// never get a token here; their identity comes from the live Supabase
-// Auth session instead (see cloud.setAvatar/redeemReward/etc, which
-// fall back to auth.uid() server-side when p_token is null).
 function saveUserSession(customer, token) {
   state.myCustomerId = customer.id;
   state.selectedCustomerId = customer.id;
@@ -3442,10 +3103,6 @@ function saveUserSession(customer, token) {
   cloud.subscribeToCustomer(customer.id);
 }
 
-// .avatar-option-btn.selected already existed in styles.css — a
-// checkmark-style highlight — but nothing ever applied the class, so
-// the picker never actually showed which avatar was already yours.
-// Called right before opening the modal from every entry point.
 function markSelectedAvatarInPicker(currentKey) {
   if (!DOM.avatarGrid) return;
   DOM.avatarGrid.querySelectorAll('.avatar-option-btn').forEach(btn => {
@@ -3517,11 +3174,6 @@ function initAvatarPickerModal() {
   });
 }
 
-// Pressing Enter — which is what a mobile keyboard's "Next"/"Go" key
-// actually sends — otherwise does nothing useful in a multi-field form
-// (browsers only auto-advance/submit for single-input forms). This moves
-// focus to the next input in the given container, or clicks the submit
-// button from the last one.
 function wireEnterKeyChain(container, submitBtn) {
   if (!container) return;
   const inputs = Array.from(container.querySelectorAll('input')).filter(
@@ -3548,11 +3200,9 @@ function setupEventListeners() {
   wireEnterKeyChain(document.getElementById('modal-edit-customer'), DOM.btnSaveEditCustomer);
   wireEnterKeyChain(DOM.modalSetDisplayName, DOM.btnSetDisplayNameSave);
 
-  // Navigation
   DOM.navItems.forEach(item => {
     item.addEventListener('click', () => {
-      // Only on an actual tab change — tapping the tab you're already on
-      // shouldn't make noise, there's nothing happening to confirm.
+
       if (item.dataset.target !== state.currentView) {
         playTapSound();
         hapticPulse(10);
@@ -3561,12 +3211,6 @@ function setupEventListeners() {
     });
   });
 
-  // Secret staff/admin entry point: tap the welcome-screen logo 5 times
-  // within 3 seconds. Needed because #admin URL routing only works from
-  // a browser address bar — once the app is installed to the home
-  // screen, it always launches at the plain start_url with no hash, so
-  // that route is unreachable from the installed icon with no other way
-  // in.
   if (DOM.secretAdminLogo) {
     let tapCount = 0;
     let tapResetTimer = null;
@@ -3582,7 +3226,6 @@ function setupEventListeners() {
     });
   }
 
-  // Show/Hide Password Toggles
   document.querySelectorAll('.toggle-password-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const input = document.getElementById(btn.dataset.target);
@@ -3594,8 +3237,6 @@ function setupEventListeners() {
     });
   });
 
-  // Live password strength checklist — shared by the signup form and the
-  // staff "Reset Password" field on the Edit Customer modal.
   const wirePasswordChecklist = (inputEl, requirementsContainerId) => {
     if (!inputEl) return;
     inputEl.addEventListener('input', () => {
@@ -3609,7 +3250,6 @@ function setupEventListeners() {
   wirePasswordChecklist(DOM.signupPassword, 'signup-password-requirements');
   wirePasswordChecklist(DOM.editCustomerNewPassword, 'edit-customer-password-requirements');
 
-  // Avatar Picker Modal Trigger (from Settings)
   if (DOM.btnChangeAvatar) {
     DOM.btnChangeAvatar.addEventListener('click', async () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
@@ -3621,7 +3261,6 @@ function setupEventListeners() {
     });
   }
 
-  // Allow clicking the avatar on the home screen to change it
   if (DOM.userAvatarDisplay) {
     DOM.userAvatarDisplay.addEventListener('click', async () => {
       const activeId = state.selectedCustomerId || state.myCustomerId;
@@ -3637,10 +3276,6 @@ function setupEventListeners() {
   if (DOM.btnCloseAvatarPicker) DOM.btnCloseAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
   if (DOM.overlayAvatarPicker) DOM.overlayAvatarPicker.addEventListener('click', () => closeModal(DOM.modalAvatarPicker));
 
-  // Change Display Name (Settings > Account) — the name shown on the
-  // card/QR/leaderboard, and (since the friend-search-by-name migration)
-  // also what friends search for, so it's the only "name" a customer
-  // needs to think about.
   if (DOM.btnChangeDisplayName) {
     DOM.btnChangeDisplayName.addEventListener('click', async () => {
       const activeId = state.myCustomerId;
@@ -3652,7 +3287,6 @@ function setupEventListeners() {
     });
   }
 
-  // QR Code Button
   if (DOM.btnShowQr) {
     const handleQrClick = async (e) => {
       if (e) {
@@ -3686,7 +3320,6 @@ function setupEventListeners() {
         }
       }
 
-      // Final fail-safe offline object construction using basic metadata
       if (!customer) {
         customer = {
           id: activeId,
@@ -3700,13 +3333,7 @@ function setupEventListeners() {
 
       const ts = Date.now();
       const sig = computeIntegrityHash(customer);
-      // Truncate before encoding — the QR lib's capacity math (auto-picks
-      // a QR version from an estimated byte length) has edge cases with
-      // multi-byte UTF-8 text like Cyrillic names where the estimate
-      // undershoots the real encoded size and throws "code length
-      // overflow" well before any sane string length. Staff only need
-      // enough of the name/phone to recognize the customer when
-      // onboarding a scan — the id is what actually matters.
+
       const safeName = (customer.name || '').slice(0, 24);
       const safePhone = (customer.phone || '').slice(0, 24);
       const buildPayload = (withDetails) => JSON.stringify(
@@ -3747,15 +3374,9 @@ function setupEventListeners() {
 
   if (DOM.btnCloseShowQr) DOM.btnCloseShowQr.addEventListener('click', () => closeModal(DOM.modalShowQr));
 
-  // Flippable card — tap anywhere on either face to flip (the small
-  // icon buttons are just an affordance hint, clicks on them bubble up
-  // to this same handler rather than getting their own listener, so a
-  // tap never fires the toggle twice).
   if (DOM.cardFlipInner) {
     DOM.cardFlipInner.addEventListener('click', () => {
-      // A real tap means the customer found the flip themselves — don't
-      // let the queued intro-reveal timers fight that later by flipping
-      // it again out from under them.
+
       clearTimeout(cardIntroFlipTimer);
       clearTimeout(cardIntroFlipBackTimer);
       playSwooshSound();
@@ -3765,7 +3386,6 @@ function setupEventListeners() {
   }
   window.addEventListener('resize', () => syncCardFlipHeight());
 
-  // ToS & Privacy Policy Modals
   if (DOM.linkTos) DOM.linkTos.addEventListener('click', (e) => { e.preventDefault(); openModal(DOM.modalTos); });
   if (DOM.linkPrivacy) DOM.linkPrivacy.addEventListener('click', (e) => { e.preventDefault(); openModal(DOM.modalPrivacy); });
   if (DOM.btnTosSettings) DOM.btnTosSettings.addEventListener('click', () => openModal(DOM.modalTos));
@@ -3775,7 +3395,6 @@ function setupEventListeners() {
   if (DOM.overlayTos) DOM.overlayTos.addEventListener('click', () => closeModal(DOM.modalTos));
   if (DOM.overlayPrivacy) DOM.overlayPrivacy.addEventListener('click', () => closeModal(DOM.modalPrivacy));
 
-  // Activity Filter Chips
   if (DOM.activityFilterChips) {
     DOM.activityFilterChips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -3787,7 +3406,6 @@ function setupEventListeners() {
     });
   }
 
-  // Customer Sort Chips (Recent / Regulars)
   if (DOM.customerSortChips) {
     DOM.customerSortChips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -3799,7 +3417,6 @@ function setupEventListeners() {
     });
   }
 
-  // Leaderboard Period Chips (All Time / This Month)
   if (DOM.leaderboardPeriodChips) {
     DOM.leaderboardPeriodChips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -3812,7 +3429,6 @@ function setupEventListeners() {
     });
   }
 
-  // Menu Price View Chips (Regular / Student)
   if (DOM.menuPriceViewChips) {
     DOM.menuPriceViewChips.forEach(chip => {
       chip.addEventListener('click', () => {
@@ -3822,8 +3438,6 @@ function setupEventListeners() {
     });
   }
 
-
-  // Secret 5-tap gesture on Settings title
   let tapCount = 0;
   let tapTimer = null;
   const triggerSecretAdmin = async () => {
@@ -3844,8 +3458,7 @@ function setupEventListeners() {
           renderActivityList();
         } catch (e) {}
       } else {
-        // Whitelisted staff who are already signed in on this device with
-        // their personal Google account skip the email/password form.
+
         const googleResult = await cloud.staffLoginGoogle();
         if (googleResult) {
           await finishStaffLogin(googleResult);
@@ -3859,8 +3472,6 @@ function setupEventListeners() {
   if (DOM.settingsTitle) DOM.settingsTitle.addEventListener('click', triggerSecretAdmin);
   if (DOM.appVersionText) DOM.appVersionText.addEventListener('click', triggerSecretAdmin);
 
-  // Staff Login (named accounts replace the old shared PIN — every stamp/
-  // redeem/void/edit action can now be attributed to whoever's logged in).
   if (DOM.btnStaffLoginCancel) {
     DOM.btnStaffLoginCancel.addEventListener('click', () => {
       switchView(state.myCustomerId ? 'view-home' : 'view-signup');
@@ -3906,11 +3517,9 @@ function setupEventListeners() {
     });
   }
 
-  // Close Modals on Overlay Click
   DOM.overlayShowQr.addEventListener('click', () => closeModal(DOM.modalShowQr));
   if (DOM.overlayEditCustomer) DOM.overlayEditCustomer.addEventListener('click', () => closeModal(DOM.modalEditCustomer));
 
-  // Auth Tabs (New Card vs Find Card)
   if (DOM.tabNewCard && DOM.tabFindCard) {
     DOM.tabNewCard.addEventListener('click', (e) => {
       e.preventDefault();
@@ -3933,8 +3542,6 @@ function setupEventListeners() {
     });
   }
 
-  // Continue with Google — works for both new and returning customers;
-  // the server-side RPC finds-or-creates the matching card.
   if (DOM.btnCustomerGoogleLogin) {
     DOM.btnCustomerGoogleLogin.addEventListener('click', async () => {
       DOM.btnCustomerGoogleLogin.disabled = true;
@@ -3943,14 +3550,10 @@ function setupEventListeners() {
         showToast(t('errServerConnection'), 'error');
         DOM.btnCustomerGoogleLogin.disabled = false;
       }
-      // On success the browser is navigating away to Google, so there's
-      // nothing left to do here — the redirect back is handled at init.
+
     });
   }
 
-  // Sign Up: Create New Card with Username & Password.
-  // If the username already exists and the password matches, this signs the
-  // returning customer back into their existing card instead of failing.
   DOM.btnSignupSubmit.addEventListener('click', async (e) => {
     e.preventDefault();
     const username = (DOM.signupUsername ? DOM.signupUsername.value : '').trim().toLowerCase();
@@ -3977,11 +3580,7 @@ function setupEventListeners() {
 
     DOM.btnSignupSubmit.disabled = true;
     try {
-      // No display name field on this form — a brand new account gets a
-      // placeholder name (defaults to the username server-side) and is
-      // immediately prompted for a real one right after, on the home
-      // screen. A returning customer signing back in via this same form
-      // keeps their existing name untouched.
+
       const result = await cloud.signupCustomer(username, password, '');
 
       if (result.error === 'username_taken') {
@@ -4022,7 +3621,6 @@ function setupEventListeners() {
     }
   });
 
-  // Login: Find Existing Card by Username + Password
   DOM.btnLoginSubmit.addEventListener('click', async (e) => {
     e.preventDefault();
     const username = (DOM.loginUsername ? DOM.loginUsername.value : '').trim().toLowerCase();
@@ -4057,16 +3655,9 @@ function setupEventListeners() {
     }
   });
 
-  // Logout / Switch Account — a full logout of this device, not just the
-  // customer identity. A leftover staff session sitting in localStorage
-  // would otherwise let the app boot straight back into admin mode with
-  // no auth on the next reload (the original bug: logging out of a
-  // customer account left a valid staff token behind).
   const handleUserLogout = (toastMessage = t('toastLoggedOut'), toastType = 'success') => {
     cloud.unsubscribe();
-    // Also end the Google session, if there was one — otherwise the next
-    // "Continue with Google" tap on this device (e.g. a shared phone)
-    // would silently sign back in as whoever just logged out.
+
     if (supabaseClient) supabaseClient.auth.signOut().catch(() => {});
     localStorage.removeItem('86_user_session');
     state.myCustomerId = null;
@@ -4088,9 +3679,6 @@ function setupEventListeners() {
   if (DOM.btnLogoutUser) DOM.btnLogoutUser.addEventListener('click', () => handleUserLogout());
   if (DOM.btnStaffLogout) DOM.btnStaffLogout.addEventListener('click', () => handleUserLogout());
 
-  // Staff Profile: avatar (reuses the same picker modal as the customer
-  // "Choose Avatar" flow, but flagged so the click handler inside it saves
-  // to this staff member's own row instead of a customer's).
   if (DOM.btnStaffAvatar) {
     DOM.btnStaffAvatar.addEventListener('click', () => {
       if (!state.staffToken) return;
@@ -4100,7 +3688,6 @@ function setupEventListeners() {
     });
   }
 
-  // Staff Edit & Delete Customer Handlers
   if (DOM.btnSaveEditCustomer) {
     DOM.btnSaveEditCustomer.addEventListener('click', async () => {
       if (!state.editingCustomerId || !state.staffToken) return;
@@ -4165,19 +3752,16 @@ function setupEventListeners() {
     });
   }
 
-  // Search Customers
   DOM.customerSearch.addEventListener('input', (e) => {
     renderCustomersList(e.target.value);
   });
 
-  // Search Activity Log
   if (DOM.activitySearch) {
     DOM.activitySearch.addEventListener('input', (e) => {
       renderActivityList(e.target.value);
     });
   }
 
-  // Add Stamp Action (Admin) - Open Drink Selector Modal
   DOM.btnAddStamp.addEventListener('click', () => {
     if (!state.selectedCustomerId || !state.isAdmin) return;
     openModal(DOM.modalDrinkPicker);
@@ -4190,10 +3774,6 @@ function setupEventListeners() {
     DOM.overlayDrinkPicker.addEventListener('click', () => closeModal(DOM.modalDrinkPicker));
   }
 
-  // Handle Drink Option Stamping (+1, +2 for Matcha / Freddo Espresso, +3 for Specialty)
-  // Stamp math (overflow into rewards, campaign multiplier, lifetime
-  // total, staff attribution) all happens server-side now so it can't
-  // drift between devices or be tampered with client-side.
   DOM.drinkOptionBtns.forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!state.selectedCustomerId || !state.isAdmin || !state.staffToken) return;
@@ -4232,8 +3812,7 @@ function setupEventListeners() {
         playRewardSound();
         hapticPulse([30, 40, 30, 40, 60]);
         showToast(`${drinkName}! Reward Banked for Customer! (${updated.rewardsEarned} Available)`, 'success');
-        // Fire-and-forget — never let a slow/failed push delay the stamp
-        // UI feedback above, which has already happened by this point.
+
         cloud.sendPush({
           staffToken: state.staffToken,
           customerId: updated.id,
@@ -4248,8 +3827,7 @@ function setupEventListeners() {
         for (let i = oldStamps; i < updated.stamps; i++) {
           const cup = document.getElementById(`stamp-${i}`);
           if (cup) {
-            // Stagger multi-stamp gains (double-dose items) so each cup
-            // pops in sequence instead of all at once.
+
             cup.style.animationDelay = ((i - oldStamps) * 90) + 'ms';
             cup.classList.add('earning');
             setTimeout(() => { cup.classList.remove('earning'); cup.style.animationDelay = ''; }, 600 + (i - oldStamps) * 90);
@@ -4263,7 +3841,6 @@ function setupEventListeners() {
     });
   });
 
-  // Remove Stamp (mistaken tap, wrong customer, etc.)
   if (DOM.btnRemoveStamp) {
     DOM.btnRemoveStamp.addEventListener('click', async () => {
       if (!state.selectedCustomerId || !state.isAdmin || !state.staffToken) return;
@@ -4287,9 +3864,6 @@ function setupEventListeners() {
     });
   }
 
-  // Void the customer's most recent redemption (accidental tap, redeemed
-  // twice, etc). Only reaches back to the single most recent one, on
-  // purpose — this isn't a general history editor.
   if (DOM.btnVoidRedemption) {
     DOM.btnVoidRedemption.addEventListener('click', async () => {
       if (!state.selectedCustomerId || !state.isAdmin || !state.staffToken) return;
@@ -4313,9 +3887,6 @@ function setupEventListeners() {
     });
   }
 
-  // Mark/unmark a customer as a verified student — a one-time flag so
-  // staff only ever need to check this app's QR going forward, not a
-  // second one for student proof.
   if (DOM.btnToggleStudent) {
     DOM.btnToggleStudent.addEventListener('click', async () => {
       if (!state.selectedCustomerId || !state.isAdmin || !state.staffToken) return;
@@ -4334,8 +3905,6 @@ function setupEventListeners() {
     });
   }
 
-  // Action: Keep in Wallet & Reset Card — the server re-checks stamps
-  // itself, so this can no longer be forged by mutating a local object.
   DOM.btnCloseReward.addEventListener('click', async () => {
     if (state.selectedCustomerId) {
       const isSelf = !state.isAdmin && state.selectedCustomerId === state.myCustomerId;
@@ -4357,8 +3926,6 @@ function setupEventListeners() {
     closeModal(DOM.rewardOverlay);
   });
 
-  // Tier milestone celebration — purely informational, the bonus stamps
-  // already landed server-side, so this is just a dismiss.
   if (DOM.btnCloseGiftReceived) {
     DOM.btnCloseGiftReceived.addEventListener('click', () => closeModal(DOM.giftReceivedOverlay));
   }
@@ -4366,16 +3933,6 @@ function setupEventListeners() {
     DOM.btnCloseMilestone.addEventListener('click', () => closeModal(DOM.milestoneOverlay));
   }
 
-  // Action: Redeem Reward (Counter / Wallet / Staff Mode) — server
-  // verifies rewards_earned/stamps and expiry, decrements atomically,
-  // and attributes staff-performed redemptions in the history entry.
-  // quantity only ever matters for the 'wallet' method (redeeming
-  // already-banked rewards) — a just-filled card redeemed straight from
-  // DOM.rewardOverlay (the 'direct' method) is always exactly one, so
-  // that call site below never passes a quantity at all. Each unit is
-  // still its own RPC round-trip (the RPC itself only ever redeems
-  // one), looped here rather than adding a p_quantity parameter
-  // server-side — this reuses the existing, already-deployed RPC as-is.
   const handleRedeem = async (quantity = 1) => {
     if (!state.selectedCustomerId) return;
 
@@ -4418,9 +3975,7 @@ function setupEventListeners() {
     playRedeemSound();
     hapticPulse([30, 40, 30, 40, 60]);
     if (redeemed < redeemCount) {
-      // A later unit in the loop failed (e.g. hit an unexpected server
-      // error partway through) — say exactly how many actually went
-      // through instead of a blanket success or failure message.
+
       showToast(`Redeemed ${redeemed} of ${redeemCount} — try again for the rest`, 'error');
     } else {
       showToast(redeemed > 1 ? `${redeemed} rewards redeemed! Enjoy!` : 'Reward redeemed! Enjoy your free coffee!', 'success');
@@ -4431,9 +3986,6 @@ function setupEventListeners() {
 
   DOM.btnRedeemReward.addEventListener('click', () => handleRedeem());
 
-  // Banked-reward redemption is a single tap with no other confirmation
-  // step, so it gets a confirm dialog first (unlike the reward-overlay's
-  // Redeem button, which already sits behind a deliberate two-choice screen).
   if (DOM.modalConfirmRedeem) {
     const openRedeemConfirm = async () => {
       const activeId = state.selectedCustomerId;
@@ -4459,9 +4011,6 @@ function setupEventListeners() {
     if (DOM.btnAdminRedeem) DOM.btnAdminRedeem.addEventListener('click', () => handleRedeem());
   }
 
-  // Right after a brand-new signup, this same modal reopens in mandatory
-  // mode (no skip route) so a customer never ends up permanently stuck
-  // with the auto-generated placeholder name — see promptMandatoryDisplayName().
   if (DOM.btnSetDisplayNameSkip) {
     DOM.btnSetDisplayNameSkip.addEventListener('click', () => {
       if (state.mandatoryDisplayNamePrompt) return;
@@ -4525,8 +4074,6 @@ function setupEventListeners() {
     });
   }
 
-
-  // Notifications Panel (Home header bell)
   if (DOM.btnOpenNotifications) {
     DOM.btnOpenNotifications.addEventListener('click', async () => {
       if (!state.myCustomerId) return;
@@ -4547,19 +4094,13 @@ function setupEventListeners() {
     });
   }
 
-  // Delete / accept / decline buttons live inside dynamically-rendered
-  // rows — one delegated listener instead of re-binding on every render.
   if (DOM.notificationsList) {
     DOM.notificationsList.addEventListener('click', async (e) => {
       const deleteBtn = e.target.closest('.notif-row-delete');
       if (deleteBtn) {
         const row = deleteBtn.closest('.notif-row');
         const ok = await cloud.deleteNotification(state.myToken, deleteBtn.dataset.id);
-        // Only remove the row once the server confirms it's gone — removing
-        // it unconditionally used to make it vanish for this one session
-        // and then silently come back next time the panel was opened,
-        // since the underlying row was never actually deleted on a failed
-        // call (offline, timeout, etc).
+
         if (!ok) {
           showToast(t('toastGenericError'), 'error');
           return;
@@ -4587,9 +4128,7 @@ function setupEventListeners() {
         hapticPulse([20, 30, 20]);
         showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName || '' }), 'success');
       }
-      // customer_respond_friend_request() now deletes the originating
-      // notification row itself on success, so removing it here just
-      // keeps this open panel in sync — it won't come back on next open.
+
       const row = btn.closest('.notif-row');
       if (row) row.remove();
       if (DOM.notificationsList && !DOM.notificationsList.querySelector('.notif-row')) {
@@ -4598,7 +4137,6 @@ function setupEventListeners() {
     });
   }
 
-  // Friends & Gifting (Settings > Account > Friends, and Home quick-access)
   const openFriendsModal = async () => {
     if (!state.myCustomerId) return;
     DOM.addFriendInput.value = '';
@@ -4652,9 +4190,7 @@ function setupEventListeners() {
       } else if (result.status === 'already_pending') {
         showToast(t('errAlreadyPending', { name: result.friend.name }), 'error');
       } else if (result.status === 'accepted') {
-        // Auto-accept path: the other person had already requested us,
-        // so THEY are the one who should hear their request just got
-        // accepted, not the reverse.
+
         showToast(t('toastFriendAdded', { name: result.friend.name }), 'success');
         cloud.sendPush({
           customerToken: state.myToken,
@@ -4679,8 +4215,6 @@ function setupEventListeners() {
     });
   }
 
-  // Accept/decline buttons live inside dynamically-rendered pending-request
-  // rows — one delegated listener instead of re-binding on every render.
   if (DOM.friendRequestsList) {
     DOM.friendRequestsList.addEventListener('click', async (e) => {
       const acceptBtn = e.target.closest('.friend-request-accept-btn');
@@ -4708,9 +4242,6 @@ function setupEventListeners() {
     });
   }
 
-  // Gift/remove buttons live inside dynamically-rendered rows — one
-  // delegated listener on the list container instead of re-binding on
-  // every render.
   if (DOM.friendsList) {
     DOM.friendsList.addEventListener('click', (e) => {
       const giftBtn = e.target.closest('.friend-row-gift-btn');
@@ -4778,7 +4309,6 @@ function setupEventListeners() {
     });
   }
 
-  // Stamp Campaign Toggle (e.g. "Double Stamps This Week")
   if (DOM.campaignToggle) {
     DOM.campaignToggle.addEventListener('change', async () => {
       if (!state.staffToken) return;
@@ -4795,9 +4325,6 @@ function setupEventListeners() {
       DOM.campaignStatusText.textContent = result.active ? `Active — ${result.multiplier}x stamps` : t('campaignInactive');
       showToast(result.active ? 'Double Stamps campaign is live!' : 'Campaign turned off', 'success');
 
-      // Only offer this on the ON transition — a mass notification is a
-      // bigger deal than a normal toggle flip, so it gets its own
-      // explicit confirmation rather than firing on every flip either way.
       if (result.active && window.confirm('Notify every subscribed customer that Double Stamps just went live?')) {
         cloud.sendPush({
           staffToken: state.staffToken,
@@ -4814,9 +4341,6 @@ function setupEventListeners() {
     });
   }
 
-  // ==========================================
-  // ADD TO HOME SCREEN / INSTALL ENGINE
-  // ==========================================
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   const isDismissed = localStorage.getItem('86_install_dismissed') === 'true';
 
@@ -4826,9 +4350,7 @@ function setupEventListeners() {
       DOM.installSettingsLabel.textContent = "✓ Installed on Home Screen";
     }
   } else if (DOM.installBanner) {
-    // Shown by default (not gated behind beforeinstallprompt, which never
-    // fires on iOS Safari) — the button falls back to the manual iOS
-    // "Add to Home Screen" guide when there's no native install prompt.
+
     DOM.installBanner.classList.remove('hidden');
   }
 
@@ -4872,9 +4394,6 @@ function setupEventListeners() {
   if (DOM.btnCloseInstallGuide) DOM.btnCloseInstallGuide.addEventListener('click', () => closeModal(DOM.modalInstallGuide));
   if (DOM.overlayInstallGuide) DOM.overlayInstallGuide.addEventListener('click', () => closeModal(DOM.modalInstallGuide));
 
-  // ==========================================
-  // SECURE SIGNED QR CODE LOGIC
-  // ==========================================
   let html5QrCode = null;
 
   if (DOM.btnScanQr) {
@@ -4893,9 +4412,7 @@ function setupEventListeners() {
           const size = Math.floor(Math.min(width, height) * 0.7);
           return { width: size, height: size };
         },
-        // NOTE: no fixed aspectRatio here on purpose — forcing aspectRatio (e.g. 1.0)
-        // is a known cause of black-screen / camera-start failures on iOS Safari
-        // (iPhone 15/16/17), since some rear lenses can't satisfy a forced square stream.
+
         formatsToSupport: window.Html5QrcodeSupportedFormats ? [ window.Html5QrcodeSupportedFormats.QR_CODE ] : []
       };
 
@@ -4929,10 +4446,7 @@ function setupEventListeners() {
           if (!customer) {
             let created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
             if (!created) {
-              // One retry — most failures here are a transient blip, not a
-              // real outage, and it's worth the extra second to avoid
-              // leaving a local-only record that later stamp actions can't
-              // find server-side.
+
               created = await cloud.staffCreateCustomer(state.staffToken, custId, custName || 'Customer', custPhone || '');
             }
             customer = created || await db.addCustomer(custName || 'Customer', custPhone || '', custId);
@@ -4955,9 +4469,6 @@ function setupEventListeners() {
         }
       };
 
-      // Some iPhones (notably iPhone 15/16/17 with multi-lens rear cameras) reject or
-      // silently fail a plain facingMode request. If that happens, fall back to
-      // explicitly enumerating cameras and picking the rear one by id instead.
       try {
         await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, () => {});
       } catch (err1) {
@@ -4996,21 +4507,10 @@ function setupEventListeners() {
   setupScrollDiagnostic();
 }
 
-// TEMPORARY — long-press the greeting text on the Card tab (~1.2s) for
-// live layout/scroll metrics. Browser-automated testing (real device
-// emulation, simulated safe-area-inset values) already confirmed the
-// CSS math itself is correct — real overflow exists and the QR/Friends
-// buttons clear the bottom nav with the intended gap — so what's left
-// to rule out is specific to actual iOS hardware: is this build even
-// the one running (a PWA that's merely backgrounded, not truly force-
-// quit, can keep running old code indefinitely), and does a real touch
-// gesture actually produce a scroll on-device the way a mouse/programmatic
-// one does in every other test environment.
 function setupScrollDiagnostic() {
   const view = DOM.viewHome;
   if (!view || !DOM.homeGreeting) return;
-  // .home-scroll, not view-home itself, is the element that actually
-  // scrolls now — see getScrollableEl().
+
   const scrollEl = getScrollableEl(view);
   let touchCount = 0, moveCount = 0, scrollCount = 0;
   scrollEl.addEventListener('touchstart', () => { touchCount++; }, { passive: true });
@@ -5047,14 +4547,6 @@ function setupScrollDiagnostic() {
   DOM.homeGreeting.addEventListener('touchmove', () => clearTimeout(pressTimer));
 }
 
-// ==========================================
-// UI UPDATES & HELPERS
-// ==========================================
-
-// Most views scroll themselves directly. view-home doesn't — its header
-// is a plain sibling outside the scroll box (see .home-scroll in
-// styles.css), so #view-home itself never scrolls and .home-scroll is
-// the element every scroll-position fix below actually needs to touch.
 function getScrollableEl(view) {
   return view.querySelector('.home-scroll') || view;
 }
@@ -5070,31 +4562,13 @@ function switchView(viewId) {
   DOM.views.forEach(view => {
     if (view.id === viewId) {
       view.classList.add('active');
-      // A view keeps whatever scroll position it was left at (same DOM
-      // element, just re-rendered with new content) — logging out and
-      // signing into a fresh account can land back on view-home with
-      // far less content than before (no student promo yet, no
-      // campaign banner, etc.), so the old scroll offset can end up
-      // past the new, shorter scrollHeight. iOS Safari's momentum
-      // scroll has a long history of getting stuck rather than
-      // clamping back in that situation. Reset on every switch — also
-      // just correct tab-nav behavior (each tab starts at the top).
+
       getScrollableEl(view).scrollTop = 0;
     } else {
       view.classList.remove('active');
     }
   });
 
-  // The view being switched to was very likely laid out (content
-  // populated, syncCardFlipHeight etc.) while it was still
-  // visibility:hidden/inactive — e.g. view-home fills in via
-  // updateCardUI() during app boot, well before dismissSplash() ever
-  // calls switchView('view-home'). iOS Safari can fail to properly wire
-  // up touch-scroll for an overflow:auto region that was never visible
-  // during its own layout pass, and merely toggling visibility later
-  // doesn't retroactively fix that — the same forced-reflow nudge
-  // updateCardUI() uses for live content changes is needed here too, for
-  // the "becoming visible for the first time" case specifically.
   nudgeActiveViewScroll();
 
   if (viewId === 'view-poster') {
@@ -5103,7 +4577,7 @@ function switchView(viewId) {
   } else if (viewId === 'view-signup' || viewId === 'view-splash' || viewId === 'view-admin-login') {
     if (DOM.nav) DOM.nav.classList.add('hidden');
   } else if (viewId === 'view-leaderboard' && state.tvMode) {
-    // Shop-display mode — nobody's here to tap a tab bar.
+
     if (DOM.nav) DOM.nav.classList.add('hidden');
   } else {
     if (DOM.nav) DOM.nav.classList.remove('hidden');
@@ -5118,10 +4592,7 @@ function switchView(viewId) {
   }
   if (viewId === 'view-activity') renderActivityList();
   if (viewId === 'view-leaderboard') renderLeaderboard();
-  // Prices must be current the moment someone is actually looking at the
-  // menu — don't rely solely on realtime having stayed connected since
-  // boot (a backgrounded app, a dropped websocket, etc. shouldn't be able
-  // to leave a stale price on screen at the moment it matters most).
+
   if (viewId === 'view-menu' || viewId === 'view-admin-menu') { syncMenuFromCloud(); syncPromoBannersFromCloud(); }
   if (viewId === 'view-menu' && !state.isAdmin && !state.menuPriceViewInitialized && state.selectedCustomerId) {
     state.menuPriceViewInitialized = true;
@@ -5151,10 +4622,6 @@ function renderPosterQr() {
   });
 }
 
-// Shared tail end of every staff-login path (email/password or Google) —
-// stores the token exactly like the old shared-PIN flow used to, so
-// session restore on reload works identically no matter how the token
-// was obtained.
 async function finishStaffLogin(result) {
   state.staffToken = result.token;
   state.staffName = result.name;
@@ -5189,14 +4656,9 @@ function renderStaffProfile() {
 
 function toggleAdminMode(isActive) {
   state.isAdmin = isActive;
-  // Desktop is blocked to a "use your phone" message for customers (see
-  // the inline script in index.html's <head>), but staff run the admin
-  // panel from a desktop all the time — make sure reaching admin mode
-  // any way (not just the #admin route the head script already checks)
-  // lifts the block for the rest of this tab's session.
+
   if (isActive) document.documentElement.classList.add('staff-desktop-ok');
 
-  // Swap nav tabs: show admin-only tabs in admin mode, customer tabs otherwise
   DOM.customerNavItems.forEach(el => {
     if (isActive) el.classList.add('hidden');
     else el.classList.remove('hidden');
@@ -5206,13 +4668,12 @@ function toggleAdminMode(isActive) {
     else el.classList.add('hidden');
   });
 
-  // Hide the "Hi, [name]" greeting header in admin mode
   const homeHeader = document.querySelector('#view-home .home-header');
   if (homeHeader) {
     if (isActive) homeHeader.classList.add('hidden');
     else homeHeader.classList.remove('hidden');
   }
-  
+
   const adminOnlyElements = document.querySelectorAll('.admin-only');
   adminOnlyElements.forEach(el => {
     if (isActive) el.classList.remove('hidden');
@@ -5249,14 +4710,6 @@ function toggleAdminMode(isActive) {
   }
 }
 
-// .modal is already visibility:hidden while inactive, which browsers
-// exclude from the tab order and the accessibility tree on their own —
-// what was actually missing: a screen reader is never told a dialog
-// opened at all (no role/label), and a keyboard user can Tab straight
-// through an open modal into whatever's behind it instead of staying
-// inside it. State is stored per-element (not in shared module
-// variables) so this stays correct even if a modal opens while another
-// is already open.
 function getModalFocusableEls(container) {
   return Array.from(container.querySelectorAll(
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -5268,12 +4721,7 @@ function openModal(modalEl) {
   modalEl.classList.add('active');
 
   modalEl._returnFocusEl = document.activeElement;
-  // Deferred one frame on purpose — .modal's `transition: all 0.3s`
-  // includes visibility, and focusing an element the very same tick its
-  // ancestor's visibility flips from hidden to visible can silently
-  // fail (the focus call lands before the browser actually commits the
-  // element as focusable). Every accessible-modal library defers
-  // initial focus for exactly this reason; this is the same fix.
+
   requestAnimationFrame(() => {
     const focusables = getModalFocusableEls(modalEl);
     (focusables[0] || modalEl).focus({ preventScroll: true });
@@ -5307,23 +4755,18 @@ function closeModal(modalEl) {
     modalEl.removeEventListener('keydown', modalEl._keydownHandler);
     modalEl._keydownHandler = null;
   }
-  // The trigger element (e.g. the button that opened this modal) may
-  // itself have been removed/re-rendered while the modal was open —
-  // contains() guards against focusing a detached element.
+
   if (modalEl._returnFocusEl && document.body.contains(modalEl._returnFocusEl)) {
     modalEl._returnFocusEl.focus({ preventScroll: true });
   }
   modalEl._returnFocusEl = null;
 }
 
-// One-time setup — role/label don't change per open/close, so these are
-// set once here rather than in openModal on every single call.
 function setupModalAccessibility() {
   document.querySelectorAll('.modal').forEach(modal => {
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    // Fallback focus target (openModal's `focusables[0] || modalEl") —
-    // a plain div can't actually receive focus without this.
+
     if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
     const title = modal.querySelector('.modal-title');
     if (title) {
@@ -5333,9 +4776,6 @@ function setupModalAccessibility() {
   });
 }
 
-// Called right before opening the redeem-confirm modal with however
-// many banked rewards this customer actually has. Hidden entirely at
-// 1 (or 0) — nothing to choose between yet.
 function updateRedeemQtyStepper(maxAvailable) {
   if (!DOM.redeemQtyStepper || !DOM.redeemQtyValue) return;
   const max = Math.max(1, maxAvailable || 1);
@@ -5364,10 +4804,6 @@ function updateRedeemConfirmText(qty) {
     : t('confirmRedeemSubtitle');
 }
 
-// Opens the existing Display Name modal in a mode with no way out except
-// submitting a name — used right after a brand-new signup, since that
-// account was created with only a placeholder name (see the New Card
-// form, which deliberately doesn't ask for one up front anymore).
 function promptMandatoryDisplayName() {
   if (!DOM.modalSetDisplayName) return;
   state.mandatoryDisplayNamePrompt = true;
@@ -5402,9 +4838,6 @@ function initStampGrid() {
   }
 }
 
-// If the greeting ("Hi, Name") is too long for its space (long name, or a
-// language whose words run longer), scroll it back and forth instead of
-// wrapping to a second line or squishing the avatar next to it.
 function updateGreetingMarquee() {
   const el = DOM.homeGreeting;
   const wrap = el ? el.parentElement : null;
@@ -5426,8 +4859,6 @@ function isRewardExpired(customer) {
   return (Date.now() - bankedTime) > REWARD_EXPIRY_MS;
 }
 
-// Days left before a banked reward hits the 1-year expiry. Null when
-// there's no banked reward or the date is unreadable.
 function getRewardDaysRemaining(customer) {
   if (!customer || !customer.rewardsEarned || !customer.rewardBankedAt) return null;
   const bankedTime = new Date(customer.rewardBankedAt).getTime();
@@ -5436,8 +4867,6 @@ function getRewardDaysRemaining(customer) {
   return Math.ceil(msLeft / (24 * 60 * 60 * 1000));
 }
 
-// Milestone badges based on lifetime stamps earned (never resets, unlike
-// the current 0-10 progress bar which loops every reward).
 const STAMP_BADGES = [
   { key: 'platinum', threshold: 250 },
   { key: 'gold', threshold: 100 },
@@ -5448,9 +4877,6 @@ function getEarnedBadge(totalStampsEarned) {
   return STAMP_BADGES.find(b => (totalStampsEarned || 0) >= b.threshold) || null;
 }
 
-// Picks the right store link for the device viewing the app. Falls back
-// to Android for anything that isn't clearly iOS, and returns '' (hides
-// the promo entirely) if neither link is configured yet.
 function netavilleStoreUrl() {
   const ua = navigator.userAgent || '';
   const isIOS = /iPhone|iPad|iPod/i.test(ua);
@@ -5458,13 +4884,6 @@ function netavilleStoreUrl() {
   return NETAVILLE_ANDROID_URL || NETAVILLE_IOS_URL || '';
 }
 
-// Student discount promo — only for customers who aren't verified yet,
-// and only once real store links are configured (never point somewhere
-// broken in the meantime). Called from updateCardUI() AND separately
-// from updateSettingsStats(), since navigating straight to Settings
-// doesn't go through updateCardUI() and was leaving this on stale data
-// (e.g. still showing the promo right after staff verify someone, until
-// they happened to revisit the Card tab).
 function refreshStudentPromoVisibility(customer) {
   if (!DOM.studentPromoBanner || !DOM.btnStudentPromoDownload) return;
   const storeUrl = netavilleStoreUrl();
@@ -5477,10 +4896,6 @@ function refreshStudentPromoVisibility(customer) {
   }
 }
 
-// iOS Safari only exposes Notification/PushManager to a PWA that's already
-// been added to the home screen (not the in-browser tab), so this check is
-// the real "can this device even do push" gate — a plain feature check,
-// not a permission check.
 function pushIsSupported() {
   return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
 }
@@ -5555,26 +4970,6 @@ async function handlePushToggleChange() {
 let lastCardCustomerId = null;
 let cardBackRankCache = {};
 
-// The 3D rotation (.flipped, in styles.css) is purely decorative — iOS
-// Safari has proven unreliable at actually suppressing the away-facing
-// side via either backface-visibility or a visibility:hidden fallback,
-// both bitten by the same underlying iOS compositing bugs. This is what
-// actually controls which face can be seen: display:none, toggled at
-// the exact moment the transform passes 90deg — edge-on, so the swap
-// is imperceptible regardless of which browser is rendering the
-// rotation itself correctly. A display:none element is removed from
-// the render tree entirely, so there's no compositor state left over
-// for iOS to get wrong.
-//
-// The delay below is NOT half the transition's duration — that was the
-// original (buggy) assumption, and it's wrong for any non-linear easing.
-// .card-flip-inner's transition uses cubic-bezier(0.4, 0.15, 0.2, 1),
-// 600ms — a curve that front-loads most of the rotation, so by the time
-// 50% of the duration (300ms) has elapsed, the card has already rotated
-// to ~145deg, not 90deg. That's the gap that let a "flipped" card still
-// show its old face for a moment: the swap fired ~104ms late. Solving
-// for the actual time the eased value crosses 0.5 gives ~196ms — that's
-// the number to change if CARD_FLIP_MS or the easing curve ever does.
 const CARD_FLIP_MS = 600;
 const CARD_FLIP_SWAP_DELAY_MS = 196;
 let cardFlipDisplayTimer = null;
@@ -5589,18 +4984,11 @@ function setCardFlipped(flipped) {
   clearTimeout(cardFlipDisplayTimer);
   cardFlipDisplayTimer = setTimeout(() => {
     if (DOM.cardFaceFront) DOM.cardFaceFront.style.display = flipped ? 'none' : '';
-    // .card-face-back's CSS default is display:none (styles.css), so
-    // clearing its inline override falls back to hidden, not visible —
-    // it needs an explicit 'block' when showing, unlike the front face.
+
     if (DOM.cardFaceBack) DOM.cardFaceBack.style.display = flipped ? 'block' : 'none';
   }, CARD_FLIP_SWAP_DELAY_MS);
 }
 
-// One-time "peek at the back" reveal — flips to the stats side shortly
-// after the card first appears, holds long enough to read it, then
-// flips itself back. Timed off setCardFlipped's own 600ms transition so
-// it never fights a tap the customer makes mid-animation (flipped state
-// still toggles instantly; only the delayed intro calls are skipped).
 function playCardIntroFlip() {
   if (!DOM.cardFlipInner) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -5615,19 +5003,11 @@ function playCardIntroFlip() {
 function bumpStampCount() {
   if (!DOM.stampCount) return;
   DOM.stampCount.classList.remove('bump');
-  void DOM.stampCount.offsetWidth; // restart the animation on rapid repeats
+  void DOM.stampCount.offsetWidth;
   DOM.stampCount.classList.add('bump');
   setTimeout(() => DOM.stampCount && DOM.stampCount.classList.remove('bump'), 400);
 }
 
-// Both faces are absolutely positioned (so they can overlap during the 3D
-// flip), which takes them out of normal flow — .card-flip-inner needs an
-// explicit height or it collapses to 0. Re-measure whenever either face's
-// content could have changed size (stamp count, language, viewport width).
-// Whichever face is currently display:none reports scrollHeight 0, which
-// would undersize the card whenever that face is naturally the taller of
-// the two — briefly force both visible for the measurement itself, then
-// restore whatever display state they actually had.
 function syncCardFlipHeight() {
   if (!DOM.cardFlipInner || !DOM.cardFaceFront || !DOM.cardFaceBack) return;
   const frontPrevDisplay = DOM.cardFaceFront.style.display;
@@ -5657,8 +5037,6 @@ async function updateCardBackStats(customer) {
       : '—';
   }
 
-  // Rank needs its own network round-trip — show a placeholder, fetch it
-  // lazily, and cache per customer so re-flipping doesn't refetch.
   if (DOM.cardBackStatRank) {
     const cached = cardBackRankCache[customer.id];
     if (cached) {
@@ -5706,24 +5084,18 @@ async function updateCardUI() {
   if (lastCardCustomerId !== customer.id) {
     lastCardCustomerId = customer.id;
     setCardFlipped(false);
-    // First time this customer's own card appears this session — give it
-    // a quick flip-and-back so the stats on the back (lifetime stamps,
-    // redemptions, rank) actually get noticed at least once, instead of
-    // sitting undiscovered behind a tap gesture nobody knows to try.
-    // Admin/staff scanning through customers should never see this.
+
     if (!state.isAdmin) playCardIntroFlip();
   }
 
   DOM.homeGreeting.textContent = t('hiName', { name: customer.name });
   DOM.cardNumber.textContent = `CARD #${customer.id.substring(0, 6)}`;
 
-  // Render Customer 2D Monochrome Avatar
   if (DOM.userAvatarDisplay) {
     const avatarKey = customer.avatar || 'person';
     DOM.userAvatarDisplay.innerHTML = MONOCHROME_AVATARS[avatarKey] || MONOCHROME_AVATARS.person;
   }
 
-  // Lifetime milestone badge (never resets, unlike the 0-10 progress bar)
   if (DOM.stampBadge && DOM.stampBadgeLabel) {
     const badge = getEarnedBadge(customer.totalStampsEarned);
     if (badge) {
@@ -5734,8 +5106,6 @@ async function updateCardUI() {
     }
   }
 
-  // Verified-student badge — set once by staff, then shown automatically
-  // on every future visit so a second app/QR is never needed again.
   if (DOM.studentBadge) DOM.studentBadge.classList.toggle('hidden', !customer.isStudent);
   if (DOM.btnToggleStudent && DOM.btnToggleStudentLabel) {
     DOM.btnToggleStudent.classList.toggle('active', !!customer.isStudent);
@@ -5767,7 +5137,6 @@ async function updateCardUI() {
     DOM.progressMsg.style.color = "var(--text-muted)";
   }
 
-  // Rewards Wallet Display
   const unclaimed = customer.rewardsEarned || 0;
   const expired = isRewardExpired(customer);
   if (DOM.rewardsWalletCard && DOM.walletCountText) {
@@ -5848,28 +5217,10 @@ async function updateCardUI() {
     }
   }
 
-  // Measured here, after the notification bell's own visibility is
-  // finally settled a few lines up — not right after setting the name
-  // above. That toggle can shrink .header-text's available width (a
-  // guest becoming a logged-in customer reveals the bell), and measuring
-  // before it settled meant a long name could be sized for more room
-  // than the header actually had left once the bell appeared, visually
-  // overlapping it instead of scrolling clear of it.
   updateGreetingMarquee();
   nudgeActiveViewScroll();
 }
 
-// iOS Safari can get an overflow:auto view's touch-scroll recognizer
-// stuck when the view's content height changes while it's on-screen and
-// untouched — e.g. a live stamp update growing/shrinking the wallet
-// card, reward banner, or student promo. switchView() already guards
-// against the same freeze for tab navigation (resetting scrollTop so a
-// stale offset never sits past a new, shorter scrollHeight), but that
-// only runs when a view becomes active — not when its content changes
-// under a tab the customer is already sitting on. Toggling overflow off
-// and back on forces iOS to recompute the scrollable region against the
-// new layout instead of leaving stale gesture state around one it no
-// longer matches.
 function nudgeActiveViewScroll() {
   DOM.views.forEach(view => {
     if (!view.classList.contains('active')) return;
@@ -5887,13 +5238,6 @@ function canVoidRedemption(customer) {
   return !!(last && last.type === 'redemption' && !last.voided);
 }
 
-// ==========================================
-// NOTIFICATIONS PANEL
-// ==========================================
-// Monochrome line icons (matches the rest of the app's icon set — e.g.
-// the gift/coffee paths are the same ones used on the card back) instead
-// of full-color emoji, which stood out against the app's monochrome
-// design system.
 const NOTIF_TYPE_ICON = {
   friend_request: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
   friend_accepted: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
@@ -5904,13 +5248,6 @@ const NOTIF_TYPE_ICON = {
 };
 const NOTIF_TYPE_ICON_DEFAULT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
 
-// Notification titles are written server-side (Supabase SQL functions)
-// and still lead with a colored emoji (e.g. "🎉 Friend request
-// accepted") from before the panel switched to its own monochrome
-// NOTIF_TYPE_ICON per row — that context now makes the emoji redundant
-// as well as visually inconsistent. Stripped client-side rather than
-// requiring a DB migration, so it's fixed for every row regardless of
-// which SQL version last wrote it.
 function stripLeadingEmoji(str) {
   return (str || '').replace(/^[\p{Extended_Pictographic}️‍]+\s*/u, '');
 }
@@ -5928,9 +5265,6 @@ function formatNotifTime(iso) {
   return t('timeDaysAgo', { n: days });
 }
 
-// Badge-only refresh — cheap enough to call often (app init, returning to
-// the home view, after opening/closing the panel) without pulling the
-// full notification list each time.
 async function refreshNotifBadge() {
   if (!DOM.notifBellBadge || !state.myCustomerId || state.isAdmin) return;
   const count = await cloud.unreadNotificationCount(state.myToken);
@@ -5943,9 +5277,6 @@ async function loadAndRenderNotifications() {
   const notifications = await cloud.listNotifications(state.myToken);
   renderNotificationsList(notifications);
 
-  // Flash the unread state on open (so what's new is still visible this
-  // one time), then clear it server-side so the badge is gone by the
-  // next time the panel — or the app — opens.
   if (notifications.some(n => !n.read)) {
     cloud.markAllNotificationsRead(state.myToken).then(() => refreshNotifBadge());
   }
@@ -6008,12 +5339,6 @@ function renderNotificationsList(notifications) {
     deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
     row.appendChild(deleteBtn);
 
-    // Friend requests are still actionable from right here — no need to
-    // dig into the Friends modal separately to respond to one. A direct
-    // child of .row (not nested in .notif-row-content), with flex-basis:
-    // 100% (styles.css) so it wraps onto its own full-width line below
-    // the icon+text — spanning the whole row edge to edge instead of
-    // being squeezed into the narrower text column next to the icon.
     if (n.type === 'friend_request' && n.data && n.data.request_id) {
       const actions = document.createElement('div');
       actions.className = 'notif-row-actions';
@@ -6038,9 +5363,6 @@ function renderNotificationsList(notifications) {
   });
 }
 
-// ==========================================
-// FRIENDS & GIFTING
-// ==========================================
 async function loadAndRenderFriends() {
   if (!DOM.friendsList) return;
   DOM.friendsList.innerHTML = `<div class="empty-state" style="padding: 24px 0;"><p class="empty-text">${t('loadingText')}</p></div>`;
@@ -6198,10 +5520,6 @@ function updateSettingsStats() {
   let rewardsGiven = 0;
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // "This week" = last 7 days, "this month" = last 30 — rolling windows
-  // rather than calendar week/month, so the numbers stay meaningful no
-  // matter what day it is (a calendar-week counter would read almost
-  // empty every Monday morning).
   const now = Date.now();
   const weekCutoff = now - 7 * 24 * 60 * 60 * 1000;
   const monthCutoff = now - 30 * 24 * 60 * 60 * 1000;
@@ -6210,9 +5528,6 @@ function updateSettingsStats() {
   let redemptionsMonth = 0;
   const drinkCounts = {};
 
-  // staffName -> { today, total, rewardsToday } — lets the profile
-  // screen show both "my" numbers and a per-teammate breakdown from the
-  // same single pass over everyone's history.
   const perStaff = {};
   const bump = (name) => {
     const key = name || 'Unknown';
@@ -6338,7 +5653,6 @@ async function refreshCustomerCampaignBanner() {
   }
 }
 
-// SAFE DOM CONSTRUCTION FOR STORED XSS PREVENTION
 function renderCustomersList(searchTerm = '') {
   DOM.customerList.innerHTML = '';
   DOM.totalCustomersBadge.textContent = state.customers.length;
@@ -6426,7 +5740,6 @@ function renderCustomersList(searchTerm = '') {
   });
 }
 
-// RENDER ACTIVITY LOG LIST (NO 3D EMOJIS — 2D LINE SVGs ONLY)
 function renderActivityList(searchTerm = '') {
   if (!DOM.activityList) return;
   DOM.activityList.innerHTML = '';
@@ -6526,11 +5839,6 @@ function renderActivityList(searchTerm = '') {
   });
 }
 
-
-// ==========================================
-// STAMP FEEDBACK (sound + haptics)
-// Generated in-browser via Web Audio — no external audio asset needed.
-// ==========================================
 let audioCtx = null;
 function getAudioCtx() {
   if (!audioCtx) {
@@ -6556,21 +5864,12 @@ function playTone(freq, startTime, duration, ctx, gainPeak = 0.18) {
   osc.stop(startTime + duration);
 }
 
-// Bottom-nav tab switches — deliberately the quietest, shortest cue in
-// the app. This fires on every single tab tap, the highest-frequency
-// interaction there is, so anything louder or longer than a stamp/
-// reward sound would get old fast. One tone, low gain, ~40ms.
 function playTapSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
   playTone(1200, ctx.currentTime, 0.05, ctx, 0.05);
 }
 
-// Card flip — the only cue so far built from filtered noise instead of
-// plain tones, since a believable "swoosh" needs actual noise texture,
-// not a pitch. A short white-noise burst swept through a bandpass
-// filter from high to low frequency, with its own quick attack/decay
-// envelope so it doesn't click at the start/end.
 function playSwooshSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6610,9 +5909,6 @@ function playStampSound() {
   playTone(1318.5, now + 0.07, 0.16, ctx);
 }
 
-// Reward BANKED — the card just filled up (10th stamp). The big one:
-// a 4-note ascending arpeggio, distinct from every other cue below both
-// in note count and in starting where playStampSound ends.
 function playRewardSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6622,10 +5918,6 @@ function playRewardSound() {
   });
 }
 
-// Reward REDEEMED — actually claiming the free coffee. Used to silently
-// reuse playRewardSound(), which meant "you banked a reward" and "you
-// just spent it" sounded identical — a bright, high two-note "cha-ching"
-// instead, clearly a different moment from earning one.
 function playRedeemSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6634,11 +5926,6 @@ function playRedeemSound() {
   playTone(2093, now + 0.06, 0.22, ctx, 0.2);
 }
 
-// Lighter positive confirmations that aren't the "big" moment above:
-// banking a reward to the wallet instead of redeeming now, a friend
-// request accepted, a gift sent. One quick bright pop, quieter and
-// shorter than every other cue here on purpose — these happen often
-// enough that a loud sound would get annoying fast.
 function playConfirmSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6647,9 +5934,6 @@ function playConfirmSound() {
   playTone(1396.9, now + 0.05, 0.12, ctx, 0.12);
 }
 
-// Corrective/undo actions — removing a mistaken stamp, voiding a
-// redemption. A single short, lower, quiet tone: "noted," not a
-// celebration and not an alarm either.
 function playUndoSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6657,9 +5941,6 @@ function playUndoSound() {
   playTone(523.25, now, 0.14, ctx, 0.1);
 }
 
-// Tier milestone (Gold/Platinum) — rarer and bigger than a reward bank,
-// so it gets the biggest cue: a 5-note ascending fanfare, paired with
-// the existing confetti in showMilestoneCelebration().
 function playMilestoneSound() {
   const ctx = getAudioCtx();
   if (!ctx) return;
@@ -6673,27 +5954,6 @@ function hapticPulse(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
-// Browsers only let an AudioContext actually start on/after a genuine user
-// gesture — creating or resuming it from an async callback (like a realtime
-// stamp update arriving while the customer is just passively looking at
-// their card, having tapped nothing since) is silently ignored, so no sound
-// plays even though nothing errors. This is why sound worked for staff
-// (their own tap on the drink button was the gesture) but not for the
-// customer receiving it passively — there's no way around that from code,
-// it's a platform rule, not a bug.
-//
-// What IS fixable: getting the context unlocked as early and as durably as
-// possible so it's already running by the time a stamp arrives.
-//   - Listen on every plausible first-interaction event (not just one), and
-//     keep listening for the app's whole lifetime instead of unsubscribing
-//     after the first hit — iOS/Chrome can silently re-suspend an idle
-//     AudioContext after the tab sits backgrounded for a while, so a taps a
-//     minute apart should each get a chance to re-resume it.
-//   - Also try to resume on tab-foreground: this can't unlock a context
-//     that's never been started (that still needs a real gesture), but it
-//     CAN successfully resume one that was already unlocked earlier in the
-//     session and got auto-suspended while backgrounded — no fresh gesture
-//     required for that case per spec.
 function unlockAudio() { getAudioCtx(); }
 ['pointerdown', 'touchstart', 'keydown', 'click'].forEach(evt => {
   document.addEventListener(evt, unlockAudio, { passive: true });
@@ -6717,11 +5977,6 @@ function showToast(message, type = 'info', options = {}) {
   toastHideTimer = setTimeout(() => DOM.toast.classList.remove('show'), options.duration || 2500);
 }
 
-// Gold/Platinum tier celebration — triggered from the cloud-polling
-// comparison in startCloudPolling() the moment totalStampsEarned
-// crosses a new tier's threshold. Purely a client-side "nice!" moment;
-// the actual bonus stamps were already granted server-side by
-// staff_add_stamp when the crossing happened.
 function showMilestoneCelebration(tier, bonus) {
   if (!DOM.milestoneOverlay) return;
   const tierLabel = t('badge_' + tier);
@@ -6733,12 +5988,6 @@ function showMilestoneCelebration(tier, bonus) {
   hapticPulse([30, 40, 30, 40, 30, 40, 60]);
 }
 
-// Gift-received celebration — triggered from the cloud-polling comparison
-// in startCloudPolling() the moment this device notices rewardsEarned went
-// up because of an incoming gift (as opposed to filling a card, which has
-// its own reward-overlay). The reward itself was already credited
-// server-side by customer_gift_reward; this is purely the "hey, look!"
-// moment, since a silent wallet-count bump was easy to miss entirely.
 function showGiftReceivedCelebration(fromName) {
   if (!DOM.giftReceivedOverlay) return;
   if (DOM.giftReceivedTitle) DOM.giftReceivedTitle.textContent = t('giftReceivedTitle');
@@ -6749,9 +5998,6 @@ function showGiftReceivedCelebration(fromName) {
   hapticPulse([30, 40, 30, 40, 30, 40, 60]);
 }
 
-// ==========================================
-// CONFETTI ANIMATION
-// ==========================================
 function fireConfetti() {
   const canvas = document.getElementById('confetti-canvas');
   if (!canvas) return;
@@ -6790,14 +6036,6 @@ function fireConfetti() {
   animate();
 }
 
-// ==========================================
-// DYNAMIC MENU LOGIC
-// ==========================================
-// Menu categories are free-text staff-editable data, so they can't
-// carry a fixed translation key the way app chrome does — but the
-// built-in default categories are common enough to translate by
-// matching their known English text. Anything staff renames to
-// something custom just passes through untranslated.
 const CATEGORY_TRANSLATION_MAP = {
   'espresso based': 'catEspressoBased',
   'instant coffee': 'catInstantCoffee',
@@ -6810,14 +6048,6 @@ function translateCategoryName(catName) {
   return key ? t(key) : catName;
 }
 
-// Groups items by category in the admin-defined section order
-// (state.menuCategories), instead of "whichever order their first item
-// happened to be created in" — that's what made section order
-// uncontrollable before. Any item whose category isn't in the known
-// list (e.g. a stale/renamed section) still shows, just appended at the
-// end sorted alphabetically, so nothing silently disappears. Empty
-// sections are dropped — customers should never see a header with
-// nothing under it.
 function groupMenuItemsByCategory(items) {
   const byName = {};
   items.forEach(item => {
@@ -6831,9 +6061,6 @@ function groupMenuItemsByCategory(items) {
   return [...known, ...rest].map(name => [name, byName[name]]);
 }
 
-// Same idea for the admin editor, except empty sections stay visible
-// (as an empty header with reorder/delete controls) — staff need to see
-// and manage a section before it has any items in it.
 function groupAdminMenuByCategory(items) {
   const byName = {};
   items.forEach(item => {
@@ -6923,7 +6150,6 @@ function renderCustomerMenu() {
   DOM.customerMenuContainer.appendChild(note);
 }
 
-// SAFE DOM CONSTRUCTION FOR STORED XSS PREVENTION
 async function renderLeaderboard() {
   if (!DOM.leaderboardContainer) return;
   const loadToken = (state._lbLoadToken = (state._lbLoadToken || 0) + 1);
@@ -6942,14 +6168,10 @@ async function renderLeaderboard() {
   if (loadToken !== state._lbLoadToken) return;
   DOM.leaderboardContainer.innerHTML = '';
 
-  // "Your Rank" pinned card
   const myCard = document.createElement('div');
   myCard.className = 'lb-your-rank';
   if (myRank && myRank.totalStampsEarned > 0) {
-    // Badge tiers (10/50/100/250) are calibrated for lifetime totals — on
-    // a monthly count they'd either never show or misleadingly award a
-    // "Mayor of Eightysix°"-tier badge for one good month, so they only
-    // make sense in the All Time view.
+
     const badge = period === 'all' ? getEarnedBadge(myRank.totalStampsEarned) : null;
 
     const label = document.createElement('div');
@@ -7007,10 +6229,6 @@ async function renderLeaderboard() {
     row.className = 'lb-row' + (rank <= 3 ? ` lb-top lb-top-${rank}` : '');
     if (myRank && rank === myRank.rank) row.classList.add('lb-is-me');
 
-    // Was colored medal emoji (🥇🥈🥉) — the one place in the whole app
-    // that broke from the monochrome design system. A tiered badge
-    // (same number, different fill weight) reads as "podium" without
-    // needing color.
     const rankEl = document.createElement('div');
     rankEl.className = rank <= 3 ? `lb-rank-badge lb-rank-badge-${rank}` : 'lb-rank-num';
     rankEl.textContent = rank;
@@ -7053,9 +6271,6 @@ const ICON_CHEVRON_UP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="n
 const ICON_CHEVRON_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 const ICON_TRASH_SM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
 
-// ==========================================
-// PROMO BANNER CAROUSEL (customer Menu tab) + admin management
-// ==========================================
 function renderPromoBanners() {
   if (!DOM.promoBannerScroll) return;
   const banners = state.promoBanners || [];
@@ -7140,8 +6355,6 @@ function renderAdminPromoBanners() {
   });
 }
 
-// Optimistically reorders locally so the UI responds instantly, then
-// persists the full new order — mirrors reorderMenuCategory() above.
 async function reorderPromoBanner(orderedIds, id, direction) {
   const i = orderedIds.indexOf(id);
   const j = i + direction;
@@ -7157,10 +6370,6 @@ async function reorderPromoBanner(orderedIds, id, direction) {
   syncPromoBannersFromCloud();
 }
 
-// Holds whichever image URL should be saved: the existing banner's URL
-// (unchanged), or a freshly-uploaded one once cloud.uploadPromoBannerImage
-// resolves. Kept outside the modal-open function since it's set async,
-// after the file input's change event, not at open time.
 let pendingPromoBannerImageUrl = null;
 
 function showPromoBannerPreview(url) {
@@ -7214,10 +6423,6 @@ if (DOM.promoBannerFileInput) {
     if (!file) return;
     if (DOM.promoBannerUploadError) DOM.promoBannerUploadError.textContent = '';
 
-    // Instant local preview while the real upload happens in the
-    // background — this object URL is only ever shown, never saved;
-    // pendingPromoBannerImageUrl (and what actually gets persisted)
-    // only changes once the real storage upload succeeds below.
     const localPreviewUrl = URL.createObjectURL(file);
     showPromoBannerPreview(localPreviewUrl);
     if (DOM.btnSavePromoBanner) DOM.btnSavePromoBanner.disabled = true;
@@ -7352,9 +6557,6 @@ function renderAdminMenu() {
   });
 }
 
-// Optimistically reorders locally so the UI responds instantly, then
-// persists the full new order — realtime will also echo it back to
-// every other open device momentarily.
 async function reorderMenuCategory(orderedNames, name, direction) {
   const i = orderedNames.indexOf(name);
   const j = i + direction;
@@ -7406,10 +6608,6 @@ function openMenuModal(item = null) {
   openModal(DOM.modalEditMenuItem);
 }
 
-// Populates the Category <select> from the admin-managed section list,
-// plus a trailing "+ Add New Section" option that reveals a text input
-// right in the item editor — so a brand new section can be created in
-// the same flow as adding an item, not as a separate detour.
 function populateMenuCategorySelect(selectedName) {
   if (!DOM.menuItemCategory) return;
   const names = (state.menuCategories || []).map(c => c.name);
@@ -7427,9 +6625,6 @@ function populateMenuCategorySelect(selectedName) {
   }
 }
 
-// Live "-X%" preview under the Student Price field as the admin types,
-// computed from the two prices rather than asking them to work out a
-// percentage themselves.
 function updateMenuItemDiscountPreview() {
   if (!DOM.menuItemDiscountPreview) return;
   const price = parseFloat(DOM.menuItemPrice.value);
@@ -7500,8 +6695,6 @@ if (DOM.btnSaveMenuItem) {
       return;
     }
 
-    // Server is authoritative — realtime will also push this to every
-    // other open device momentarily, this just avoids waiting on it here.
     await syncMenuFromCloud();
     closeModal(DOM.modalEditMenuItem);
     showToast('Menu item saved', 'success');
@@ -7528,7 +6721,4 @@ if (DOM.btnDeleteMenuItem) {
   });
 }
 
-// ==========================================
-// BOOTSTRAP
-// ==========================================
 document.addEventListener('DOMContentLoaded', initApp);

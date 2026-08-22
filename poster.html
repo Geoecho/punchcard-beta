@@ -15,11 +15,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
 
-  <!-- Its own manifest, separate from the main app's. This is the whole
-       fix: a home-screen icon always launches at the manifest's
-       start_url, ignoring whatever URL/hash was on screen at install
-       time. Pointing this file's own manifest at itself means there's
-       no hash to lose — the icon can only ever open the poster. -->
   <link rel="manifest" href="./manifest-poster.json">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">

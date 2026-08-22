@@ -6,18 +6,12 @@
   <meta name="theme-color" content="#000000">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- "black" (Apple's fixed opaque style) isn't actually pure #000 — it
-       renders as a dark gray, visibly off from this app's pure-black
-       design. iOS gives no way to set a literal status-bar color other
-       than "black-translucent" (content draws under a genuinely
-       see-through status bar) + our own opaque fill behind it — see the
-       #status-bar-fill element/CSS for the fixed, pure-black mask that
-       actually paints that region regardless of scroll position. -->
+
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Eightysix°">
-  
+
   <title>Eightysix° Punchcard</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
@@ -25,58 +19,28 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
-  
+
   <link rel="stylesheet" href="./styles.css">
 
-  <!-- Runs before first paint so a staff desktop never flashes the
-       mobile-only block: the actual admin panel is desktop-friendly on
-       purpose (see the >=900px rules in styles.css), only the customer
-       card experience is mobile/tablet-only. The width+pointer check
-       below (in styles.css) does the real, resize-reactive gating; this
-       just exempts the staff entry route from it. -->
   <script>
     (function () {
       var isStaffRoute = location.hash === '#admin' || location.hash === '#poster'
         || location.hash === '#/poster' || location.hash === '#leaderboard-tv'
         || location.search.indexOf('admin=true') !== -1;
       if (isStaffRoute) document.documentElement.classList.add('staff-desktop-ok');
-      // #leaderboard-tv is an unattended shop-display mode (a TV/monitor
-      // showing the live leaderboard), not a phone-in-hand customer or a
-      // staff member — needs the desktop block bypassed the same way
-      // #poster does, but its own bigger-screen styling, not the phone-
-      // shaped customer app (see .tv-mode in styles.css).
+
       if (location.hash === '#leaderboard-tv') document.documentElement.classList.add('tv-mode');
     })();
   </script>
 </head>
 <body>
-  <!-- Pure-black mask for the status-bar-height strip at the very top of
-       the screen — see the apple-mobile-web-app-status-bar-style comment
-       in <head>. Fixed (not part of #app/.view's own layout or scroll),
-       so it always paints solid black there regardless of which view is
-       active or how far anything has scrolled. Zero height outside
-       standalone iOS (env(safe-area-inset-top) is 0 everywhere else),
-       so it's a no-op elsewhere. -->
+
   <div id="status-bar-fill"></div>
 
-  <!-- Same idea, bottom edge: .bottom-nav's own background is a
-       translucent rgba(10,10,10,0.95) + blur (a deliberate frosted-glass
-       tab bar look), which is visibly not pure black against the rest
-       of this pure-#000 app — most noticeable in the home-indicator
-       strip below the icons, where there's no content to blur over and
-       the translucency just reads as a mismatched, washed-out gray gap.
-       This mask paints that exact strip pure black on top of it,
-       independent of the nav's own translucency. Zero height outside
-       standalone iOS, so it's a no-op elsewhere. -->
   <div id="bottom-bar-fill"></div>
 
-  <!-- Confetti Canvas for Celebrations -->
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Shown instead of the app on a desktop-class browser (mouse pointer
-       + wide viewport — see styles.css) unless html.staff-desktop-ok is
-       set. Customers get this; staff reach the admin panel via #admin,
-       which is exempted. -->
   <div class="desktop-block-overlay">
     <div class="desktop-block-icon">
       <svg width="44" height="34" viewBox="0 0 44 34" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="21" height="32" rx="3"></rect><line x1="8.5" y1="27.5" x2="14.5" y2="27.5"></line><rect x="27" y="9" width="16" height="24" rx="2.5"></rect><line x1="33" y1="29" x2="37" y2="29"></line></svg>
@@ -86,10 +50,7 @@
   </div>
 
   <div id="app">
-    
-    <!-- ==========================================
-         SPLASH SCREEN
-         ========================================== -->
+
     <div id="view-splash" class="view active">
       <div class="splash-content">
         <div class="brand-lockup brand-lockup-large">
@@ -105,9 +66,6 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         PROMOTIONAL POSTER VIEW (/#poster)
-         ========================================== -->
     <div id="view-poster" class="view">
       <div class="poster-glow" aria-hidden="true"></div>
       <div class="poster-container">
@@ -138,9 +96,6 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         SIGN UP / LOGIN VIEW (Customers)
-         ========================================== -->
     <div class="view" id="view-signup">
       <div class="lang-switcher-globe" id="lang-switcher-signup">
         <button class="lang-globe-btn" id="lang-globe-btn-signup" aria-label="Change language" aria-haspopup="true" aria-expanded="false">
@@ -171,14 +126,11 @@
         </button>
         <div class="auth-divider"><span data-i18n="authDividerOr">or</span></div>
 
-        <!-- Auth Tabs -->
         <div class="auth-tabs">
           <button class="auth-tab active" id="tab-new-card" data-i18n="tabNewCard">New Card</button>
           <button class="auth-tab" id="tab-find-card" data-i18n="tabFindCard">Find My Card</button>
         </div>
 
-        <!-- Form: New Card — display name is asked right after, not here,
-             so this stays the fastest possible path to a working card. -->
         <div class="signup-form" id="form-new-card">
           <div class="form-group">
             <input type="text" id="signup-username" class="form-input" placeholder="Username (Used to log in)" autocomplete="username" enterkeyhint="next" data-i18n-placeholder="phUsername">
@@ -212,7 +164,6 @@
           <button class="btn-primary btn-block" id="btn-signup-submit" data-i18n="btnCreateCard">Create My Card</button>
         </div>
 
-        <!-- Form: Find Card -->
         <div class="signup-form hidden" id="form-find-card">
           <div class="form-group">
             <input type="text" id="login-username" class="form-input" placeholder="Enter your Username" autocomplete="username" enterkeyhint="next" data-i18n-placeholder="phEnterUsername">
@@ -229,9 +180,6 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         ADMIN / STAFF LOGIN VIEW
-         ========================================== -->
     <div class="view" id="view-admin-login">
       <div class="signup-container">
         <div class="signup-header">
@@ -254,9 +202,6 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         HOME VIEW (Customer Card)
-         ========================================== -->
     <div id="view-home" class="view">
       <header class="home-header">
         <div class="header-left">
@@ -276,9 +221,6 @@
         </div>
       </header>
 
-      <!-- Everything below scrolls; the header above does not — it's a
-           plain sibling outside this box, not a sticky child inside it.
-           See .home-scroll in styles.css for why. -->
       <div class="home-scroll" id="home-scroll">
       <div class="install-prompt-banner hidden" id="install-banner">
         <div class="install-prompt-left">
@@ -308,10 +250,6 @@
         </div>
       </div>
 
-      <!-- Student Discount Promo (Customer, not-yet-verified only) — placed
-           above the card, alongside the other home-view banners, so it's
-           seen without scrolling instead of buried below the wallet card
-           and Friends button. -->
       <div class="student-promo-banner hidden" id="student-promo-banner">
         <div class="student-promo-header">
           <div class="student-promo-icon">
@@ -348,7 +286,7 @@
             </div>
 
             <div class="stamp-grid" id="stamp-grid">
-              <!-- Stamps will be injected here by JS -->
+
             </div>
 
             <div class="card-footer">
@@ -406,7 +344,6 @@
         </div>
       </div>
 
-      <!-- Rewards Wallet Card (Customer View) -->
       <div class="rewards-wallet-card hidden" id="rewards-wallet-card">
         <div class="wallet-left">
           <div class="wallet-icon">
@@ -427,7 +364,6 @@
         <button class="btn-secondary btn-small" id="btn-redeem-banked" data-i18n="btnRedeem">Redeem</button>
       </div>
 
-      <!-- Customer actions (Hidden from admin) -->
       <div class="home-actions" id="customer-actions">
         <button class="btn-primary show-qr-btn" id="btn-show-qr">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -450,7 +386,6 @@
         </button>
       </div>
 
-      <!-- Admin Add Stamp Action (Hidden by default) -->
       <div class="home-actions hidden" id="admin-actions">
         <div class="stamp-actions-row">
           <button class="btn-add-stamp" id="btn-add-stamp">
@@ -482,7 +417,6 @@
         </div>
       </div>
 
-      <!-- Empty State for Admin before selecting customer -->
       <div class="empty-state hidden" id="admin-empty-state">
         <div class="empty-icon">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -493,9 +427,6 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         MENU VIEW (Customer Only)
-         ========================================== -->
     <div id="view-menu" class="view">
       <header class="customers-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
         <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
@@ -503,7 +434,7 @@
       </header>
 
       <div class="promo-banner-scroll hidden" id="promo-banner-scroll">
-        <!-- Dynamically rendered promo banner cards go here -->
+
       </div>
 
       <div class="segmented-toggle" id="menu-price-view-chips" style="margin: 4px 20px 16px;">
@@ -512,20 +443,12 @@
       </div>
 
       <div class="menu-scroll-area" id="customer-menu-container">
-        <!-- Dynamically rendered menu items go here -->
+
       </div>
     </div>
 
-    <!-- ==========================================
-         LEADERBOARD VIEW (Customer Only)
-         ========================================== -->
     <div id="view-leaderboard" class="view">
-      <!-- align-items: flex-start (not center, like every other
-           .customers-header) — this is the one header with a subtitle
-           under the title, and centering against that taller two-line
-           block pushed the logo visibly lower than the same logo sits
-           in every other tab's single-line header. Top-aligning it
-           against the title line keeps it consistent across tabs. -->
+
       <header class="customers-header" style="display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px;">
         <img src="Group 9.png" alt="Eightysix° Logo" class="brand-logo" style="height: 28px; opacity: 0.9;">
         <div>
@@ -540,13 +463,10 @@
       </div>
 
       <div class="lb-scroll-area" id="leaderboard-container">
-        <!-- Dynamically rendered leaderboard rows go here -->
+
       </div>
     </div>
 
-    <!-- ==========================================
-         ADMIN MENU EDITOR (Staff Only)
-         ========================================== -->
     <div id="view-admin-menu" class="view">
       <header class="customers-header" style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -559,21 +479,20 @@
       <div class="admin-promo-section">
         <div class="admin-promo-section-header">
           <h3 data-i18n="navPromoBanners">Promo Banners</h3>
-          <button class="btn-secondary btn-small" id="btn-add-promo-banner" data-i18n="btnAddBanner">+ Add Banner</button>
+          <button class="menu-section-btn" id="btn-add-promo-banner" type="button" aria-label="Add promo banner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
         </div>
         <div class="admin-promo-list" id="admin-promo-banner-list">
-          <!-- Dynamically rendered admin banner rows go here -->
+
         </div>
       </div>
 
       <div class="menu-scroll-area" id="admin-menu-container">
-        <!-- Dynamically rendered admin menu items go here -->
+
       </div>
     </div>
 
-    <!-- ==========================================
-         CUSTOMERS VIEW (Admin Only)
-         ========================================== -->
     <div id="view-customers" class="view">
       <header class="customers-header">
         <h2 data-i18n="navCustomers">Customers</h2>
@@ -596,13 +515,10 @@
       </div>
 
       <div class="customer-list" id="customer-list">
-        <!-- Customer items injected by JS -->
+
       </div>
     </div>
 
-    <!-- ==========================================
-         ACTIVITY & REDEMPTIONS LOG VIEW (Admin Only)
-         ========================================== -->
     <div id="view-activity" class="view">
       <header class="customers-header">
         <h2 data-i18n="navActivity">Activity Log</h2>
@@ -626,13 +542,10 @@
       </div>
 
       <div class="customer-list" id="activity-list">
-        <!-- Log entries injected by JS -->
+
       </div>
     </div>
 
-    <!-- ==========================================
-         SETTINGS VIEW
-         ========================================== -->
     <div id="view-settings" class="view">
       <header class="settings-header">
         <h2 id="settings-title" style="cursor: pointer;" data-i18n="dashboardTitle">Dashboard</h2>
@@ -848,16 +761,10 @@
       </div>
     </div>
 
-    <!-- ==========================================
-         BOTTOM NAVIGATION
-         ========================================== -->
     <nav class="bottom-nav hidden" id="bottom-nav">
-      <!-- Customer Nav (shown when NOT admin) -->
+
       <button type="button" class="nav-item active customer-nav-item" data-target="view-home">
-        <!-- Was a calendar icon (two hanging tabs + divider) — an odd
-             mismatch for a tab literally called "Card". This is Feather's
-             credit-card glyph instead: a rounded rect with one stripe
-             near the top, which actually reads as a card at a glance. -->
+
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
           <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -883,7 +790,7 @@
         </svg>
         <span class="nav-label" data-i18n="navLeaderboard">Ranks</span>
       </button>
-      <!-- Admin Nav (shown only in admin mode) -->
+
       <button type="button" class="nav-item admin-nav-item hidden" data-target="view-customers">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -920,9 +827,6 @@
       </button>
     </nav>
 
-    <!-- Scan QR FAB (Customers view only) — lives outside any .view so its
-         position:fixed isn't broken by the .view slide-transition transform,
-         and so it never scrolls with the customer list. -->
     <div class="customers-actions hidden" id="customers-fab-actions">
       <button class="fab scan-fab" id="btn-scan-qr" aria-label="Scan Customer QR">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -934,11 +838,6 @@
       </button>
     </div>
 
-    <!-- ==========================================
-         OVERLAYS & MODALS
-         ========================================== -->
-         
-    <!-- Reward Celebration Overlay -->
     <div class="reward-overlay" id="reward-overlay">
       <div class="reward-content">
         <div class="reward-icon-box">
@@ -958,10 +857,6 @@
       </div>
     </div>
 
-    <!-- Tier Milestone Celebration Overlay (Gold/Platinum) — reuses the
-         reward-overlay's visual language, own modal since it's a plain
-         "nice!" dismiss, not a redeem flow. Title/subtitle/icon are set
-         dynamically in app.js (showMilestoneCelebration). -->
     <div class="reward-overlay" id="milestone-overlay">
       <div class="reward-content">
         <div class="reward-icon-box">
@@ -978,9 +873,6 @@
       </div>
     </div>
 
-    <!-- Gift Received Celebration Overlay — reuses the reward-overlay's
-         visual language. Title/subtitle are set dynamically in app.js
-         (showGiftReceivedCelebration) with the sender's name. -->
     <div class="reward-overlay" id="gift-received-overlay">
       <div class="reward-content">
         <div class="reward-icon-box">
@@ -994,13 +886,12 @@
       </div>
     </div>
 
-    <!-- Edit Menu Item Modal (Staff Only) -->
     <div class="modal" id="modal-edit-menu-item">
       <div class="modal-overlay" id="overlay-edit-menu-item"></div>
       <div class="modal-content">
         <div class="modal-handle"></div>
         <h3 class="modal-title" id="menu-modal-title">Edit Item</h3>
-        
+
         <input type="hidden" id="menu-item-id">
         <div class="form-group">
           <label class="form-label" for="menu-item-name" data-i18n="labelName">Name</label>
@@ -1009,7 +900,7 @@
         <div class="form-group">
           <label class="form-label" for="menu-item-category" data-i18n="labelCategory">Category</label>
           <select id="menu-item-category" class="form-input">
-            <!-- populated by JS from state.menuCategories, plus "+ Add New Section" -->
+
           </select>
           <input type="text" id="menu-item-category-new" class="form-input hidden" style="margin-top: 8px;" enterkeyhint="next" data-i18n-placeholder="phNewSectionName" placeholder="New section name">
         </div>
@@ -1041,7 +932,6 @@
       </div>
     </div>
 
-    <!-- Add/Edit Promo Banner Modal (Staff Only) -->
     <div class="modal" id="modal-edit-promo-banner">
       <div class="modal-overlay" id="overlay-edit-promo-banner"></div>
       <div class="modal-content">
@@ -1081,7 +971,6 @@
       </div>
     </div>
 
-    <!-- Set/Change Display Name Modal (from Settings > Account) -->
     <div class="modal" id="modal-set-displayname">
       <div class="modal-overlay" id="overlay-set-displayname"></div>
       <div class="modal-content">
@@ -1101,7 +990,6 @@
       </div>
     </div>
 
-    <!-- Notifications Panel -->
     <div class="modal" id="modal-notifications">
       <div class="modal-overlay" id="overlay-notifications"></div>
       <div class="modal-content">
@@ -1121,7 +1009,6 @@
       </div>
     </div>
 
-    <!-- Friends & Gift a Reward Modal -->
     <div class="modal" id="modal-friends">
       <div class="modal-overlay" id="overlay-friends"></div>
       <div class="modal-content">
@@ -1130,11 +1017,7 @@
         <p class="modal-subtitle" data-i18n="friendsModalSubtitle">Send a friend request by their display name. Once they accept, you can gift each other a free coffee.</p>
 
         <div class="form-group friends-add-row">
-          <!-- Decoy fields ahead of the real input: Safari/Chrome's
-               heuristic autofill sometimes ignores autocomplete="off" on
-               the real field but will "absorb" itself into empty decoys
-               that look more like a login form, keeping account/password
-               suggestions off the actual username field. -->
+
           <input type="text" name="username" autocomplete="username" class="visually-hidden" tabindex="-1" aria-hidden="true">
           <input type="password" name="password" autocomplete="current-password" class="visually-hidden" tabindex="-1" aria-hidden="true">
           <input type="text" id="add-friend-input" class="form-input" placeholder="Friend's display name" name="friend-search-86" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" data-i18n-placeholder="phFriendName">
@@ -1160,7 +1043,6 @@
       </div>
     </div>
 
-    <!-- Confirm Gift Reward Modal -->
     <div class="modal" id="modal-confirm-gift">
       <div class="modal-overlay" id="overlay-confirm-gift"></div>
       <div class="modal-content">
@@ -1178,7 +1060,6 @@
       </div>
     </div>
 
-    <!-- Confirm Remove Friend Modal -->
     <div class="modal" id="modal-confirm-remove-friend">
       <div class="modal-overlay" id="overlay-confirm-remove-friend"></div>
       <div class="modal-content">
@@ -1192,16 +1073,13 @@
       </div>
     </div>
 
-    <!-- Confirm Redeem Reward Modal -->
     <div class="modal" id="modal-confirm-redeem">
       <div class="modal-overlay" id="overlay-confirm-redeem"></div>
       <div class="modal-content">
         <div class="modal-handle"></div>
         <h3 class="modal-title" data-i18n="confirmRedeemTitle">Redeem Reward?</h3>
         <p class="modal-subtitle" id="confirm-redeem-text" data-i18n="confirmRedeemSubtitle">This uses 1 free coffee from the wallet and can't be undone.</p>
-        <!-- Only shown when the customer has more than 1 banked reward
-             (see updateRedeemQtyStepper) — redeeming the single reward
-             from a just-filled card never has a quantity to pick. -->
+
         <div class="redeem-qty-stepper hidden" id="redeem-qty-stepper">
           <button type="button" class="redeem-qty-btn" id="btn-redeem-qty-minus" aria-label="Fewer">−</button>
           <span class="redeem-qty-value" id="redeem-qty-value">1</span>
@@ -1214,7 +1092,6 @@
       </div>
     </div>
 
-    <!-- Show QR Modal (For Customers) -->
     <div class="modal" id="modal-show-qr">
       <div class="modal-overlay" id="overlay-show-qr"></div>
       <div class="modal-content" style="text-align: center;">
@@ -1228,7 +1105,6 @@
       </div>
     </div>
 
-    <!-- Staff Drink Selector Modal — 1 stamp standard, 2 for double-dose, 3 for multi-item combos -->
     <div class="modal" id="modal-drink-picker">
       <div class="modal-overlay" id="overlay-drink-picker"></div>
       <div class="modal-content">
@@ -1302,7 +1178,6 @@
       </div>
     </div>
 
-    <!-- Edit / Delete Customer Modal (Staff Only) -->
     <div class="modal" id="modal-edit-customer">
       <div class="modal-overlay" id="overlay-edit-customer"></div>
       <div class="modal-content">
@@ -1339,7 +1214,6 @@
       </div>
     </div>
 
-    <!-- Terms of Service Modal -->
     <div class="modal" id="modal-tos">
       <div class="modal-overlay" id="overlay-tos"></div>
       <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
@@ -1358,7 +1232,6 @@
       </div>
     </div>
 
-    <!-- Privacy Policy Modal -->
     <div class="modal" id="modal-privacy">
       <div class="modal-overlay" id="overlay-privacy"></div>
       <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
@@ -1377,7 +1250,6 @@
       </div>
     </div>
 
-    <!-- Monochrome Avatar Picker Modal -->
     <div class="modal" id="modal-avatar-picker">
       <div class="modal-overlay" id="overlay-avatar-picker"></div>
       <div class="modal-content">
@@ -1386,7 +1258,7 @@
         <p class="modal-subtitle" data-i18n="avatarModalSubtitle">Pick an icon for your card</p>
 
         <div class="avatar-grid" id="avatar-grid">
-          <!-- 10 Monochrome SVG Avatars injected by JS -->
+
         </div>
 
         <div class="modal-actions" style="margin-top: 20px;">
@@ -1395,7 +1267,6 @@
       </div>
     </div>
 
-    <!-- Install Guide Modal (iOS / Universal) -->
     <div class="modal" id="modal-install-guide">
       <div class="modal-overlay" id="overlay-install-guide"></div>
       <div class="modal-content" style="text-align: center;">
@@ -1446,7 +1317,6 @@
       </div>
     </div>
 
-    <!-- Scan QR Modal (For Admin) -->
     <div class="modal" id="modal-scan-qr">
       <div class="modal-overlay" id="overlay-scan-qr"></div>
       <div class="modal-content">
@@ -1460,13 +1330,11 @@
       </div>
     </div>
 
-    <!-- Toast Notification Container -->
     <div class="toast" id="toast">
       <div class="toast-icon" id="toast-icon">✓</div>
       <div class="toast-message" id="toast-message">Action successful</div>
     </div>
 
-    <!-- New Version Available Banner -->
     <div class="update-banner" id="update-banner">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
       <span data-i18n="updateAvailable">New version available — tap to refresh</span>
@@ -1474,13 +1342,10 @@
 
   </div>
 
-  <!-- Cloud SDK (Supabase) & QR Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./lib/qrcode.min.js"></script>
   <script src="./lib/html5-qrcode.min.js"></script>
-  
-  <!-- App Logic -->
+
   <script src="./app.js"></script>
 </body>
 </html>
-

@@ -380,15 +380,6 @@
       return `https://api.dicebear.com/10.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed || 'person')}&backgroundColor=ffffff`;
     }
 
-    // ==========================================
-    // STATIC FIT — no scrolling. #fit-wrapper is measured against the
-    // real viewport height and, if its natural content would overflow,
-    // scaled down as a whole (uniform transform: scale) until it fits.
-    // transform doesn't affect layout/scrollHeight, so this is safe to
-    // call repeatedly regardless of any scale already applied. Runs
-    // after every render that can change content height (menu/
-    // leaderboard/campaign updates, period rotation) and on resize.
-    // ==========================================
     function autoFit() {
       const wrapper = document.getElementById('fit-wrapper');
       wrapper.style.transform = 'none';
@@ -402,13 +393,11 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(autoFit, 150);
     });
-    // Web fonts can finish loading fractionally after first paint and
-    // nudge text metrics — re-check once they're settled.
+
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(autoFit).catch(() => {});
     }
 
-    // ---- Live clock ----
     function tickClock() {
       const now = new Date();
       document.getElementById('tv-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -417,14 +406,6 @@
     tickClock();
     setInterval(tickClock, 1000);
 
-    // ==========================================
-    // LEADERBOARD — alternates between "This Month" and "All Time"
-    // every 12s so an unattended display stays interesting instead of
-    // showing one static list all day. Both lists are fetched together;
-    // the rotation just toggles which cached list is shown. A filling
-    // progress rail under the period pill makes the countdown to the
-    // next swap visible instead of the change just happening silently.
-    // ==========================================
     let lbPeriod = 'month';
     let lbMonthly = [];
     let lbAllTime = [];
@@ -506,38 +487,21 @@
         list.style.opacity = '1';
         list.style.transform = 'translateY(0)';
         label.style.opacity = '1';
-        // Was called from the setInterval callback alongside
-        // rotateLeaderboardPeriod() — that fired 350ms BEFORE this
-        // fade-in actually swaps the label text (the fade-out delay
-        // above), so the rail was already resetting to 0% and counting
-        // a fresh 12s for the *new* period while the words above it
-        // still showed the *old* one for that last 350ms of each
-        // cycle. Moved here so both change at the exact same instant.
+
         restartProgressRail();
       }, 350);
     }
 
-    // Restarts the 12s fill animation in sync with each rotation —
-    // toggling the class forces the browser to replay it from 0%.
-    // Toggling a class + reflow restarts a CSS *animation*, but not a
-    // *transition* — the property and the transition itself change
-    // together in one style recalc, so the browser never sees a
-    // separate "before" state to animate from. Driving it via inline
-    // styles with an explicit transition:none reset in between is the
-    // reliable way to restart a transition-based fill like this.
     function restartProgressRail() {
       const fill = document.getElementById('lb-progress-fill');
       fill.style.transition = 'none';
       fill.style.width = '0%';
-      void fill.offsetWidth; // force the reset to actually paint first
+      void fill.offsetWidth;
       fill.style.transition = 'width 12s linear';
       fill.style.width = '100%';
     }
     restartProgressRail();
 
-    // ==========================================
-    // MENU — same rendering as menu.html.
-    // ==========================================
     function renderMenu(items) {
       const grid = document.getElementById('tv-grid');
       grid.innerHTML = '';
@@ -602,7 +566,6 @@
       autoFit();
     }
 
-    // Cache-first paint (same key the main app uses), then network.
     try {
       const cached = localStorage.getItem('86_menu');
       if (cached) renderMenu(JSON.parse(cached));
@@ -637,11 +600,6 @@
     fetchMenu();
     fetchCampaign();
 
-    // Realtime for menu/campaign — both tables are intentionally public-
-    // readable so this actually works. The leaderboard is derived from
-    // the customers table, which (correctly) has no public read grant —
-    // realtime can't subscribe to it from here, so it's covered by the
-    // polling loop below instead.
     sb.channel('tv-leaderboard-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, fetchMenu)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, fetchCampaign)
@@ -650,13 +608,9 @@
     setInterval(fetchLeaderboards, 60000);
     setInterval(fetchMenu, 60000);
     setInterval(fetchCampaign, 60000);
-    // restartProgressRail() now happens inside rotateLeaderboardPeriod()'s
-    // own fade-in callback (see above) instead of here, so both the rail
-    // and the label swap at exactly the same instant.
+
     setInterval(rotateLeaderboardPeriod, 12000);
 
-    // An always-on TV/tablet tab can accumulate memory/stale-connection
-    // issues over days — a clean reload once every 6 hours keeps it healthy.
     setTimeout(() => window.location.reload(), 6 * 60 * 60 * 1000);
   </script>
 </body>
