@@ -1573,44 +1573,8 @@ input { font: inherit; color: inherit; }
 .modal { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s var(--ease-in-out); }
 .modal.active { opacity: 1; visibility: visible; }
 .modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-
-/* Popups invert to a white surface against the app's all-black ground —
-   every component inside a modal is already built on these tokens, so
-   redeclaring them here (instead of restyling each component) re-themes
-   the whole popup at once and keeps new modals correct automatically. */
-.modal-content {
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F0F0F0;
-  --bg-card: #FAFAFA;
-  --bg-glass: rgba(0, 0, 0, 0.05);
-  --bg-glass-hover: rgba(0, 0, 0, 0.1);
-  --border-glass: rgba(0, 0, 0, 0.12);
-  --border-glass-strong: rgba(0, 0, 0, 0.25);
-  --text-primary: #000000;
-  --text-secondary: #444444;
-  --text-muted: #767676;
-  --text-inverse: #FFFFFF;
-  --accent-main: #000000;
-  --accent-secondary: #333333;
-  --success: #000000;
-  --success-bg: rgba(0, 0, 0, 0.08);
-
-  position: relative; width: 100%; max-width: 768px; background: var(--bg-primary); color: var(--text-primary); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 28px 24px calc(24px + var(--sab)); transform: translateY(100%); transition: transform 0.35s var(--ease-out); max-height: 90vh; overflow-y: auto; border-top: 1px solid var(--border-glass-strong); box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
-}
+.modal-content { position: relative; width: 100%; max-width: 768px; background: var(--bg-secondary); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 28px 24px calc(24px + var(--sab)); transform: translateY(100%); transition: transform 0.35s var(--ease-out); max-height: 90vh; overflow-y: auto; border-top: 1px solid var(--border-glass-strong); }
 .modal.active .modal-content { transform: translateY(0); }
-
-/* A handful of components use a hardcoded white-on-black tint instead
-   of the tokens above (glows/fills meant to read against black) —
-   those still need their own inverted values here. */
-.modal-content .chip { background: rgba(0, 0, 0, 0.05); }
-.modal-content .chip.active { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); }
-.modal-content .avatar-option-btn { background: rgba(0, 0, 0, 0.06); }
-.modal-content .avatar-option-btn.selected { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
-.modal-content .user-avatar-display { background: rgba(0, 0, 0, 0.08); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-.modal-content .drink-option-btn:active { background: rgba(0, 0, 0, 0.08); }
-.modal-content .drink-option-btn.bonus { border-color: rgba(0, 0, 0, 0.35); }
-.modal-content .drink-option-icon { background: rgba(0, 0, 0, 0.06); }
-.modal-content .drink-badge { background: rgba(0, 0, 0, 0.08); }
 .modal-handle { width: 36px; height: 4px; background: var(--border-glass-strong); border-radius: var(--radius-full); margin: 0 auto 20px; }
 .modal-title { font-size: 22px; margin-bottom: 4px; }
 .legal-text-content {
