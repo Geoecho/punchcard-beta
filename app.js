@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v92';
+const APP_BUILD_ID = 'v93';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';

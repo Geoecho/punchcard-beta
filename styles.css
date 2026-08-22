@@ -2111,8 +2111,10 @@ input { font: inherit; color: inherit; }
 
 .promo-banner-scroll {
   display: flex;
+  flex-shrink: 0;
   gap: 10px;
   overflow-x: auto;
+  overflow-y: visible;
   scroll-snap-type: x mandatory;
   padding: 4px 20px 2px;
   margin-top: 4px;
