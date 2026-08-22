@@ -2,7 +2,7 @@
 const MAX_STAMPS = 10;
 const REGULARS_MIN_STAMPS = 30;
 
-const APP_BUILD_ID = 'v95';
+const APP_BUILD_ID = 'v96';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -40,6 +40,31 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Downscales + re-encodes a staff-picked image to WebP before it ever
+// reaches Supabase Storage — phone camera photos routinely run 3-5MB,
+// while a banner never displays wider than a phone screen. Returns null
+// (caller falls back to uploading the original file) if the browser
+// can't produce a real WebP blob, which canvas.toBlob signals by either
+// rejecting the mime type (falls back to PNG) or returning null.
+async function resizeImageToWebP(file, maxDim = 1600, quality = 0.82) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    if (bitmap.close) bitmap.close();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+    return (blob && blob.type === 'image/webp') ? blob : null;
+  } catch (e) {
+    return null;
+  }
 }
 const MONOCHROME_AVATARS = AVATAR_SEEDS.reduce((acc, seed) => {
   acc[seed] = `<img src="${avatarUrl(seed)}" alt="" loading="lazy">`;
@@ -2149,11 +2174,23 @@ const cloud = {
   async uploadPromoBannerImage(file) {
     if (!supabaseClient || !file) return { error: 'offline' };
     try {
-      const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') : 'jpg';
+      const webpBlob = await resizeImageToWebP(file);
+      const uploadBlob = webpBlob || file;
+      const ext = webpBlob
+        ? 'webp'
+        : ((file.name && file.name.includes('.')) ? file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') : 'jpg');
       const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext || 'jpg'}`;
       const res = await withTimeout(
-        supabaseClient.storage.from('promo-banners').upload(path, file, { upsert: false, contentType: file.type || 'image/jpeg' }),
-        15000
+        supabaseClient.storage.from('promo-banners').upload(path, uploadBlob, {
+          upsert: false,
+          contentType: webpBlob ? 'image/webp' : (file.type || 'image/jpeg'),
+          // Banner images are never edited in place (a change always saves
+          // under a new path), so a long cache lifetime is safe and cuts
+          // repeat egress every time a customer's device re-fetches the
+          // same still-active banner.
+          cacheControl: '2592000'
+        }),
+        20000
       );
       if (res.error) return { error: 'upload_failed' };
       const { data } = supabaseClient.storage.from('promo-banners').getPublicUrl(path);
@@ -6313,6 +6350,8 @@ function renderPromoBanners() {
     const img = document.createElement('img');
     img.src = b.imageUrl;
     img.alt = b.title || '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
     card.appendChild(img);
 
     if (b.title || b.description || b.price) {
@@ -6382,6 +6421,8 @@ function renderAdminPromoBanners() {
     thumb.className = 'admin-promo-row-thumb';
     thumb.src = b.imageUrl;
     thumb.alt = '';
+    thumb.loading = 'lazy';
+    thumb.decoding = 'async';
     thumb.addEventListener('click', () => openPromoBannerModal(b));
     row.appendChild(thumb);
 
