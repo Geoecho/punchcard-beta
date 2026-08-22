@@ -12,7 +12,7 @@ const REGULARS_MIN_STAMPS = 30;
 // a deployed build be confirmed (e.g. curl the live app.js and grep for
 // this) independent of whatever a given browser/service-worker cache is
 // actually serving a specific device.
-const APP_BUILD_ID = 'v88';
+const APP_BUILD_ID = 'v89';
 const DB_NAME = '86_punchcard_db';
 const DB_VERSION = 1;
 const INTEGRITY_SALT = '86_DEGREES_MONOCHROME_SALT_2026';
@@ -252,6 +252,9 @@ const TRANSLATIONS = {
     btnKeepWallet: "Keep in Wallet & Reset Card",
     milestoneTitle: "{tier} TIER REACHED",
     milestoneSubtitle: "You just hit {tier} status — enjoy {n} bonus stamps!",
+    giftReceivedTitle: "YOU RECEIVED A GIFT",
+    giftReceivedSubtitle: "{name} gifted you a free coffee!",
+    someoneFallback: "A friend",
     btnAwesome: "Awesome!",
     staffAccessTitle: "Staff Access",
     staffAccessSubtitle: "Enter PIN to access staff features.",
@@ -303,6 +306,7 @@ const TRANSLATIONS = {
     toastFriendAdded: "Added {name} as a friend!",
     toastFriendRequestSent: "Friend request sent to {name}",
     toastFriendRequestAccepted: "You and {name} are now friends!",
+    toastGenericError: "Something went wrong — please try again",
     errAlreadyFriends: "You're already friends with {name}",
     errAlreadyPending: "You already sent {name} a friend request",
     errNotFriends: "You're not friends with this person anymore",
@@ -539,6 +543,9 @@ const TRANSLATIONS = {
     btnKeepWallet: "Зачувај во паричник и ресетирај картичка",
     milestoneTitle: "Достигнато {tier} ниво",
     milestoneSubtitle: "Штотуку го достигнавте статусот {tier} — уживајте {n} бонус печати!",
+    giftReceivedTitle: "ДОБИВТЕ ПОДАРОК",
+    giftReceivedSubtitle: "{name} ви подари бесплатно кафе!",
+    someoneFallback: "Пријател",
     btnAwesome: "Одлично!",
     staffAccessTitle: "Пристап за вработени",
     staffAccessSubtitle: "Внесете ПИН за пристап до опциите за вработени.",
@@ -590,6 +597,7 @@ const TRANSLATIONS = {
     toastFriendAdded: "{name} е додаден како пријател!",
     toastFriendRequestSent: "Барањето за пријателство е испратено до {name}",
     toastFriendRequestAccepted: "Вие и {name} сега сте пријатели!",
+    toastGenericError: "Нешто тргна наопаку — обидете се повторно",
     errAlreadyFriends: "Веќе сте пријатели со {name}",
     errAlreadyPending: "Веќе испративте барање до {name}",
     errNotFriends: "Веќе не сте пријатели со оваа личност",
@@ -826,6 +834,9 @@ const TRANSLATIONS = {
     btnKeepWallet: "Ruaje në Portofol & Rivendos Kartën",
     milestoneTitle: "Niveli {tier} u arrit",
     milestoneSubtitle: "Sapo arrite statusin {tier} — shijo {n} vula bonus!",
+    giftReceivedTitle: "MORE NJË DHURATË",
+    giftReceivedSubtitle: "{name} të dhuroi një kafe falas!",
+    someoneFallback: "Një mik",
     btnAwesome: "Fantastike!",
     staffAccessTitle: "Qasja e Stafit",
     staffAccessSubtitle: "Vendos PIN-in për të hyrë në veçoritë e stafit.",
@@ -876,6 +887,7 @@ const TRANSLATIONS = {
     errCannotAddSelf: "Nuk mund ta shtosh veten",
     toastFriendRequestSent: "Kërkesa e miqësisë u dërgua te {name}",
     toastFriendRequestAccepted: "Ti dhe {name} tani jeni miq!",
+    toastGenericError: "Diçka shkoi keq — provo përsëri",
     errAlreadyFriends: "Tashmë je mik me {name}",
     errAlreadyPending: "Tashmë i ke dërguar një kërkesë miqësie {name}",
     errNotFriends: "Nuk je më mik me këtë person",
@@ -2309,6 +2321,18 @@ function startCloudPolling() {
             showMilestoneCelebration(newBadge.key, newBadge.key === 'platinum' ? 10 : 5);
           }
         }
+
+        // Gift-received celebration — a friend's gift bumps rewardsEarned
+        // without touching stamps, which otherwise had zero visual
+        // feedback (just a quietly-larger wallet count). Distinguished
+        // from "card just filled up" (which has its own reward-overlay
+        // above) by history[0].type, not by whether stamps also changed.
+        if (!state.isAdmin && cloudCustomer.rewardsEarned > (localCustomer ? localCustomer.rewardsEarned : 0)) {
+          const latestEntry = cloudCustomer.history && cloudCustomer.history[0];
+          if (latestEntry && latestEntry.type === 'gift_received') {
+            showGiftReceivedCelebration(latestEntry.fromName);
+          }
+        }
       }
     } catch (e) {}
   }, 3000);
@@ -2727,6 +2751,10 @@ const DOM = {
   milestoneTitle: document.getElementById('milestone-title'),
   milestoneSubtitle: document.getElementById('milestone-subtitle'),
   btnCloseMilestone: document.getElementById('btn-close-milestone'),
+  giftReceivedOverlay: document.getElementById('gift-received-overlay'),
+  giftReceivedTitle: document.getElementById('gift-received-title'),
+  giftReceivedSubtitle: document.getElementById('gift-received-subtitle'),
+  btnCloseGiftReceived: document.getElementById('btn-close-gift-received'),
   btnRedeemReward: document.getElementById('btn-redeem-reward'),
   btnCloseReward: document.getElementById('btn-close-reward'),
 
@@ -4149,6 +4177,9 @@ function setupEventListeners() {
 
   // Tier milestone celebration — purely informational, the bonus stamps
   // already landed server-side, so this is just a dismiss.
+  if (DOM.btnCloseGiftReceived) {
+    DOM.btnCloseGiftReceived.addEventListener('click', () => closeModal(DOM.giftReceivedOverlay));
+  }
   if (DOM.btnCloseMilestone) {
     DOM.btnCloseMilestone.addEventListener('click', () => closeModal(DOM.milestoneOverlay));
   }
@@ -4341,7 +4372,16 @@ function setupEventListeners() {
       const deleteBtn = e.target.closest('.notif-row-delete');
       if (deleteBtn) {
         const row = deleteBtn.closest('.notif-row');
-        await cloud.deleteNotification(state.myToken, deleteBtn.dataset.id);
+        const ok = await cloud.deleteNotification(state.myToken, deleteBtn.dataset.id);
+        // Only remove the row once the server confirms it's gone — removing
+        // it unconditionally used to make it vanish for this one session
+        // and then silently come back next time the panel was opened,
+        // since the underlying row was never actually deleted on a failed
+        // call (offline, timeout, etc).
+        if (!ok) {
+          showToast(t('toastGenericError'), 'error');
+          return;
+        }
         if (row) row.remove();
         if (DOM.notificationsList && !DOM.notificationsList.querySelector('.notif-row')) {
           renderNotificationsList([]);
@@ -4355,11 +4395,19 @@ function setupEventListeners() {
       if (!btn || btn.disabled) return;
       btn.disabled = true;
       const ok = await cloud.respondFriendRequest(state.myToken, btn.dataset.requestId, !!acceptBtn);
-      if (ok && acceptBtn) {
+      if (!ok) {
+        btn.disabled = false;
+        showToast(t('toastGenericError'), 'error');
+        return;
+      }
+      if (acceptBtn) {
         playConfirmSound();
         hapticPulse([20, 30, 20]);
         showToast(t('toastFriendRequestAccepted', { name: btn.dataset.requestName || '' }), 'success');
       }
+      // customer_respond_friend_request() now deletes the originating
+      // notification row itself on success, so removing it here just
+      // keeps this open panel in sync — it won't come back on next open.
       const row = btn.closest('.notif-row');
       if (row) row.remove();
       if (DOM.notificationsList && !DOM.notificationsList.querySelector('.notif-row')) {
@@ -6498,6 +6546,22 @@ function showMilestoneCelebration(tier, bonus) {
   if (DOM.milestoneTitle) DOM.milestoneTitle.textContent = t('milestoneTitle', { tier: tierLabel });
   if (DOM.milestoneSubtitle) DOM.milestoneSubtitle.textContent = t('milestoneSubtitle', { tier: tierLabel, n: bonus });
   openModal(DOM.milestoneOverlay);
+  fireConfetti();
+  playMilestoneSound();
+  hapticPulse([30, 40, 30, 40, 30, 40, 60]);
+}
+
+// Gift-received celebration — triggered from the cloud-polling comparison
+// in startCloudPolling() the moment this device notices rewardsEarned went
+// up because of an incoming gift (as opposed to filling a card, which has
+// its own reward-overlay). The reward itself was already credited
+// server-side by customer_gift_reward; this is purely the "hey, look!"
+// moment, since a silent wallet-count bump was easy to miss entirely.
+function showGiftReceivedCelebration(fromName) {
+  if (!DOM.giftReceivedOverlay) return;
+  if (DOM.giftReceivedTitle) DOM.giftReceivedTitle.textContent = t('giftReceivedTitle');
+  if (DOM.giftReceivedSubtitle) DOM.giftReceivedSubtitle.textContent = t('giftReceivedSubtitle', { name: fromName || t('someoneFallback') });
+  openModal(DOM.giftReceivedOverlay);
   fireConfetti();
   playMilestoneSound();
   hapticPulse([30, 40, 30, 40, 30, 40, 60]);
