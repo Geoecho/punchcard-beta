@@ -84,6 +84,8 @@ const TRANSLATIONS = {
     onboardingSkip: "Skip",
     onboardingNext: "Next",
     onboardingGetStarted: "Get Started",
+    onboarding0Title: "Every Coffee Earns a Stamp",
+    onboarding0Desc: "Collect 10 stamps and your next coffee is free. Staff add a stamp every time you order — just show your card at the register.",
     onboarding1Title: "Sign In, Your Way",
     onboarding1Desc: "Continue with Google for instant access, or create a card with just a username and password — whichever's easier for you.",
     onboarding2Title: "Get the Student Discount",
@@ -411,6 +413,8 @@ const TRANSLATIONS = {
     onboardingSkip: "Прескокни",
     onboardingNext: "Следно",
     onboardingGetStarted: "Започни",
+    onboarding0Title: "Секое кафе носи печат",
+    onboarding0Desc: "Соберете 10 печати и следното кафе е бесплатно. Персоналот додава печат секој пат кога нарачувате — само покажете ја картичката на каса.",
     onboarding1Title: "Најавете се на ваш начин",
     onboarding1Desc: "Продолжете со Google за инстант пристап, или направете картичка само со корисничко име и лозинка — што ви е полесно.",
     onboarding2Title: "Добијте попуст за студенти",
@@ -738,6 +742,8 @@ const TRANSLATIONS = {
     onboardingSkip: "Kalo",
     onboardingNext: "Tjetër",
     onboardingGetStarted: "Fillo",
+    onboarding0Title: "Çdo Kafe Fiton një Vulë",
+    onboarding0Desc: "Mblidh 10 vula dhe kafja tjetër është falas. Stafi shton një vulë çdo herë që porosit — thjesht trego kartën tënde te arka.",
     onboarding1Title: "Hyr, Si të Duash",
     onboarding1Desc: "Vazhdo me Google për qasje të menjëhershme, ose krijo një kartë vetëm me emër përdoruesi dhe fjalëkalim — çfarë të duket më e lehtë.",
     onboarding2Title: "Merr Zbritjen për Studentë",
@@ -2641,6 +2647,7 @@ const DOM = {
   onboardingDots: document.getElementById('onboarding-dots'),
   btnOnboardingNext: document.getElementById('btn-onboarding-next'),
   btnOnboardingSkip: document.getElementById('btn-onboarding-skip'),
+  btnOnboardingBack: document.getElementById('btn-onboarding-back'),
   viewAdminLogin: document.getElementById('view-admin-login'),
   viewMenu: document.getElementById('view-menu'),
   viewAdminMenu: document.getElementById('view-admin-menu'),
@@ -3430,7 +3437,7 @@ function setupEventListeners() {
   wirePasswordChecklist(DOM.signupPassword, 'signup-password-requirements');
   wirePasswordChecklist(DOM.editCustomerNewPassword, 'edit-customer-password-requirements');
 
-  const ONBOARDING_SLIDE_COUNT = 3;
+  const ONBOARDING_SLIDE_COUNT = 4;
   let onboardingIndex = 0;
   const renderOnboardingSlide = () => {
     if (DOM.onboardingTrack) DOM.onboardingTrack.style.transform = `translateX(-${onboardingIndex * 100}%)`;
@@ -3440,6 +3447,7 @@ function setupEventListeners() {
     if (DOM.btnOnboardingNext) {
       DOM.btnOnboardingNext.textContent = onboardingIndex === ONBOARDING_SLIDE_COUNT - 1 ? t('onboardingGetStarted') : t('onboardingNext');
     }
+    if (DOM.btnOnboardingBack) DOM.btnOnboardingBack.classList.toggle('hidden', onboardingIndex === 0);
   };
   const completeOnboarding = () => {
     localStorage.setItem('86_onboarding_seen', '1');
@@ -3452,6 +3460,14 @@ function setupEventListeners() {
         renderOnboardingSlide();
       } else {
         completeOnboarding();
+      }
+    });
+  }
+  if (DOM.btnOnboardingBack) {
+    DOM.btnOnboardingBack.addEventListener('click', () => {
+      if (onboardingIndex > 0) {
+        onboardingIndex--;
+        renderOnboardingSlide();
       }
     });
   }
@@ -4793,7 +4809,7 @@ function switchView(viewId) {
   if (viewId === 'view-poster') {
     if (DOM.nav) DOM.nav.classList.add('hidden');
     renderPosterQr();
-  } else if (viewId === 'view-signup' || viewId === 'view-splash' || viewId === 'view-admin-login') {
+  } else if (viewId === 'view-signup' || viewId === 'view-splash' || viewId === 'view-admin-login' || viewId === 'view-onboarding') {
     if (DOM.nav) DOM.nav.classList.add('hidden');
   } else if (viewId === 'view-leaderboard' && state.tvMode) {
 

@@ -333,7 +333,7 @@ input { font: inherit; color: inherit; }
   text-align: left;
 }
 
-/* ---------- Onboarding (3-slide first-launch intro) ---------- */
+/* ---------- Onboarding (4-slide first-launch intro) ---------- */
 #view-onboarding {
   z-index: 15;
   background: var(--bg-primary);
@@ -342,9 +342,29 @@ input { font: inherit; color: inherit; }
   padding: calc(24px + env(safe-area-inset-top, 0px)) 0 calc(28px + var(--sab)) !important;
   overflow: hidden;
 }
+.onboarding-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 20px 8px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+.onboarding-back {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: -8px;
+}
+.onboarding-back:active { color: var(--text-primary); }
 .onboarding-skip {
-  align-self: flex-end;
-  margin: 0 24px 8px;
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -352,7 +372,7 @@ input { font: inherit; color: inherit; }
   font-weight: 600;
   padding: 8px 4px;
   cursor: pointer;
-  flex-shrink: 0;
+  margin-left: auto;
 }
 .onboarding-skip:active { color: var(--text-secondary); }
 .onboarding-track {
