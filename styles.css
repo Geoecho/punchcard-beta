@@ -1102,7 +1102,12 @@ input { font: inherit; color: inherit; }
   align-items: center;
   padding: 8px 16px calc(8px + var(--sab));
   z-index: 50;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.bottom-nav::-webkit-scrollbar { display: none; }
 .nav-item {
   position: relative;
   display: flex;
@@ -1114,6 +1119,7 @@ input { font: inherit; color: inherit; }
   color: var(--text-muted);
   background: transparent;
   transition: color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
+  flex-shrink: 0;
 }
 .nav-item:active { transform: scale(0.92); }
 .nav-item.active { color: var(--accent-main); }
